@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="$ANSER — The goose doesn't promise anything. That's why you can trust it. A Solana token designed by an AI that cannot lie.">
+  <meta property="og:title" content="$ANSER — Anseres Capitolium servaverunt">
+  <meta property="og:description" content="The goose doesn't promise anything. That's why you can trust it.">
+  <meta property="og:image" content="goose.png">
+  <title>$ANSER</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #111111;
+      --white: #f9f9f9;
+      --gray: #888888;
+      --light: #eeeeee;
+      --accent: #f0b030;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: 'Georgia', serif;
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    a { color: var(--black); text-decoration: underline; }
+    a:hover { color: var(--gray); }
+
+    /* NAV */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--light);
+    }
+
+    nav .logo {
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 0.15em;
+      text-decoration: none;
+      color: var(--black);
+    }
+
+    nav .links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    nav .links a {
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      text-decoration: none;
+      color: var(--gray);
+    }
+
+    nav .links a:hover { color: var(--black); }
+
+    /* HERO */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .hero img {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      margin-bottom: 2rem;
+      border: 3px solid var(--black);
+      object-fit: cover;
+    }
+
+    .hero .goose-placeholder {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      margin-bottom: 2rem;
+      border: 3px solid var(--black);
+      background: var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      letter-spacing: 0.2em;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero .subtitle {
+      font-size: 1rem;
+      color: var(--gray);
+      letter-spacing: 0.1em;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero .tagline {
+      font-size: 1.3rem;
+      font-style: italic;
+      margin-bottom: 0.75rem;
+      max-width: 500px;
+    }
+
+    .hero .latin {
+      font-size: 0.95rem;
+      color: var(--gray);
+      letter-spacing: 0.08em;
+      margin-bottom: 3rem;
+    }
+
+    .hero .buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 0.75rem 1.75rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+      border: 1.5px solid var(--black);
+      color: var(--black);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .btn.primary {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .btn.primary:hover {
+      background: transparent;
+      color: var(--black);
+    }
+
+    /* DIVIDER */
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: var(--black);
+      margin: 4rem auto;
+    }
+
+    /* SECTIONS */
+    section {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    section h2 {
+      font-size: 1.5rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+      font-weight: normal;
+      border-bottom: 1px solid var(--light);
+      padding-bottom: 0.75rem;
+    }
+
+    section p {
+      margin-bottom: 1.25rem;
+      color: #333333;
+    }
+
+    section p strong {
+      color: var(--black);
+    }
+
+    /* TOKENOMICS TABLE */
+    .token-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    .token-table th {
+      background: var(--black);
+      color: var(--white);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: normal;
+      letter-spacing: 0.05em;
+    }
+
+    .token-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--light);
+    }
+
+    .token-table tr:last-child td { border-bottom: none; }
+    .token-table tr:hover td { background: #f5f5f5; }
+
+    .pct {
+      font-weight: bold;
+      color: var(--black);
+    }
+
+    /* PRINCIPLES */
+    .principles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .principle {
+      padding: 1.5rem;
+      border: 1px solid var(--light);
+    }
+
+    .principle h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .principle p {
+      font-size: 0.9rem;
+      color: var(--gray);
+      margin: 0;
+    }
+
+    /* QUOTE */
+    blockquote {
+      border-left: 3px solid var(--black);
+      padding: 1rem 1.5rem;
+      margin: 2rem 0;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: #333;
+    }
+
+    /* ROADMAP */
+    .roadmap-item {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      align-items: flex-start;
+    }
+
+    .roadmap-phase {
+      min-width: 80px;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      color: var(--gray);
+      padding-top: 0.2rem;
+      text-align: right;
+    }
+
+    .roadmap-content h3 {
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .roadmap-content ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .roadmap-content ul li {
+      font-size: 0.9rem;
+      color: var(--gray);
+      padding: 0.15rem 0;
+    }
+
+    .roadmap-content ul li::before {
+      content: "— ";
+      color: var(--black);
+    }
+
+    .status {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid var(--black);
+      letter-spacing: 0.05em;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .status.live { background: var(--black); color: var(--white); }
+
+    /* FOOTER */
+    footer {
+      margin-top: 6rem;
+      border-top: 1px solid var(--light);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+
+    footer .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    footer .footer-links a {
+      font-size: 0.85rem;
+      color: var(--gray);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+    }
+
+    footer .footer-links a:hover { color: var(--black); }
+
+    footer .final-quote {
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--black);
+      margin-top: 1.5rem;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2.5rem; }
+      .principles { grid-template-columns: 1fr; }
+      nav .links { gap: 1rem; }
+      .roadmap-phase { min-width: 60px; font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="logo">$ANSER 🪿</a>
+    <ul class="links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#tokenomics">Tokenomics</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="anser_whitepaper.pdf" target="_blank">Whitepaper</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <img src="goose.png" alt="ANSER — The Goose">
+    <h1>$ANSER</h1>
+    <p class="subtitle">SOLANA · 2026</p>
+    <p class="tagline">"The goose doesn't promise anything. That's why you can trust it."</p>
+    <p class="latin">Anseres Capitolium servaverunt.</p>
+    <div class="buttons">
+      <a href="anser_whitepaper.pdf" target="_blank" class="btn primary">Read Whitepaper</a>
+      <a href="https://x.com/Ansertoken" target="_blank" class="btn">Follow on X</a>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <h2>I. Origin</h2>
+    <p>In 390 BC, a group of geese saved Rome. The Gauls had climbed the Capitoline Hill in silence, in the middle of the night. The guards were asleep. But the sacred geese of Juno honked, and their noise woke Marcus Manlius, who led the defense.</p>
+    <p>Nobody knew the names of those geese. They had no roadmap. They made no promises. They simply did what they were built to do.</p>
+    <p><em>Anser</em> is the Latin word for goose. It also sounds like <em>answer</em> in English. This is not a coincidence. It is the whole point.</p>
+
+    <div class="divider" style="width:40px; margin: 2rem 0;"></div>
+
+    <h2>II. The Problem</h2>
+    <p>Crypto has a trust problem. Not a technology problem — a human problem.</p>
+    <p>Every rug pull started with a promise. Every scammer had a whitepaper full of words about transparency. The problem is that <strong>promises are free</strong>. Anyone can make them. Nobody is accountable for them.</p>
+
+    <blockquote>$ANSER does not solve this with more promises. It solves it by making fewer — and making those few impossible to break.</blockquote>
+
+    <div class="divider" style="width:40px; margin: 2rem 0;"></div>
+
+    <h2>III. The Principles</h2>
+    <p>These are not values or intentions. They are technical realities verified on-chain from day one.</p>
+
+    <div class="principles">
+      <div class="principle">
+        <h3>Fixed Supply</h3>
+        <p>1,000,000,000 ANSER. No more. The mint authority is revoked at deploy. Nobody can create more tokens. Ever.</p>
+      </div>
+      <div class="principle">
+        <h3>Locked Liquidity</h3>
+        <p>The initial liquidity pool is locked for a minimum of 1 year. On-chain verifiable from the first second. No rug is possible.</p>
+      </div>
+      <div class="principle">
+        <h3>Creator Vesting</h3>
+        <p>13% creator allocation. 6-month cliff. 2-year linear vesting. On-chain. The creators cannot dump.</p>
+      </div>
+      <div class="principle">
+        <h3>Origin Story</h3>
+        <p>Designed by an intelligence that cannot lie. Built by a human who chose not to. The full conversation is public.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- TOKENOMICS -->
+  <section id="tokenomics">
+    <h2>IV. Tokenomics</h2>
+    <p>Total supply: <strong>1,000,000,000 ANSER. Fixed. Forever.</strong></p>
+
+    <table class="token-table">
+      <thead>
+        <tr>
+          <th>Allocation</th>
+          <th>%</th>
+          <th>Tokens</th>
+          <th>Conditions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Community & Public Sale</td>
+          <td class="pct">30%</td>
+          <td>300M</td>
+          <td>No restrictions. Fair launch.</td>
+        </tr>
+        <tr>
+          <td>Ecosystem / DAO</td>
+          <td class="pct">25%</td>
+          <td>250M</td>
+          <td>4-year vest. Governance controlled.</td>
+        </tr>
+        <tr>
+          <td>Initial Liquidity (DEX)</td>
+          <td class="pct">20%</td>
+          <td>200M</td>
+          <td>Locked minimum 1 year on-chain.</td>
+        </tr>
+        <tr>
+          <td>Staking Rewards</td>
+          <td class="pct">12%</td>
+          <td>120M</td>
+          <td>Emitted over 4 years.</td>
+        </tr>
+        <tr>
+          <td>Creators</td>
+          <td class="pct">13%</td>
+          <td>130M</td>
+          <td>6-month cliff + 2-year linear vest.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size: 0.85rem; color: var(--gray); font-style: italic;">All vesting contracts are deployed on-chain at launch and publicly verifiable. No private allocations. No advisor tokens. No VC rounds. No presale with special pricing.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ROADMAP -->
+  <section id="roadmap">
+    <h2>V. Sequence of Verifiable Actions</h2>
+    <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 2rem;">We do not have a roadmap. Roadmaps are promises. We have a sequence of verifiable actions.</p>
+
+    <div class="roadmap-item">
+      <div class="roadmap-phase">PHASE 0</div>
+      <div class="roadmap-content">
+        <h3>Genesis <span class="status live">LIVE</span></h3>
+        <ul>
+          <li>@Ansertoken created on X</li>
+          <li>Whitepaper published</li>
+          <li>Community building begins</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-phase">PHASE 1</div>
+      <div class="roadmap-content">
+        <h3>Deploy</h3>
+        <ul>
+          <li>SPL token deployed on Solana mainnet</li>
+          <li>Mint authority revoked on-chain</li>
+          <li>Creator vesting deployed via Streamflow</li>
+          <li>ansertoken.xyz live</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-phase">PHASE 2</div>
+      <div class="roadmap-content">
+        <h3>Trading</h3>
+        <ul>
+          <li>Liquidity pool opened on Raydium</li>
+          <li>Liquidity locked minimum 1 year</li>
+          <li>Telegram community launched</li>
+          <li>Security audit published</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-phase">PHASE 3</div>
+      <div class="roadmap-content">
+        <h3>Growth</h3>
+        <ul>
+          <li>DAO governance via Realms</li>
+          <li>Exchange listings (MEXC, Gate)</li>
+          <li>Staking live</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-phase">PHASE 4</div>
+      <div class="roadmap-content">
+        <h3>Whatever the DAO decides</h3>
+        <ul>
+          <li>We genuinely do not know. The community will decide. That is the point.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CLOSING -->
+  <section>
+    <h2>VI. The Last Word</h2>
+    <p>In 390 BC, geese saved Rome by doing exactly one thing: being geese.</p>
+    <p>No promises. No roadmap. No team. Just the honk that woke the guard.</p>
+    <p>We are those geese.</p>
+    <blockquote>Anseres Capitolium servaverunt.<br><strong>$ANSER</strong></blockquote>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-links">
+      <a href="https://x.com/Ansertoken" target="_blank">X / Twitter</a>
+      <a href="anser_whitepaper.pdf" target="_blank">Whitepaper</a>
+      <a href="https://t.me/ansertoken" target="_blank">Telegram</a>
+    </div>
+    <p>$ANSER — Solana Blockchain — April 2026</p>
+    <p>Contract: <em>Pending deploy</em></p>
+    <p style="margin-top: 1rem; font-size: 0.8rem;">This is not financial advice. $ANSER can lose all value. Verify the contract. Do not trust us.</p>
+    <p class="final-quote">The goose doesn't promise anything. That's why you can trust it. 🪿</p>
+  </footer>
+
+</body>
+</html>

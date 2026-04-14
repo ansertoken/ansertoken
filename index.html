@@ -342,12 +342,41 @@
       margin-top: 1.5rem;
     }
 
+    /* SCROLL TO TOP */
+    .scroll-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 44px;
+      height: 44px;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 999;
+    }
+    .scroll-top.visible { opacity: 1; }
+    .scroll-top:hover { background: #444; }
+
     /* RESPONSIVE */
     @media (max-width: 600px) {
       .hero h1 { font-size: 2.5rem; }
       .principles { grid-template-columns: 1fr; }
-      nav .links { gap: 1rem; }
+      nav { padding: 1rem; }
+      nav .logo { font-size: 1rem; }
+      nav .links { gap: 0.6rem; }
+      nav .links a { font-size: 0.78rem; letter-spacing: 0; }
       .roadmap-phase { min-width: 60px; font-size: 0.75rem; }
+    }
+
+    @media (max-width: 380px) {
+      nav .links li:last-child { display: none; }
     }
   </style>
 </head>
@@ -372,7 +401,7 @@
     <p class="tagline">"The goose doesn't promise anything. That's why you can trust it."</p>
     <p class="latin">Anseres Capitolium servaverunt.</p>
     <div class="buttons">
-      <a href="anser_whitepaper.pdf" target="_blank" class="btn primary">Read Whitepaper</a>
+      <a href="https://ansertoken.xyz/anser_whitepaper.pdf" target="_blank" class="btn primary">Read Whitepaper</a>
       <a href="https://x.com/Ansertoken" target="_blank" class="btn">Follow on X</a>
     </div>
   </div>
@@ -563,6 +592,19 @@
     <p style="margin-top: 1rem; font-size: 0.8rem;">This is not financial advice. $ANSER can lose all value. Verify the contract. Do not trust us.</p>
     <p class="final-quote">The goose doesn't promise anything. That's why you can trust it. 🪿</p>
   </footer>
+
+  <!-- WHITEPAPER HTTPS FIX -->
+  <!-- All internal links use relative paths — no mixed content -->
+
+  <!-- SCROLL TO TOP -->
+  <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+
+  <script>
+    var btn = document.getElementById('scrollTop');
+    window.addEventListener('scroll', function() {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    });
+  </script>
 
 </body>
 </html>

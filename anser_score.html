@@ -431,7 +431,7 @@
       <input type="text" id="contractInput" placeholder="Enter Solana contract address..." maxlength="44">
       <button onclick="analyzeToken()">ANALYZE →</button>
     </div>
-    <p class="search-hint">Example: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v (USDC)</p>
+    <p class="search-hint">Example: DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263 (BONK)</p>
   </div>
 
   <hr class="divider">
@@ -574,23 +574,32 @@
     }
 
     async function fetchAndRender(address) {
-      try {
-        const [name, authorities, concentration, deployedAt] = await Promise.all([
-          getTokenName(address),
-          getMintAuthorities(address),
-          getHolderConcentration(address),
-          getContractAge(address)
-        ]);
-        renderResults({ address, name, authorities, concentration, deployedAt });
-      } catch (err) {
+      const [nameRes, authRes, concRes, ageRes] = await Promise.allSettled([
+        getTokenName(address),
+        getMintAuthorities(address),
+        getHolderConcentration(address),
+        getContractAge(address)
+      ]);
+
+      // Mint account is the critical call — if it fails the address is invalid
+      if (authRes.status === 'rejected') {
         document.getElementById('loading').classList.remove('visible');
         document.getElementById('results').innerHTML = `
           <div class="verdict fail">
             <div class="verdict-label">Error</div>
-            <div class="verdict-text">Could not fetch data: ${err.message}</div>
+            <div class="verdict-text">Could not fetch data: ${authRes.reason?.message || 'Unknown error'}</div>
           </div>`;
         document.getElementById('results').classList.add('visible');
+        return;
       }
+
+      renderResults({
+        address,
+        name:          nameRes.status === 'fulfilled' ? nameRes.value : null,
+        authorities:   authRes.value,
+        concentration: concRes.status === 'fulfilled' ? concRes.value : null,
+        deployedAt:    ageRes.status  === 'fulfilled' ? ageRes.value  : null
+      });
     }
 
     // ── Score calculation ────────────────────────────────────────────────────
@@ -605,11 +614,13 @@
       // Freeze authority (5 pts)
       pts += auth.freezeAuthorityRevoked ? 5 : 0;
 
-      // Holder concentration (20 pts)
-      if      (conc.pct < 20) pts += 20;
-      else if (conc.pct < 40) pts += 14;
-      else if (conc.pct < 60) pts += 7;
-      else if (conc.pct < 80) pts += 3;
+      // Holder concentration (20 pts) — skip if data unavailable
+      if (conc) {
+        if      (conc.pct < 20) pts += 20;
+        else if (conc.pct < 40) pts += 14;
+        else if (conc.pct < 60) pts += 7;
+        else if (conc.pct < 80) pts += 3;
+      }
 
       // Contract age (10 pts)
       if (deployedAt) {
@@ -652,12 +663,17 @@
       }
 
       // Holder concentration label
-      const pct = concentration.pct;
       let concStatus, concDesc, concClass;
-      if      (pct < 20) { concStatus = `${pct}% ✓`;    concClass = 'status-pass'; concDesc = `Top 10 holders control ${pct}% of supply. Healthy distribution.`; }
-      else if (pct < 40) { concStatus = `${pct}% ⚠`;    concClass = 'status-warn'; concDesc = `Top 10 holders control ${pct}% of supply. Moderate concentration.`; }
-      else if (pct < 60) { concStatus = `${pct}% ⚠`;    concClass = 'status-warn'; concDesc = `Top 10 holders control ${pct}% of supply. Notable concentration risk.`; }
-      else               { concStatus = `${pct}% ✗`;    concClass = 'status-fail'; concDesc = `Top 10 holders control ${pct}% of supply. High concentration risk.`; }
+      if (!concentration) {
+        concStatus = 'N/A'; concClass = 'status-unknown';
+        concDesc = 'Could not retrieve holder data. This token may have too many accounts for automated analysis — check manually on Solscan.';
+      } else {
+        const pct = concentration.pct;
+        if      (pct < 20) { concStatus = `${pct}% ✓`; concClass = 'status-pass'; concDesc = `Top 10 holders control ${pct}% of supply. Healthy distribution.`; }
+        else if (pct < 40) { concStatus = `${pct}% ⚠`; concClass = 'status-warn'; concDesc = `Top 10 holders control ${pct}% of supply. Moderate concentration.`; }
+        else if (pct < 60) { concStatus = `${pct}% ⚠`; concClass = 'status-warn'; concDesc = `Top 10 holders control ${pct}% of supply. Notable concentration risk.`; }
+        else               { concStatus = `${pct}% ✗`; concClass = 'status-fail'; concDesc = `Top 10 holders control ${pct}% of supply. High concentration risk.`; }
+      }
 
       const metrics = [
         {

@@ -217,33 +217,39 @@
     .token-table tr:hover td { background: #f5f5f5; }
 
     @media (max-width: 600px) {
-      .token-table { display: block; }
+      .token-table, .token-table tbody,
+      .token-table tr, .token-table td { display: block; width: 100%; }
       .token-table thead { display: none; }
-      .token-table tbody { display: block; }
       .token-table tr {
-        display: block;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         border: 1px solid var(--light);
-        padding: 0.5rem 0;
+        padding: 1rem;
+        background: var(--white);
       }
       .token-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding: 0.5rem 1rem;
-        border-bottom: 1px solid var(--light);
+        padding: 0;
+        border: none;
         font-size: 0.9rem;
-        gap: 1rem;
       }
-      .token-table td:last-child { border-bottom: none; }
-      .token-table td::before {
-        content: attr(data-label);
+      .token-table td:first-child {
         font-weight: bold;
-        min-width: 90px;
-        color: var(--black);
-        font-size: 0.8rem;
-        letter-spacing: 0.05em;
-        flex-shrink: 0;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+      }
+      .token-table td:nth-child(2),
+      .token-table td:nth-child(3) {
+        display: inline;
+        color: var(--gray);
+        font-size: 0.85rem;
+      }
+      .token-table td:nth-child(2)::after { content: " · "; }
+      .token-table td:nth-child(4) {
+        margin-top: 0.5rem;
+        color: var(--gray);
+        font-size: 0.82rem;
+        line-height: 1.6;
+        border-top: 1px solid var(--light);
+        padding-top: 0.5rem;
       }
     }
 

@@ -216,6 +216,37 @@
     .token-table tr:last-child td { border-bottom: none; }
     .token-table tr:hover td { background: #f5f5f5; }
 
+    @media (max-width: 600px) {
+      .token-table { display: block; }
+      .token-table thead { display: none; }
+      .token-table tbody { display: block; }
+      .token-table tr {
+        display: block;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--light);
+        padding: 0.5rem 0;
+      }
+      .token-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--light);
+        font-size: 0.9rem;
+        gap: 1rem;
+      }
+      .token-table td:last-child { border-bottom: none; }
+      .token-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        min-width: 90px;
+        color: var(--black);
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
+        flex-shrink: 0;
+      }
+    }
+
     .pct {
       font-weight: bold;
       color: var(--black);
@@ -468,34 +499,34 @@
       </thead>
       <tbody>
         <tr>
-          <td>Community & Public Sale</td>
-          <td class="pct">30%</td>
-          <td>300M</td>
-          <td>Phased fair launch. 50M at pool open, +75M at 500 holders, +75M at 2,000 holders, +100M community airdrop. Reserve wallet publicly verifiable on-chain at all times.</td>
+          <td data-label="ALLOCATION">Community & Public Sale</td>
+          <td data-label="%" class="pct">30%</td>
+          <td data-label="TOKENS">300M</td>
+          <td data-label="CONDITIONS">Phased fair launch. 50M at pool open, +75M at 500 holders, +75M at 2,000 holders, +100M community airdrop. Reserve wallet publicly verifiable on-chain at all times.</td>
         </tr>
         <tr>
-          <td>Ecosystem / DAO</td>
-          <td class="pct">25%</td>
-          <td>250M</td>
-          <td>Linear vest 4 years via Streamflow (~5.2M/month). Community governance controlled. No tokens spent without 72h public notice until Realms is live. Funds listings, contributions, and any initiative approved by holders.</td>
+          <td data-label="ALLOCATION">Ecosystem / DAO</td>
+          <td data-label="%" class="pct">25%</td>
+          <td data-label="TOKENS">250M</td>
+          <td data-label="CONDITIONS">Linear vest 4 years via Streamflow (~5.2M/month). Community governance controlled. No tokens spent without 72h public notice until Realms is live. Funds listings, contributions, and any initiative approved by holders.</td>
         </tr>
         <tr>
-          <td>Initial Liquidity (DEX)</td>
-          <td class="pct">20%</td>
-          <td>200M</td>
-          <td>Locked minimum 1 year on-chain.</td>
+          <td data-label="ALLOCATION">Initial Liquidity (DEX)</td>
+          <td data-label="%" class="pct">20%</td>
+          <td data-label="TOKENS">200M</td>
+          <td data-label="CONDITIONS">Locked minimum 1 year on-chain.</td>
         </tr>
         <tr>
-          <td>Staking Rewards</td>
-          <td class="pct">12%</td>
-          <td>120M</td>
-          <td>Gradual emission over 4 years. Timeline decided by DAO governance.</td>
+          <td data-label="ALLOCATION">Staking Rewards</td>
+          <td data-label="%" class="pct">12%</td>
+          <td data-label="TOKENS">120M</td>
+          <td data-label="CONDITIONS">Gradual emission over 4 years. Timeline decided by DAO governance.</td>
         </tr>
         <tr>
-          <td>Creators</td>
-          <td class="pct">13%</td>
-          <td>130M</td>
-          <td>6-month cliff + 2-year linear vest.</td>
+          <td data-label="ALLOCATION">Creators</td>
+          <td data-label="%" class="pct">13%</td>
+          <td data-label="TOKENS">130M</td>
+          <td data-label="CONDITIONS">6-month cliff + 2-year linear vest.</td>
         </tr>
       </tbody>
     </table>

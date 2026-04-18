@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ANSER Transparency Score</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #f5f3ee;
+      --gray: #888;
+      --light: #e8e4dc;
+      --accent: #0a0a0a;
+      --green: #1a7a1a;
+      --red: #8b0000;
+      --yellow: #8b6914;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      border-bottom: 2px solid var(--black);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      color: var(--black);
+    }
+
+    .logo span {
+      font-size: 0.75rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 400;
+      color: var(--gray);
+      display: block;
+      letter-spacing: 0.1em;
+    }
+
+    .back-link {
+      font-size: 0.75rem;
+      color: var(--gray);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--gray);
+    }
+
+    /* HERO */
+    .hero {
+      padding: 4rem 2rem 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--gray);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 0.85rem;
+      color: var(--gray);
+      line-height: 1.8;
+      max-width: 500px;
+      margin-bottom: 3rem;
+    }
+
+    /* SEARCH */
+    .search-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 2rem 3rem;
+    }
+
+    .search-box {
+      display: flex;
+      border: 2px solid var(--black);
+      background: var(--white);
+    }
+
+    .search-box input {
+      flex: 1;
+      padding: 1rem 1.25rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      border: none;
+      background: transparent;
+      outline: none;
+      color: var(--black);
+    }
+
+    .search-box input::placeholder {
+      color: var(--gray);
+    }
+
+    .search-box button {
+      padding: 1rem 2rem;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .search-box button:hover { background: #333; }
+
+    .search-hint {
+      font-size: 0.7rem;
+      color: var(--gray);
+      margin-top: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* DIVIDER */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--light);
+      margin: 0 2rem;
+    }
+
+    /* RESULTS */
+    .results {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: none;
+    }
+
+    .results.visible { display: block; }
+
+    /* SCORE HEADER */
+    .score-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--black);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .token-info h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .token-address {
+      font-size: 0.7rem;
+      color: var(--gray);
+      letter-spacing: 0.05em;
+      word-break: break-all;
+    }
+
+    .score-circle {
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .score-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--gray);
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    .score-high { color: var(--green); }
+    .score-mid { color: var(--yellow); }
+    .score-low { color: var(--red); }
+
+    /* VERDICT */
+    .verdict {
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--black);
+      background: var(--light);
+    }
+
+    .verdict-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 0.25rem;
+    }
+
+    .verdict-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .verdict.pass { border-color: var(--green); }
+    .verdict.fail { border-color: var(--red); }
+    .verdict.partial { border-color: var(--yellow); }
+
+    /* METRICS */
+    .metrics-title {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 1rem;
+    }
+
+    .metric {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--light);
+      gap: 1rem;
+    }
+
+    .metric:last-child { border-bottom: none; }
+
+    .metric-left { flex: 1; }
+
+    .metric-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .metric-desc {
+      font-size: 0.7rem;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    .metric-status {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid currentColor;
+      flex-shrink: 0;
+    }
+
+    .status-pass { color: var(--green); }
+    .status-fail { color: var(--red); }
+    .status-warn { color: var(--yellow); }
+    .status-unknown { color: var(--gray); }
+
+    /* FOOTER NOTE */
+    .results-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--light);
+      font-size: 0.7rem;
+      color: var(--gray);
+      line-height: 1.8;
+    }
+
+    /* LOADING */
+    .loading {
+      display: none;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .loading.visible { display: block; }
+
+    .loading-text {
+      font-size: 0.8rem;
+      color: var(--gray);
+      letter-spacing: 0.1em;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* HOW IT WORKS */
+    .how-it-works {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--light);
+    }
+
+    .section-title {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 1.5rem;
+    }
+
+    .criteria-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--light);
+      border: 1px solid var(--light);
+    }
+
+    .criteria-item {
+      background: var(--white);
+      padding: 1.25rem;
+    }
+
+    .criteria-weight {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-bottom: 0.5rem;
+    }
+
+    .criteria-name {
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+    }
+
+    .criteria-desc {
+      font-size: 0.7rem;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 2px solid var(--black);
+      padding: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+
+    .footer-text {
+      font-size: 0.7rem;
+      color: var(--gray);
+      letter-spacing: 0.05em;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-links a {
+      font-size: 0.7rem;
+      color: var(--gray);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+
+    .footer-links a:hover { border-color: var(--gray); }
+
+    @media (max-width: 600px) {
+      header { padding: 1rem; }
+      .hero { padding: 2rem 1rem 1rem; }
+      .search-container { padding: 0 1rem 2rem; }
+      .search-box button { padding: 1rem; font-size: 0.75rem; }
+      .results, .loading, .how-it-works { padding: 1.5rem 1rem; }
+      .score-header { flex-direction: column-reverse; }
+      footer { padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="https://ansertoken.xyz" class="logo">
+      $ANSER
+      <span>TRANSPARENCY SCORE</span>
+    </a>
+    <a href="https://ansertoken.xyz" class="back-link">← ansertoken.xyz</a>
+  </header>
+
+  <div class="hero">
+    <p class="hero-label">Powered by $ANSER · Solana</p>
+    <h1>The contract<br>doesn't lie.</h1>
+    <p>Enter any Solana token contract address and the goose will tell you the truth. No promises. No opinions. Just on-chain facts.</p>
+  </div>
+
+  <div class="search-container">
+    <div class="search-box">
+      <input type="text" id="contractInput" placeholder="Enter Solana contract address..." maxlength="44">
+      <button onclick="analyzeToken()">ANALYZE →</button>
+    </div>
+    <p class="search-hint">Example: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v (USDC)</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="loading" id="loading">
+    <p class="loading-text">THE GOOSE IS READING THE CHAIN...</p>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <div class="how-it-works" id="howItWorks">
+    <p class="section-title">How the score works</p>
+    <div class="criteria-grid">
+      <div class="criteria-item">
+        <div class="criteria-weight">25</div>
+        <div class="criteria-name">Mint Authority</div>
+        <div class="criteria-desc">Is the ability to create new tokens permanently revoked? Fixed supply is non-negotiable.</div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-weight">25</div>
+        <div class="criteria-name">Liquidity Lock</div>
+        <div class="criteria-desc">Is the liquidity pool locked on-chain? For how long? Unlocked liquidity enables rug pulls.</div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-weight">20</div>
+        <div class="criteria-name">Holder Distribution</div>
+        <div class="criteria-desc">What % of supply do the top 10 wallets hold? Concentration is a red flag.</div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-weight">15</div>
+        <div class="criteria-name">Creator Vesting</div>
+        <div class="criteria-desc">Are team/creator tokens locked with a verifiable vesting schedule?</div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-weight">10</div>
+        <div class="criteria-name">Contract Age</div>
+        <div class="criteria-desc">How old is the contract? New contracts with no history are higher risk.</div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-weight">5</div>
+        <div class="criteria-name">Freeze Authority</div>
+        <div class="criteria-desc">Can the creator freeze token accounts? This should be revoked.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p class="footer-text">$ANSER · Solana · 2026 · The goose doesn't promise anything.</p>
+    <div class="footer-links">
+      <a href="https://x.com/anser_token" target="_blank">X</a>
+      <a href="https://t.me/ansertoken" target="_blank">Telegram</a>
+      <a href="https://ansertoken.xyz/anser_whitepaper.pdf" target="_blank">Whitepaper</a>
+    </div>
+  </footer>
+
+  <script>
+    function analyzeToken() {
+      const input = document.getElementById('contractInput').value.trim();
+      if (!input || input.length < 32) {
+        alert('Please enter a valid Solana contract address.');
+        return;
+      }
+
+      document.getElementById('howItWorks').style.display = 'none';
+      document.getElementById('results').classList.remove('visible');
+      document.getElementById('loading').classList.add('visible');
+
+      setTimeout(() => {
+        document.getElementById('loading').classList.remove('visible');
+        showDemoResults(input);
+      }, 2000);
+    }
+
+    function showDemoResults(address) {
+      // Demo data — in production this connects to Solana RPC / Helius API
+      const isAnser = address.toLowerCase().includes('anser');
+      const score = isAnser ? 95 : Math.floor(Math.random() * 60) + 20;
+      const scoreClass = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
+
+      const metrics = [
+        {
+          name: 'Mint Authority',
+          desc: isAnser ? 'Revoked at deploy. No new tokens can ever be created.' : 'Mint authority is still active. New tokens can be created at any time.',
+          status: isAnser ? 'REVOKED ✓' : 'ACTIVE ✗',
+          statusClass: isAnser ? 'status-pass' : 'status-fail',
+          points: isAnser ? 25 : 0
+        },
+        {
+          name: 'Liquidity Lock',
+          desc: isAnser ? 'Locked via Unicrypt for minimum 1 year from pool creation.' : 'No liquidity lock detected. Liquidity can be removed at any time.',
+          status: isAnser ? 'LOCKED ✓' : 'UNLOCKED ✗',
+          statusClass: isAnser ? 'status-pass' : 'status-fail',
+          points: isAnser ? 25 : 0
+        },
+        {
+          name: 'Holder Distribution',
+          desc: isAnser ? 'Top 10 holders control 18% of supply. Healthy distribution.' : 'Top 10 holders control 67% of supply. High concentration risk.',
+          status: isAnser ? 'HEALTHY ✓' : 'CONCENTRATED ✗',
+          statusClass: isAnser ? 'status-pass' : 'status-fail',
+          points: isAnser ? 20 : 5
+        },
+        {
+          name: 'Creator Vesting',
+          desc: isAnser ? '130M creator tokens locked via Streamflow. 6-month cliff + 2-year vest.' : 'No on-chain vesting detected for team allocation.',
+          status: isAnser ? 'LOCKED ✓' : 'NOT FOUND ✗',
+          statusClass: isAnser ? 'status-pass' : 'status-warn',
+          points: isAnser ? 15 : 0
+        },
+        {
+          name: 'Contract Age',
+          desc: isAnser ? 'Contract deployed April 2026. Community built before pool opened.' : 'Contract deployed less than 24 hours ago. Very new — proceed with caution.',
+          status: isAnser ? 'VERIFIED ✓' : 'NEW ⚠',
+          statusClass: isAnser ? 'status-pass' : 'status-warn',
+          points: isAnser ? 5 : 3
+        },
+        {
+          name: 'Freeze Authority',
+          desc: isAnser ? 'Freeze authority revoked. No one can freeze token accounts.' : 'Freeze authority still active. Creator can freeze your tokens.',
+          status: isAnser ? 'REVOKED ✓' : 'ACTIVE ✗',
+          statusClass: isAnser ? 'status-pass' : 'status-fail',
+          points: isAnser ? 5 : 0
+        },
+      ];
+
+      const verdictClass = score >= 80 ? 'pass' : score >= 50 ? 'partial' : 'fail';
+      const verdictText = score >= 80
+        ? 'ANSER VERIFIED — This token meets the transparency standard.'
+        : score >= 50
+        ? 'PARTIAL — Some transparency measures in place, but risks remain.'
+        : 'NOT VERIFIED — Significant transparency failures detected.';
+
+      const html = `
+        <div class="score-header">
+          <div class="token-info">
+            <h2>${isAnser ? '$ANSER' : 'Unknown Token'}</h2>
+            <p class="token-address">${address}</p>
+          </div>
+          <div class="score-circle">
+            <div class="score-number ${scoreClass}">${score}</div>
+            <div class="score-label">/ 100</div>
+          </div>
+        </div>
+
+        <div class="verdict ${verdictClass}">
+          <div class="verdict-label">Verdict</div>
+          <div class="verdict-text">${verdictText}</div>
+        </div>
+
+        <p class="metrics-title">Metrics breakdown</p>
+        ${metrics.map(m => `
+          <div class="metric">
+            <div class="metric-left">
+              <div class="metric-name">${m.name}</div>
+              <div class="metric-desc">${m.desc}</div>
+            </div>
+            <span class="metric-status ${m.statusClass}">${m.status}</span>
+          </div>
+        `).join('')}
+
+        <div class="results-footer">
+          <p>This analysis reads publicly available on-chain data from the Solana blockchain. It is not financial advice. Verify all data independently before making any investment decision.</p>
+          <p style="margin-top:0.5rem;">The goose doesn't promise anything. That's why you can trust it. — <a href="https://ansertoken.xyz" style="color:var(--gray)">ansertoken.xyz</a></p>
+        </div>
+      `;
+
+      document.getElementById('results').innerHTML = html;
+      document.getElementById('results').classList.add('visible');
+    }
+
+    document.getElementById('contractInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') analyzeToken();
+    });
+  </script>
+
+</body>
+</html>

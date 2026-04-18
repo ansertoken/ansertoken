@@ -426,6 +426,24 @@
     .conf-verified   { color: var(--green); }
     .conf-observed   { color: var(--yellow); }
     .conf-indicative { color: var(--gray); }
+
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .share-btn:hover { background: #333; }
+    .share-btn svg { width: 14px; height: 14px; fill: currentColor; }
   </style>
 </head>
 <body>
@@ -570,21 +588,42 @@
     async function getHolderConcentration(address) {
       const supplyRes = await rpc('getTokenSupply', [address]);
       const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
-      let accounts = null;
+      const decimals  = supplyRes?.value?.decimals || 0;
+      let accounts = [];
+
+      // Try DAS first (returns up to 20 sorted by amount)
       try {
-        const largest = await rpc('getTokenLargestAccounts', [address]);
-        accounts = (largest?.value || []).slice(0, 10);
-      } catch {
         const das = await rpc('getTokenAccounts', {
-          mint: address, limit: 10,
+          mint: address, limit: 20,
           sortBy: { sortBy: 'amount', sortDirection: 'desc' }
         });
-        accounts = (das?.token_accounts || []).map(a => ({
-          uiAmount: parseFloat(a.amount || 0) / Math.pow(10, supplyRes?.value?.decimals || 0)
-        }));
+        if (das?.token_accounts?.length) {
+          accounts = das.token_accounts.map(a => ({
+            address: a.address,
+            uiAmount: parseFloat(a.amount || 0) / Math.pow(10, decimals)
+          }));
+        }
+      } catch {}
+
+      // Fallback to standard RPC
+      if (!accounts.length) {
+        try {
+          const largest = await rpc('getTokenLargestAccounts', [address]);
+          accounts = (largest?.value || []).map(a => ({
+            address: a.address,
+            uiAmount: parseFloat(a.uiAmount || 0)
+          }));
+        } catch {}
       }
-      const top10sum = accounts.reduce((s, h) => s + parseFloat(h.uiAmount || 0), 0);
-      return { pct: supply > 0 ? Math.round((top10sum / supply) * 100) : 100 };
+
+      if (!accounts.length) throw new Error('Could not fetch holder data');
+
+      const top20sum  = accounts.reduce((s, h) => s + h.uiAmount, 0);
+      const top1amt   = accounts[0]?.uiAmount || 0;
+      const top20pct  = supply > 0 ? Math.round((top20sum / supply) * 100) : 100;
+      const top1pct   = supply > 0 ? Math.round((top1amt  / supply) * 100) : 100;
+
+      return { pct: top20pct, top1pct, count: accounts.length };
     }
 
     async function getContractAge(address) {
@@ -831,7 +870,7 @@
         concStatus = 'LARGE TOKEN'; concCls = 'status-unknown';
       } else {
         const p = conc.pct;
-        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Healthy, distributed ownership.'; }
+        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest single wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
         else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.'; }
         else if (p < 60) { concStatus = 'HIGH RISK'; concCls = 'status-fail'; concDesc = 'WARNING: Top 10 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
         else             { concStatus = 'CRITICAL';  concCls = 'status-fail'; concDesc = 'CRITICAL: Top 10 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
@@ -947,6 +986,10 @@
           '<div class="verdict-label">Verdict</div>' +
           '<div class="verdict-text">' + verdictText + '</div>' +
         '</div>' +
+        '<button class="share-btn" onclick="shareVerdict()" id="shareBtn">' +
+          '<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>' +
+          'SHARE VERDICT \u2192' +
+        '</button>' +
         (!conc ? '<div style="font-size:0.7rem;color:var(--gray);margin-bottom:1rem;padding:0.5rem 0;border-bottom:1px solid var(--light)">⚠ Score reduced — holder distribution unavailable for this token.</div>' : '') +
         centralizedBanner +
         '<p class="metrics-title">Metrics breakdown</p>' +
@@ -961,6 +1004,88 @@
         '</div>';
 
       document.getElementById('results').classList.add('visible');
+    }
+
+
+    // Share Verdict
+    function shareVerdict() {
+      const tokenName  = document.querySelector('.token-info h2')?.textContent || 'Unknown';
+      const scoreNum   = document.querySelector('.score-number')?.textContent || '?';
+      const verdictTxt = document.querySelector('.verdict-text')?.textContent || '';
+      const address    = document.querySelector('.token-address')?.textContent?.trim().split(' ')[0] || '';
+      const score      = parseInt(scoreNum);
+      const accent     = score >= 80 ? '#1a7a1a' : score >= 50 ? '#8b6914' : '#8b0000';
+
+      const W = 800, H = 420;
+      const canvas = document.createElement('canvas');
+      canvas.width = W * 2; canvas.height = H * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
+
+      ctx.fillStyle = '#f5f3ee'; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 4);
+
+      // Score
+      ctx.font = 'bold 88px serif'; ctx.fillStyle = accent; ctx.textAlign = 'right';
+      ctx.fillText(scoreNum, W - 44, 108);
+      ctx.font = '13px monospace'; ctx.fillStyle = '#888';
+      ctx.fillText('/ 100', W - 44, 130);
+
+      // Token name + address
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 40px serif'; ctx.fillStyle = '#0a0a0a';
+      ctx.fillText(tokenName, 40, 78);
+      ctx.font = '11px monospace'; ctx.fillStyle = '#888';
+      ctx.fillText(address.slice(0,22) + '...' + address.slice(-4), 40, 100);
+
+      // Divider
+      ctx.fillStyle = '#0a0a0a'; ctx.fillRect(40, 125, W - 80, 1);
+
+      // Verdict
+      ctx.font = '11px monospace'; ctx.fillStyle = '#888'; ctx.fillText('VERDICT', 40, 155);
+      ctx.font = 'bold 17px serif'; ctx.fillStyle = '#0a0a0a';
+      const words = verdictTxt.split(' '); let line = '', y = 180;
+      for (const w of words) {
+        const t = line + w + ' ';
+        if (ctx.measureText(t).width > W - 220 && line) { ctx.fillText(line.trim(), 40, y); line = w + ' '; y += 24; }
+        else { line = t; }
+      }
+      ctx.fillText(line.trim(), 40, y);
+
+      // Metric badges
+      const metrics = document.querySelectorAll('.metric');
+      let mx = 40, my = H - 96;
+      metrics.forEach((m, i) => {
+        if (i >= 4) return;
+        const nm  = m.querySelector('.metric-name')?.textContent?.replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim().toUpperCase().slice(0,16) || '';
+        const st  = m.querySelector('.metric-status')?.textContent?.trim().slice(0,14) || '';
+        const clr = m.querySelector('.status-pass') ? '#1a7a1a' : m.querySelector('.status-fail') ? '#8b0000' : '#8b6914';
+        ctx.fillStyle = clr; ctx.fillRect(mx, my, 162, 38);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 8px monospace'; ctx.fillText(nm, mx+8, my+14);
+        ctx.font = '8px monospace'; ctx.fillText(st, mx+8, my+28);
+        mx += 174;
+      });
+
+      // Branding
+      ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#0a0a0a'; ctx.textAlign = 'left';
+      ctx.fillText('$ANSER TRANSPARENCY SCORE', 40, H - 18);
+      ctx.font = '11px monospace'; ctx.fillStyle = '#888'; ctx.textAlign = 'right';
+      ctx.fillText('ansertoken.xyz/anser_score.html', W - 40, H - 18);
+
+      canvas.toBlob(blob => {
+        const shareData = {
+          title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
+          text: verdictTxt + '\n\nVerify any Solana token free: ansertoken.xyz/anser_score.html',
+          files: [new File([blob], 'anser-score.png', { type: 'image/png' })]
+        };
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          navigator.share(shareData).catch(() => {});
+        } else {
+          const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+          a.download = 'anser-score.png'; a.click();
+        }
+      }, 'image/png');
     }
 
     document.getElementById('contractInput').addEventListener('keypress', function(e) {

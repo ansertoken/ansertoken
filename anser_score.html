@@ -539,15 +539,30 @@
 
     // ── Top-10 holder concentration ──────────────────────────────────────────
     async function getHolderConcentration(address) {
-      const [largest, supplyRes] = await Promise.all([
-        rpc('getTokenLargestAccounts', [address]),
-        rpc('getTokenSupply',          [address])
-      ]);
-      const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
-      const top10sum  = (largest?.value || []).slice(0, 10)
-                          .reduce((s, h) => s + parseFloat(h.uiAmount || 0), 0);
-      const pct       = supply > 0 ? Math.round((top10sum / supply) * 100) : 100;
-      return { pct, holderCount: (largest?.value || []).length };
+      // Try standard RPC first, fall back to DAS getTokenAccounts
+      let accounts = null;
+      let supply = 0;
+
+      const supplyRes = await rpc('getTokenSupply', [address]);
+      supply = parseFloat(supplyRes?.value?.uiAmount || 0);
+
+      try {
+        const largest = await rpc('getTokenLargestAccounts', [address]);
+        accounts = (largest?.value || []).slice(0, 10);
+      } catch {
+        // Fallback: DAS getTokenAccounts (Helius-specific)
+        const das = await rpc('getTokenAccounts', {
+          mint: address, limit: 10,
+          sortBy: { sortBy: 'amount', sortDirection: 'desc' }
+        });
+        accounts = (das?.token_accounts || []).map(a => ({
+          uiAmount: parseFloat(a.amount || 0) / Math.pow(10, supplyRes?.value?.decimals || 0)
+        }));
+      }
+
+      const top10sum = accounts.reduce((s, h) => s + parseFloat(h.uiAmount || 0), 0);
+      const pct = supply > 0 ? Math.round((top10sum / supply) * 100) : 100;
+      return { pct, holderCount: accounts.length };
     }
 
     // ── Contract age from first known signature ───────────────────────────────
@@ -555,6 +570,8 @@
       try {
         const sigs = await rpc('getSignaturesForAddress', [address, { limit: 1000 }]);
         if (!sigs?.length) return null;
+        // If we hit the 1000-sig limit the token is too active to determine true age
+        if (sigs.length >= 1000) return { tooActive: true };
         const oldest = sigs[sigs.length - 1];
         return oldest.blockTime ? new Date(oldest.blockTime * 1000) : null;
       } catch { return null; }
@@ -653,13 +670,16 @@
 
       // Contract age label
       let ageStatus = 'UNKNOWN', ageDesc = 'Could not determine contract age.', ageClass = 'status-unknown';
-      if (deployedAt) {
+      if (deployedAt?.tooActive) {
+        ageStatus = 'ACTIVE ✓'; ageClass = 'status-pass';
+        ageDesc = 'High transaction volume detected. Contract has extensive on-chain history — a positive signal.';
+      } else if (deployedAt instanceof Date) {
         const days = Math.floor((Date.now() - deployedAt.getTime()) / 86400000);
         const dateStr = deployedAt.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
-        if (days < 1)   { ageStatus = 'NEW ⚠';         ageClass = 'status-warn'; ageDesc = `Deployed less than 24 hours ago (${dateStr}). Very new — proceed with caution.`; }
-        else if (days < 7)  { ageStatus = `${days}D OLD ⚠`; ageClass = 'status-warn'; ageDesc = `Deployed ${days} days ago (${dateStr}). Limited on-chain history.`; }
-        else if (days < 30) { ageStatus = `${days}D OLD`;   ageClass = 'status-warn'; ageDesc = `Deployed ${days} days ago (${dateStr}).`; }
-        else { ageStatus = `${days}D ✓`; ageClass = 'status-pass'; ageDesc = `Deployed ${dateStr}. Established contract with history.`; }
+        if (days < 1)   { ageStatus = 'NEW ⚠';          ageClass = 'status-warn'; ageDesc = `Deployed less than 24 hours ago (${dateStr}). Very new — proceed with caution.`; }
+        else if (days < 7)  { ageStatus = `${days}D ⚠`; ageClass = 'status-warn'; ageDesc = `Deployed ${days} days ago (${dateStr}). Limited on-chain history.`; }
+        else if (days < 30) { ageStatus = `${days}D ⚠`; ageClass = 'status-warn'; ageDesc = `Deployed ${days} days ago (${dateStr}).`; }
+        else { ageStatus = `${days}D ✓`; ageClass = 'status-pass'; ageDesc = `Deployed ${dateStr}. Established contract with on-chain history.`; }
       }
 
       // Holder concentration label
@@ -706,15 +726,15 @@
         },
         {
           name: 'Liquidity Lock',
-          desc: 'Automated on-chain verification not available. Check manually via Unicrypt, Streamflow or the project\'s official channels.',
-          status: 'MANUAL ⚠',
-          statusClass: 'status-warn'
+          desc: 'Requires off-chain verification. Check the project\'s liquidity lock on Unicrypt or Streamflow and confirm the lock duration independently.',
+          status: 'VERIFY →',
+          statusClass: 'status-unknown'
         },
         {
           name: 'Creator Vesting',
-          desc: 'Automated vesting detection not available. Verify the team allocation schedule manually via Streamflow, Vesting.xyz or the project whitepaper.',
-          status: 'MANUAL ⚠',
-          statusClass: 'status-warn'
+          desc: 'Requires off-chain verification. Confirm the team allocation schedule via Streamflow, the project whitepaper, or official channels.',
+          status: 'VERIFY →',
+          statusClass: 'status-unknown'
         }
       ];
 

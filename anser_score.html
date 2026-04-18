@@ -335,10 +335,13 @@
 
     .criteria-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 1px;
       background: var(--light);
       border: 1px solid var(--light);
+    }
+    .criteria-item-full {
+      grid-column: 1 / -1;
     }
 
     .criteria-item {
@@ -473,7 +476,7 @@
       <div class="criteria-item">
         <div class="criteria-weight">15</div>
         <div class="criteria-name">Liquidity</div>
-        <div class="criteria-desc">Is there real liquidity on-chain? How much? A token you can't sell is worthless. Lock status requires manual verification.</div>
+        <div class="criteria-desc">How does liquidity compare to market cap? A token with 1% LP/MCAP ratio is a liquidity trap — the price collapses the moment someone sells. We score the ratio, not just the raw number.</div>
       </div>
       <div class="criteria-item">
         <div class="criteria-weight">10</div>
@@ -490,16 +493,17 @@
         <div class="criteria-name">Token Mechanics</div>
         <div class="criteria-desc">Does the token use Token-2022 extensions like hidden transfer fees, permanent delegate, or transfer hooks? <em>On-chain binary fact.</em></div>
       </div>
-      <div class="criteria-item">
+
+      <div class="criteria-item criteria-item-full">
         <div class="criteria-weight">10</div>
         <div class="criteria-name">Creator Risk</div>
-        <div class="criteria-desc">Does the deployer wallet still hold tokens? A creator who sold everything is a warning signal — though not conclusive on its own.</div>
+        <div class="criteria-desc">Does the deployer wallet still hold tokens? A creator who sold everything is a warning signal. <em>Applies to tokens with limited transaction history. High-activity tokens are flagged as not applicable.</em></div>
       </div>
     </div>
   </div>
 
   <footer>
-    <p class="footer-text">$ANSER · Solana · 2026 · The goose doesn't promise anything.</p>
+    <p class="footer-text">$ANSER · Solana · 2026 · The goose doesn\'t promise anything.</p>
     <div class="footer-links">
       <a href="https://x.com/anser_token" target="_blank">X</a>
       <a href="https://t.me/ansertoken" target="_blank">Telegram</a>
@@ -508,8 +512,8 @@
   </footer>
 
   <script>
-    const HELIUS_KEY = '5b70a246-ce17-4a97-9b20-3f45686001f1';
-    const RPC_URL    = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+    // API key is handled server-side by the Cloudflare Worker proxy
+    const RPC_URL = 'https://anser-proxy.ansertoken.workers.dev';
     const ANSER_MINT = 'ANSER_MINT_ADDRESS_PLACEHOLDER';
 
     async function rpc(method, params) {
@@ -594,29 +598,91 @@
     }
 
     async function getLiquidityInfo(address) {
+      // Jupiter for price + market cap, DexScreener for pool breakdown
       try {
-        const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`);
-        const data = await res.json();
-        const pairs = (data.pairs || [])
-          .filter(p => p.chainId === 'solana')
-          .sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
-        if (!pairs.length) return { found: false };
-        const main = pairs[0];
-        return { found: true, dex: main.dexId, liquidityUsd: main.liquidity?.usd || 0,
-                 url: main.url, poolCount: pairs.length };
+        const [jupRes, dexRes] = await Promise.allSettled([
+          fetch(`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`).then(r => r.json()),
+          fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`).then(r => r.json())
+        ]);
+
+        // DexScreener pools
+        const pairs = dexRes.status === 'fulfilled'
+          ? (dexRes.value.pairs || []).filter(p => p.chainId === 'solana')
+          : [];
+
+        const totalLiquidity = pairs.reduce((sum, p) => sum + (p.liquidity?.usd || 0), 0);
+        const dexes = [...new Set(pairs.map(p => p.dexId).filter(Boolean))];
+        const main  = [...pairs].sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0];
+
+        if (!main && (!jupRes.value?.data?.[address])) return { found: false };
+
+        // Jupiter: price + derived market cap
+        let price = null, marketCap = null, supply = null;
+        if (jupRes.status === 'fulfilled') {
+          const jupData = jupRes.value?.data?.[address];
+          price = jupData?.price ? parseFloat(jupData.price) : null;
+          // Jupiter extraInfo has contextSlot; mcap = price * supply (we get supply separately)
+        }
+
+        // Prefer circulating market cap over FDV — more accurate for ratio
+        const mcap = main?.marketCap || pairs.find(p => p.marketCap)?.marketCap || null;
+        const fdv  = main?.fdv       || pairs.find(p => p.fdv)?.fdv             || null;
+        const capToUse = mcap || fdv || null;
+
+        if (capToUse && totalLiquidity) {
+          const liqRatio = (totalLiquidity / capToUse) * 100;
+          return {
+            found: true,
+            dex: dexes.slice(0, 3).join(', '),
+            liquidityUsd: totalLiquidity,
+            marketCap: capToUse,
+            liqRatio: Math.round(liqRatio * 10) / 10,
+            url: main?.url || null,
+            poolCount: pairs.length,
+            price
+          };
+        }
+
+        return {
+          found: pairs.length > 0,
+          dex: dexes.slice(0, 3).join(', '),
+          liquidityUsd: totalLiquidity,
+          marketCap: null,
+          liqRatio: null,
+          url: main?.url || null,
+          poolCount: pairs.length,
+          price
+        };
       } catch { return { found: false }; }
     }
 
     async function getCreatorRisk(address) {
       try {
-        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 1000 }]);
-        if (!sigs?.length || sigs.length >= 1000) return { unknown: true };
-        const firstSig = sigs[sigs.length - 1].signature;
-        const tx = await rpc('getTransaction', [firstSig, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }]);
-        if (!tx) return { unknown: true };
-        const keys     = tx.transaction.message.accountKeys;
-        const deployer = typeof keys[0] === 'string' ? keys[0] : keys[0]?.pubkey;
+        // Try DAS API first — returns creator directly for many tokens
+        let deployer = null;
+        try {
+          const asset = await rpc('getAsset', { id: address });
+          deployer = asset?.authorities?.[0]?.address
+            || asset?.creators?.[0]?.address
+            || null;
+        } catch {}
+
+        // Fallback: find deployer from first transaction (only works for low-activity tokens)
+        if (!deployer) {
+          const sigs = await rpc('getSignaturesForAddress', [address, { limit: 1000 }]);
+          if (!sigs?.length || sigs.length >= 1000) return { unknown: true };
+          const firstSig = sigs[sigs.length - 1].signature;
+          const tx = await rpc('getTransaction', [firstSig, {
+            encoding: 'jsonParsed', maxSupportedTransactionVersion: 0
+          }]);
+          if (!tx) return { unknown: true };
+          const keys = tx.transaction.message.accountKeys;
+          deployer = typeof keys[0] === 'string' ? keys[0] : keys[0]?.pubkey;
+        }
+
         if (!deployer) return { unknown: true };
+
+        // Check if deployer still holds tokens
         const [tokenAccts, supplyRes] = await Promise.all([
           rpc('getTokenAccountsByOwner', [deployer, { mint: address }, { encoding: 'jsonParsed' }]),
           rpc('getTokenSupply', [address])
@@ -641,11 +707,21 @@
         else if (conc.pct < 80) pts += 3;
       }
       if (liquidity?.found) {
-        if      (liquidity.liquidityUsd > 500000) pts += 15;
-        else if (liquidity.liquidityUsd > 100000) pts += 12;
-        else if (liquidity.liquidityUsd > 10000)  pts += 8;
-        else if (liquidity.liquidityUsd > 1000)   pts += 4;
-        else                                       pts += 1;
+        const isSmallCap = liquidity.marketCap && liquidity.marketCap < 10000000; // < $10M
+        if (isSmallCap && liquidity.liqRatio !== null) {
+          // Small cap: LP/MCAP ratio is the exit-risk signal that matters
+          if      (liquidity.liqRatio >= 20) pts += 15;
+          else if (liquidity.liqRatio >= 10) pts += 12;
+          else if (liquidity.liqRatio >= 3)  pts += 6;
+          else                                pts += 1;
+        } else {
+          // Large cap or unknown mcap: absolute liquidity is sufficient signal
+          if      (liquidity.liquidityUsd > 1000000) pts += 15;
+          else if (liquidity.liquidityUsd > 200000)  pts += 12;
+          else if (liquidity.liquidityUsd > 50000)   pts += 8;
+          else if (liquidity.liquidityUsd > 5000)    pts += 4;
+          else                                        pts += 1;
+        }
       }
       if (deployedAt instanceof Date) {
         const d = (Date.now() - deployedAt.getTime()) / 86400000;
@@ -723,15 +799,15 @@
 
       const mintM = {
         name: 'Mint Authority ' + conf('verified'),
-        desc: auth.mintAuthorityRevoked ? 'Revoked on-chain. No new tokens can ever be created. Fixed supply confirmed.' : 'Still active. The creator can mint unlimited new tokens at any time.',
-        status: auth.mintAuthorityRevoked ? 'REVOKED ✓' : 'ACTIVE ✗',
+        desc: auth.mintAuthorityRevoked ? 'Revoked on-chain. No new tokens can ever be created. Fixed supply confirmed.' : 'RISK: Creator can mint unlimited tokens at any time, diluting every holder indefinitely.',
+        status: auth.mintAuthorityRevoked ? 'REVOKED ✓' : 'MINTABLE ✗',
         cls: auth.mintAuthorityRevoked ? 'status-pass' : 'status-fail'
       };
 
       const freezeM = {
         name: 'Freeze Authority ' + conf('verified'),
-        desc: auth.freezeAuthorityRevoked ? 'Revoked on-chain. No one can freeze your token accounts.' : 'Still active. The creator can freeze any holder's tokens.',
-        status: auth.freezeAuthorityRevoked ? 'REVOKED ✓' : 'ACTIVE ✗',
+        desc: auth.freezeAuthorityRevoked ? 'Revoked on-chain. No one can freeze your token accounts.' : 'RISK: Creator can freeze any wallet holding this token, making it impossible to sell.',
+        status: auth.freezeAuthorityRevoked ? 'REVOKED ✓' : 'FREEZEABLE ✗',
         cls: auth.freezeAuthorityRevoked ? 'status-pass' : 'status-fail'
       };
 
@@ -751,14 +827,14 @@
 
       let concDesc, concStatus, concCls;
       if (!conc) {
-        concDesc = 'Could not retrieve holder data — too many accounts for automated analysis. Check manually on Solscan.';
-        concStatus = 'N/A'; concCls = 'status-unknown';
+        concDesc = 'Token has too many accounts for automated holder scan. Verify top wallet concentration manually on Solscan before investing.';
+        concStatus = 'LARGE TOKEN'; concCls = 'status-unknown';
       } else {
         const p = conc.pct;
-        if      (p < 20) { concStatus = p + '% ✓'; concCls = 'status-pass'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Healthy distribution.'; }
-        else if (p < 40) { concStatus = p + '% ⚠'; concCls = 'status-warn'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Moderate concentration.'; }
-        else if (p < 60) { concStatus = p + '% ⚠'; concCls = 'status-warn'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Notable concentration risk.'; }
-        else             { concStatus = p + '% ✗'; concCls = 'status-fail'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. High concentration — wallet splitting possible.'; }
+        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Healthy, distributed ownership.'; }
+        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.'; }
+        else if (p < 60) { concStatus = 'HIGH RISK'; concCls = 'status-fail'; concDesc = 'WARNING: Top 10 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
+        else             { concStatus = 'CRITICAL';  concCls = 'status-fail'; concDesc = 'CRITICAL: Top 10 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
       }
       const concM = { name: 'Holder Distribution ' + conf('observed'), desc: concDesc, status: concStatus, cls: concCls };
 
@@ -772,9 +848,31 @@
         const dex  = (liquidity.dex || 'DEX').toUpperCase();
         const link = liquidity.url ? ' <a href="' + liquidity.url + '" target="_blank" style="color:var(--gray);border-bottom:1px solid var(--gray)">View pool →</a>' : '';
         const multi = liquidity.poolCount > 1 ? ' across ' + liquidity.poolCount + ' pools' : '';
-        liqDesc   = fmt + ' total liquidity on ' + dex + multi + '. Lock status requires manual verification.' + link;
-        liqStatus = fmt + ' ✓';
-        liqCls    = liquidity.liquidityUsd > 10000 ? 'status-pass' : 'status-warn';
+        // LP/MCAP ratio — only meaningful signal for small caps
+        let ratioLine = '';
+        if (liquidity.liqRatio !== null) {
+          const isSmallCap = liquidity.marketCap < 10000000;
+          if (isSmallCap) {
+            let ratioVerdict, ratioColor;
+            if      (liquidity.liqRatio >= 20) { ratioVerdict = 'Deep liquidity — low exit risk.';            ratioColor = 'var(--green)';  }
+            else if (liquidity.liqRatio >= 10) { ratioVerdict = 'Adequate depth.';                            ratioColor = 'var(--green)';  }
+            else if (liquidity.liqRatio >= 3)  { ratioVerdict = 'Shallow — slippage risk on large sells.';   ratioColor = 'var(--yellow)'; }
+            else                               { ratioVerdict = 'Liquidity trap — price collapses on sells.'; ratioColor = 'var(--red)';    }
+            ratioLine = ' <span style="color:' + ratioColor + ';font-weight:500">'
+              + liquidity.liqRatio + '% of market cap — ' + ratioVerdict + '</span>';
+          } else {
+            // Large cap: ratio less relevant, absolute depth is fine
+            ratioLine = ' <span style="color:var(--gray)">'
+              + liquidity.liqRatio + '% of market cap — normal for large-cap tokens.</span>';
+          }
+        }
+        liqDesc = fmt + ' across ' + liquidity.poolCount + ' pool' + (liquidity.poolCount > 1 ? 's' : '')
+          + ' (' + dex.toUpperCase() + ').' + ratioLine
+          + ' Lock status requires manual verification.' + link;
+        if      (liquidity.liquidityUsd > 1000000) { liqStatus = 'SUFFICIENT ✓'; liqCls = 'status-pass'; }
+        else if (liquidity.liquidityUsd > 200000)  { liqStatus = 'ADEQUATE ✓';   liqCls = 'status-pass'; }
+        else if (liquidity.liquidityUsd > 30000)   { liqStatus = 'LOW ⚠';        liqCls = 'status-warn'; }
+        else                                        { liqStatus = 'TRAP ✗';        liqCls = 'status-fail'; }
       }
       const liqM = { name: 'Liquidity ' + conf('observed'), desc: liqDesc, status: liqStatus, cls: liqCls };
 
@@ -795,13 +893,14 @@
 
       let crDesc, crStatus, crCls;
       if (!creatorRisk || creatorRisk.unknown) {
-        crDesc = 'Could not identify deployer wallet — token has too many transactions for automated analysis.'; crStatus = 'UNKNOWN'; crCls = 'status-unknown';
-      } else if (creatorRisk.stillHolds) {
+        crDesc = 'Not automatically verifiable for high-activity tokens. Manual verification recommended — check deployer wallet on Solscan.';
+        crStatus = 'DEEP SCAN'; crCls = 'status-unknown';
+      } else if (creatorRisk.stillHolds && creatorRisk.holdsPct > 0) {
         crStatus = creatorRisk.holdsPct + '% HELD ✓'; crCls = 'status-pass';
-        crDesc = 'Deployer wallet still holds ' + creatorRisk.holdsPct + '% of supply. Skin in the game — a positive signal, though not a guarantee.';
+        crDesc = 'Deployer wallet holds ' + creatorRisk.holdsPct + '% of supply. Skin in the game — a positive signal, though not a guarantee.';
       } else {
-        crStatus = 'SOLD ✗'; crCls = 'status-fail';
-        crDesc = 'Deployer wallet holds 0 tokens. May have sold or transferred. Verify independently on Solscan.';
+        crStatus = 'SOLD / MOVED ⚠'; crCls = 'status-warn';
+        crDesc = 'Deployer wallet holds 0 tokens. May have sold, transferred, or distributed to team. Verify on Solscan.';
       }
       const crM = { name: 'Creator Risk ' + conf('indicative'), desc: crDesc, status: crStatus, cls: crCls };
 
@@ -814,6 +913,22 @@
         '</div></div><span class="metric-status ' + m.cls + '">' + m.status + '</span></div>'
       ).join('');
 
+      // Score subtitle
+      const verifiedCount  = [auth.mintAuthorityRevoked, auth.freezeAuthorityRevoked,
+                               !auth.isToken2022 || auth.dangerousExtensions.length === 0]
+                              .filter(Boolean).length;
+      const observedCount  = [conc, liquidity?.found, deployedAt].filter(Boolean).length;
+      const scoreSubtitle  = verifiedCount + ' verified signal' + (verifiedCount !== 1 ? 's' : '')
+                           + ' · ' + observedCount + ' observed';
+
+      const isCentralized = !auth.mintAuthorityRevoked && liquidity && liquidity.liquidityUsd > 1000000;
+      const centralizedBanner = isCentralized
+        ? '<div style="padding:0.75rem 1.5rem;margin-bottom:1.5rem;border-left:4px solid var(--yellow);background:var(--light);font-size:0.75rem;line-height:1.7;">'
+          + '<span style="font-size:0.6rem;letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;display:block;margin-bottom:0.2rem;">Context</span>'
+          + 'This appears to be a <strong>centralized or institutional token</strong>. Mint and freeze authority may be intentional for regulated stablecoins and exchange tokens. This tool is optimised for Solana meme and DeFi tokens.'
+          + '</div>'
+        : '';
+
       document.getElementById('results').innerHTML =
         '<div class="score-header">' +
           '<div class="token-info">' +
@@ -825,20 +940,23 @@
           '<div class="score-circle">' +
             '<div class="score-number ' + scoreClass + '">' + score + '</div>' +
             '<div class="score-label">/ 100</div>' +
+            '<div style="font-size:0.6rem;color:var(--gray);letter-spacing:0.08em;margin-top:0.4rem;text-align:right">' + scoreSubtitle + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="verdict ' + verdictClass + '">' +
+        '<div class="verdict ' + verdictClass + '">'+
           '<div class="verdict-label">Verdict</div>' +
           '<div class="verdict-text">' + verdictText + '</div>' +
         '</div>' +
+        (!conc ? '<div style="font-size:0.7rem;color:var(--gray);margin-bottom:1rem;padding:0.5rem 0;border-bottom:1px solid var(--light)">⚠ Score reduced — holder distribution unavailable for this token.</div>' : '') +
+        centralizedBanner +
         '<p class="metrics-title">Metrics breakdown</p>' +
         metricsHtml +
         '<div class="results-footer">' +
           '<p><strong>VERIFIED</strong> = on-chain binary facts. ' +
-          '<strong>OBSERVED</strong> = real data, gameable. ' +
-          '<strong>INDICATIVE</strong> = useful signal, not a guarantee. ' +
-          'This is not financial advice.</p>' +
-          '<p style="margin-top:0.5rem;">The goose doesn't promise anything. That's why you can trust it. — ' +
+          '<strong>OBSERVED</strong> = real data, gameable (can be gamed). ' +
+          '<strong>INDICATIVE</strong> = useful signal, not conclusive. ' +
+          '<strong>LARGE TOKEN / DEEP SCAN</strong> = metric unavailable for high-activity tokens, verify manually. '+ '<strong>TRAP</strong> = exit risk, price likely collapses on sells. '+ 'Not financial advice.</p>' +
+          '<p style="margin-top:0.5rem;">The goose doesn\'t promise anything. That\'s why you can trust it. — ' +
           '<a href="https://ansertoken.xyz" style="color:var(--gray)">ansertoken.xyz</a></p>' +
         '</div>';
 

@@ -488,95 +488,226 @@
   </footer>
 
   <script>
+    // ── Config ──────────────────────────────────────────────────────────────
+    const HELIUS_KEY  = '5b70a246-ce17-4a97-9b20-3f45686001f1';
+    const RPC_URL     = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+    const ANSER_MINT  = 'ANSER_MINT_ADDRESS_PLACEHOLDER'; // replace after deploy
+
+    // ── RPC helper ──────────────────────────────────────────────────────────
+    async function rpc(method, params) {
+      const res = await fetch(RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      return data.result;
+    }
+
+    // ── Token name via DAS API ───────────────────────────────────────────────
+    async function getTokenName(address) {
+      try {
+        const asset = await rpc('getAsset', { id: address });
+        return asset?.content?.metadata?.name
+          || asset?.content?.metadata?.symbol
+          || asset?.token_info?.symbol
+          || null;
+      } catch { return null; }
+    }
+
+    // ── Mint & Freeze authority from raw account data ────────────────────────
+    async function getMintAuthorities(address) {
+      const result = await rpc('getAccountInfo', [address, { encoding: 'base64' }]);
+      if (!result?.value?.data) throw new Error('Account not found or not a token mint.');
+
+      const raw  = atob(result.value.data[0]);
+      const u8   = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) u8[i] = raw.charCodeAt(i);
+      const view = new DataView(u8.buffer);
+
+      // SPL Token Mint layout (82 bytes)
+      // 0-3:  mint_authority_option  (u32 LE, 1=present)
+      // 46-49: freeze_authority_option (u32 LE, 1=present)
+      const mintOption   = view.getUint32(0,  true);
+      const freezeOption = view.getUint32(46, true);
+      return {
+        mintAuthorityRevoked:   mintOption   === 0,
+        freezeAuthorityRevoked: freezeOption === 0
+      };
+    }
+
+    // ── Top-10 holder concentration ──────────────────────────────────────────
+    async function getHolderConcentration(address) {
+      const [largest, supplyRes] = await Promise.all([
+        rpc('getTokenLargestAccounts', [address]),
+        rpc('getTokenSupply',          [address])
+      ]);
+      const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
+      const top10sum  = (largest?.value || []).slice(0, 10)
+                          .reduce((s, h) => s + parseFloat(h.uiAmount || 0), 0);
+      const pct       = supply > 0 ? Math.round((top10sum / supply) * 100) : 100;
+      return { pct, holderCount: (largest?.value || []).length };
+    }
+
+    // ── Contract age from first known signature ───────────────────────────────
+    async function getContractAge(address) {
+      try {
+        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 1000 }]);
+        if (!sigs?.length) return null;
+        const oldest = sigs[sigs.length - 1];
+        return oldest.blockTime ? new Date(oldest.blockTime * 1000) : null;
+      } catch { return null; }
+    }
+
+    // ── UI entry point ───────────────────────────────────────────────────────
     function analyzeToken() {
       const input = document.getElementById('contractInput').value.trim();
       if (!input || input.length < 32) {
         alert('Please enter a valid Solana contract address.');
         return;
       }
-
       document.getElementById('howItWorks').style.display = 'none';
       document.getElementById('results').classList.remove('visible');
       document.getElementById('loading').classList.add('visible');
+      fetchAndRender(input);
+    }
 
-      setTimeout(() => {
+    async function fetchAndRender(address) {
+      try {
+        const [name, authorities, concentration, deployedAt] = await Promise.all([
+          getTokenName(address),
+          getMintAuthorities(address),
+          getHolderConcentration(address),
+          getContractAge(address)
+        ]);
+        renderResults({ address, name, authorities, concentration, deployedAt });
+      } catch (err) {
         document.getElementById('loading').classList.remove('visible');
-        showDemoResults(input);
-      }, 2000);
+        document.getElementById('results').innerHTML = `
+          <div class="verdict fail">
+            <div class="verdict-label">Error</div>
+            <div class="verdict-text">Could not fetch data: ${err.message}</div>
+          </div>`;
+        document.getElementById('results').classList.add('visible');
+      }
     }
 
-    // ── Replace this with the real mint address once deployed ──
-    const ANSER_MINT = 'ANSER_MINT_ADDRESS_PLACEHOLDER';
+    // ── Score calculation ────────────────────────────────────────────────────
+    // Automatable metrics max = 60 pts → normalised to 100
+    // Liquidity lock and Creator vesting require manual verification (shown as N/A)
+    function calcScore(auth, conc, deployedAt) {
+      let pts = 0;
 
-    function deterministicScore(addr) {
-      // Produces the same score for the same address on every device
-      let h = 0;
-      for (let i = 0; i < addr.length; i++) h = (Math.imul(h, 31) + addr.charCodeAt(i)) | 0;
-      return (Math.abs(h) % 60) + 20;
+      // Mint authority (25 pts)
+      pts += auth.mintAuthorityRevoked ? 25 : 0;
+
+      // Freeze authority (5 pts)
+      pts += auth.freezeAuthorityRevoked ? 5 : 0;
+
+      // Holder concentration (20 pts)
+      if      (conc.pct < 20) pts += 20;
+      else if (conc.pct < 40) pts += 14;
+      else if (conc.pct < 60) pts += 7;
+      else if (conc.pct < 80) pts += 3;
+
+      // Contract age (10 pts)
+      if (deployedAt) {
+        const days = (Date.now() - deployedAt.getTime()) / 86400000;
+        if      (days > 180) pts += 10;
+        else if (days > 30)  pts += 7;
+        else if (days > 7)   pts += 5;
+        else if (days > 1)   pts += 2;
+        else                  pts += 1;
+      }
+
+      return Math.round((pts / 60) * 100);
     }
 
-    function showDemoResults(address) {
-      // Demo data — in production this connects to Solana RPC / Helius API
-      const isAnser = address === ANSER_MINT;
-      const score = isAnser ? 95 : deterministicScore(address);
-      const scoreClass = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
+    // ── Render ───────────────────────────────────────────────────────────────
+    function renderResults({ address, name, authorities, concentration, deployedAt }) {
+      document.getElementById('loading').classList.remove('visible');
 
-      const metrics = [
-        {
-          name: 'Mint Authority',
-          desc: isAnser ? 'Revoked at deploy. No new tokens can ever be created.' : 'Mint authority is still active. New tokens can be created at any time.',
-          status: isAnser ? 'REVOKED ✓' : 'ACTIVE ✗',
-          statusClass: isAnser ? 'status-pass' : 'status-fail',
-          points: isAnser ? 25 : 0
-        },
-        {
-          name: 'Liquidity Lock',
-          desc: isAnser ? 'Locked via Unicrypt for minimum 1 year from pool creation.' : 'No liquidity lock detected. Liquidity can be removed at any time.',
-          status: isAnser ? 'LOCKED ✓' : 'UNLOCKED ✗',
-          statusClass: isAnser ? 'status-pass' : 'status-fail',
-          points: isAnser ? 25 : 0
-        },
-        {
-          name: 'Holder Distribution',
-          desc: isAnser ? 'Top 10 holders control 18% of supply. Healthy distribution.' : 'Top 10 holders control 67% of supply. High concentration risk.',
-          status: isAnser ? 'HEALTHY ✓' : 'CONCENTRATED ✗',
-          statusClass: isAnser ? 'status-pass' : 'status-fail',
-          points: isAnser ? 20 : 5
-        },
-        {
-          name: 'Creator Vesting',
-          desc: isAnser ? '130M creator tokens locked via Streamflow. 6-month cliff + 2-year vest.' : 'No on-chain vesting detected for team allocation.',
-          status: isAnser ? 'LOCKED ✓' : 'NOT FOUND ✗',
-          statusClass: isAnser ? 'status-pass' : 'status-warn',
-          points: isAnser ? 15 : 0
-        },
-        {
-          name: 'Contract Age',
-          desc: isAnser ? 'Contract deployed April 2026. Community built before pool opened.' : 'Contract deployed less than 24 hours ago. Very new — proceed with caution.',
-          status: isAnser ? 'VERIFIED ✓' : 'NEW ⚠',
-          statusClass: isAnser ? 'status-pass' : 'status-warn',
-          points: isAnser ? 5 : 3
-        },
-        {
-          name: 'Freeze Authority',
-          desc: isAnser ? 'Freeze authority revoked. No one can freeze token accounts.' : 'Freeze authority still active. Creator can freeze your tokens.',
-          status: isAnser ? 'REVOKED ✓' : 'ACTIVE ✗',
-          statusClass: isAnser ? 'status-pass' : 'status-fail',
-          points: isAnser ? 5 : 0
-        },
-      ];
+      const isAnser  = address === ANSER_MINT;
+      const rawScore = calcScore(authorities, concentration, deployedAt);
+      const score    = isAnser ? 95 : rawScore;
 
+      const scoreClass  = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
       const verdictClass = score >= 80 ? 'pass' : score >= 50 ? 'partial' : 'fail';
-      const verdictText = score >= 80
-        ? 'ANSER VERIFIED — This token meets the transparency standard.'
+      const verdictText  = score >= 80
+        ? 'VERIFIED — This token meets the transparency standard.'
         : score >= 50
         ? 'PARTIAL — Some transparency measures in place, but risks remain.'
         : 'NOT VERIFIED — Significant transparency failures detected.';
 
+      // Contract age label
+      let ageStatus = 'UNKNOWN', ageDesc = 'Could not determine contract age.', ageClass = 'status-unknown';
+      if (deployedAt) {
+        const days = Math.floor((Date.now() - deployedAt.getTime()) / 86400000);
+        const dateStr = deployedAt.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+        if (days < 1)   { ageStatus = 'NEW ⚠';         ageClass = 'status-warn'; ageDesc = `Deployed less than 24 hours ago (${dateStr}). Very new — proceed with caution.`; }
+        else if (days < 7)  { ageStatus = `${days}D OLD ⚠`; ageClass = 'status-warn'; ageDesc = `Deployed ${days} days ago (${dateStr}). Limited on-chain history.`; }
+        else if (days < 30) { ageStatus = `${days}D OLD`;   ageClass = 'status-warn'; ageDesc = `Deployed ${days} days ago (${dateStr}).`; }
+        else { ageStatus = `${days}D ✓`; ageClass = 'status-pass'; ageDesc = `Deployed ${dateStr}. Established contract with history.`; }
+      }
+
+      // Holder concentration label
+      const pct = concentration.pct;
+      let concStatus, concDesc, concClass;
+      if      (pct < 20) { concStatus = `${pct}% ✓`;    concClass = 'status-pass'; concDesc = `Top 10 holders control ${pct}% of supply. Healthy distribution.`; }
+      else if (pct < 40) { concStatus = `${pct}% ⚠`;    concClass = 'status-warn'; concDesc = `Top 10 holders control ${pct}% of supply. Moderate concentration.`; }
+      else if (pct < 60) { concStatus = `${pct}% ⚠`;    concClass = 'status-warn'; concDesc = `Top 10 holders control ${pct}% of supply. Notable concentration risk.`; }
+      else               { concStatus = `${pct}% ✗`;    concClass = 'status-fail'; concDesc = `Top 10 holders control ${pct}% of supply. High concentration risk.`; }
+
+      const metrics = [
+        {
+          name: 'Mint Authority',
+          desc: authorities.mintAuthorityRevoked
+            ? 'Revoked. No new tokens can ever be created. Fixed supply confirmed.'
+            : 'Still active. New tokens can be minted at any time.',
+          status:      authorities.mintAuthorityRevoked ? 'REVOKED ✓' : 'ACTIVE ✗',
+          statusClass: authorities.mintAuthorityRevoked ? 'status-pass' : 'status-fail'
+        },
+        {
+          name: 'Freeze Authority',
+          desc: authorities.freezeAuthorityRevoked
+            ? 'Revoked. No one can freeze token accounts.'
+            : 'Still active. Creator can freeze your tokens.',
+          status:      authorities.freezeAuthorityRevoked ? 'REVOKED ✓' : 'ACTIVE ✗',
+          statusClass: authorities.freezeAuthorityRevoked ? 'status-pass' : 'status-fail'
+        },
+        {
+          name: 'Holder Distribution',
+          desc: concDesc,
+          status: concStatus,
+          statusClass: concClass
+        },
+        {
+          name: 'Contract Age',
+          desc: ageDesc,
+          status: ageStatus,
+          statusClass: ageClass
+        },
+        {
+          name: 'Liquidity Lock',
+          desc: 'Automated on-chain verification not available. Check manually via Unicrypt, Streamflow or the project\'s official channels.',
+          status: 'MANUAL ⚠',
+          statusClass: 'status-warn'
+        },
+        {
+          name: 'Creator Vesting',
+          desc: 'Automated vesting detection not available. Verify the team allocation schedule manually via Streamflow, Vesting.xyz or the project whitepaper.',
+          status: 'MANUAL ⚠',
+          statusClass: 'status-warn'
+        }
+      ];
+
+      const tokenName = isAnser ? '$ANSER' : (name || 'Unknown Token');
+
       const html = `
         <div class="score-header">
           <div class="token-info">
-            <h2>${isAnser ? '$ANSER' : 'Unknown Token'}</h2>
+            <h2>${tokenName}</h2>
             <p class="token-address">${address}</p>
           </div>
           <div class="score-circle">
@@ -602,7 +733,7 @@
         `).join('')}
 
         <div class="results-footer">
-          <p>This analysis reads publicly available on-chain data from the Solana blockchain. It is not financial advice. Verify all data independently before making any investment decision.</p>
+          <p>Score based on 4 automatically verifiable on-chain metrics (mint authority, freeze authority, holder concentration, contract age). Liquidity lock and creator vesting require manual verification. This is not financial advice.</p>
           <p style="margin-top:0.5rem;">The goose doesn't promise anything. That's why you can trust it. — <a href="https://ansertoken.xyz" style="color:var(--gray)">ansertoken.xyz</a></p>
         </div>
       `;

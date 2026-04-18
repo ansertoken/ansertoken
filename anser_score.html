@@ -411,19 +411,18 @@
 
     .confidence {
       font-size: 0.55rem;
-      letter-spacing: 0.12em;
-      padding: 0.15rem 0.4rem;
+      letter-spacing: 0.1em;
+      padding: 0.12rem 0.35rem;
       border: 1px solid currentColor;
       vertical-align: middle;
-      margin-left: 0.5rem;
+      margin-left: 0.4rem;
       font-family: 'IBM Plex Mono', monospace;
-      font-weight: 400;
       text-transform: uppercase;
       opacity: 0.7;
     }
-    .conf-verified  { color: var(--green); }
-    .conf-observed  { color: var(--yellow); }
-    .conf-indicative{ color: var(--gray); }
+    .conf-verified   { color: var(--green); }
+    .conf-observed   { color: var(--yellow); }
+    .conf-indicative { color: var(--gray); }
   </style>
 </head>
 <body>
@@ -447,7 +446,7 @@
       <input type="text" id="contractInput" placeholder="Enter Solana contract address..." maxlength="44">
       <button onclick="analyzeToken()">ANALYZE →</button>
     </div>
-    <p class="search-hint">Example: DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263 (BONK)</p>
+    <p class="search-hint">Example: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v (USDC)</p>
   </div>
 
   <hr class="divider">
@@ -464,38 +463,55 @@
       <div class="criteria-item">
         <div class="criteria-weight">25</div>
         <div class="criteria-name">Mint Authority</div>
-        <div class="criteria-desc">Is the ability to create new tokens permanently revoked? Fixed supply is non-negotiable.</div>
-      </div>
-      <div class="criteria-item">
-        <div class="criteria-weight">25</div>
-        <div class="criteria-name">Liquidity Lock</div>
-        <div class="criteria-desc">Is the liquidity pool locked on-chain? For how long? Unlocked liquidity enables rug pulls.</div>
+        <div class="criteria-desc">Is the ability to create new tokens permanently revoked? Fixed supply is non-negotiable. <em>On-chain binary fact.</em></div>
       </div>
       <div class="criteria-item">
         <div class="criteria-weight">20</div>
         <div class="criteria-name">Holder Distribution</div>
-        <div class="criteria-desc">What % of supply do the top 10 wallets hold? Concentration is a red flag.</div>
+        <div class="criteria-desc">What % of supply do the top 10 wallets hold? High concentration is a red flag — though wallet splitting can game this metric.</div>
       </div>
       <div class="criteria-item">
         <div class="criteria-weight">15</div>
-        <div class="criteria-name">Creator Vesting</div>
-        <div class="criteria-desc">Are team/creator tokens locked with a verifiable vesting schedule?</div>
+        <div class="criteria-name">Liquidity</div>
+        <div class="criteria-desc">Is there real liquidity on-chain? How much? A token you can't sell is worthless. Lock status requires manual verification.</div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-weight">10</div>
+        <div class="criteria-name">Freeze Authority</div>
+        <div class="criteria-desc">Can the creator freeze your token accounts? This should be revoked. <em>On-chain binary fact.</em></div>
       </div>
       <div class="criteria-item">
         <div class="criteria-weight">10</div>
         <div class="criteria-name">Contract Age</div>
-        <div class="criteria-desc">How old is the contract? New contracts with no history are higher risk.</div>
+        <div class="criteria-desc">How old is the contract? New contracts with no history carry higher risk. Age alone is not safety.</div>
       </div>
       <div class="criteria-item">
-        <div class="criteria-weight">5</div>
-        <div class="criteria-name">Freeze Authority</div>
-        <div class="criteria-desc">Can the creator freez  <script>
-    // ── Config ──────────────────────────────────────────────────────────────
+        <div class="criteria-weight">10</div>
+        <div class="criteria-name">Token Mechanics</div>
+        <div class="criteria-desc">Does the token use Token-2022 extensions like hidden transfer fees, permanent delegate, or transfer hooks? <em>On-chain binary fact.</em></div>
+      </div>
+      <div class="criteria-item">
+        <div class="criteria-weight">10</div>
+        <div class="criteria-name">Creator Risk</div>
+        <div class="criteria-desc">Does the deployer wallet still hold tokens? A creator who sold everything is a warning signal — though not conclusive on its own.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p class="footer-text">$ANSER · Solana · 2026 · The goose doesn't promise anything.</p>
+    <div class="footer-links">
+      <a href="https://x.com/anser_token" target="_blank">X</a>
+      <a href="https://t.me/ansertoken" target="_blank">Telegram</a>
+      <a href="https://ansertoken.xyz/anser_whitepaper.pdf" target="_blank">Whitepaper</a>
+    </div>
+  </footer>
+
+  <script>
     const HELIUS_KEY = '5b70a246-ce17-4a97-9b20-3f45686001f1';
     const RPC_URL    = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
     const ANSER_MINT = 'ANSER_MINT_ADDRESS_PLACEHOLDER';
 
-    // ── RPC helper ───────────────────────────────────────────────────────────
     async function rpc(method, params) {
       const res  = await fetch(RPC_URL, {
         method: 'POST',
@@ -507,45 +523,34 @@
       return data.result;
     }
 
-    // ── Token name (DAS) ─────────────────────────────────────────────────────
     async function getTokenName(address) {
       try {
-        const asset = await rpc('getAsset', { id: address });
-        return asset?.content?.metadata?.name
-          || asset?.content?.metadata?.symbol
-          || asset?.token_info?.symbol
-          || null;
+        const a = await rpc('getAsset', { id: address });
+        return a?.content?.metadata?.name || a?.content?.metadata?.symbol || a?.token_info?.symbol || null;
       } catch { return null; }
     }
 
-    // ── Mint info + Token-2022 extensions ────────────────────────────────────
     async function getMintAuthorities(address) {
       const result = await rpc('getAccountInfo', [address, { encoding: 'base64' }]);
       if (!result?.value?.data) throw new Error('Account not found or not a token mint.');
-
-      const raw  = atob(result.value.data[0]);
-      const u8   = new Uint8Array(raw.length);
+      const raw = atob(result.value.data[0]);
+      const u8  = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) u8[i] = raw.charCodeAt(i);
       const view = new DataView(u8.buffer);
-
       const mintAuthorityRevoked   = view.getUint32(0,  true) === 0;
       const freezeAuthorityRevoked = view.getUint32(46, true) === 0;
       const isToken2022 = result.value.owner === 'TokenzQdBNbequF8Li1WhHnkPdmEep1qEkfLBs9w9vF';
-
-      // Parse Token-2022 TLV extensions (start at byte 83)
       const dangerousExtensions = [];
       let transferFeeBps = null;
-
       if (isToken2022 && u8.length > 83) {
-        const DANGEROUS = { 1: 'Transfer Fee', 6: 'Permanent Delegate', 8: 'Non-Transferable', 12: 'Transfer Hook' };
+        const DANGER = { 1: 'Transfer Fee', 6: 'Permanent Delegate', 8: 'Non-Transferable', 12: 'Transfer Hook' };
         let offset = 83;
         while (offset + 4 <= u8.length) {
           const type = view.getUint16(offset, true);
           const len  = view.getUint16(offset + 2, true);
           if (type === 0 && len === 0) break;
-          if (DANGEROUS[type]) {
-            dangerousExtensions.push(DANGEROUS[type]);
-            // Decode transfer fee basis points (at offset +100 within extension data)
+          if (DANGER[type]) {
+            dangerousExtensions.push(DANGER[type]);
             if (type === 1 && len >= 116) {
               const fv = new DataView(u8.buffer, offset + 4);
               transferFeeBps = fv.getUint16(96, true);
@@ -555,16 +560,13 @@
           if (offset >= u8.length || len === 0) break;
         }
       }
-
       return { mintAuthorityRevoked, freezeAuthorityRevoked, isToken2022, dangerousExtensions, transferFeeBps };
     }
 
-    // ── Holder concentration ─────────────────────────────────────────────────
     async function getHolderConcentration(address) {
       const supplyRes = await rpc('getTokenSupply', [address]);
       const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
-      let accounts    = null;
-
+      let accounts = null;
       try {
         const largest = await rpc('getTokenLargestAccounts', [address]);
         accounts = (largest?.value || []).slice(0, 10);
@@ -577,13 +579,10 @@
           uiAmount: parseFloat(a.amount || 0) / Math.pow(10, supplyRes?.value?.decimals || 0)
         }));
       }
-
       const top10sum = accounts.reduce((s, h) => s + parseFloat(h.uiAmount || 0), 0);
-      const pct = supply > 0 ? Math.round((top10sum / supply) * 100) : 100;
-      return { pct };
+      return { pct: supply > 0 ? Math.round((top10sum / supply) * 100) : 100 };
     }
 
-    // ── Contract age ─────────────────────────────────────────────────────────
     async function getContractAge(address) {
       try {
         const sigs = await rpc('getSignaturesForAddress', [address, { limit: 1000 }]);
@@ -594,7 +593,6 @@
       } catch { return null; }
     }
 
-    // ── Liquidity via DexScreener ────────────────────────────────────────────
     async function getLiquidityInfo(address) {
       try {
         const res  = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`);
@@ -605,95 +603,67 @@
         if (!pairs.length) return { found: false };
         const main = pairs[0];
         return { found: true, dex: main.dexId, liquidityUsd: main.liquidity?.usd || 0,
-                 pairAddress: main.pairAddress, url: main.url, poolCount: pairs.length };
+                 url: main.url, poolCount: pairs.length };
       } catch { return { found: false }; }
     }
 
-    // ── Creator risk — deployer still holds? ─────────────────────────────────
     async function getCreatorRisk(address) {
       try {
         const sigs = await rpc('getSignaturesForAddress', [address, { limit: 1000 }]);
         if (!sigs?.length || sigs.length >= 1000) return { unknown: true };
-
         const firstSig = sigs[sigs.length - 1].signature;
-        const tx = await rpc('getTransaction', [firstSig, {
-          encoding: 'jsonParsed', maxSupportedTransactionVersion: 0
-        }]);
+        const tx = await rpc('getTransaction', [firstSig, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 }]);
         if (!tx) return { unknown: true };
-
-        const keys    = tx.transaction.message.accountKeys;
+        const keys     = tx.transaction.message.accountKeys;
         const deployer = typeof keys[0] === 'string' ? keys[0] : keys[0]?.pubkey;
         if (!deployer) return { unknown: true };
-
         const [tokenAccts, supplyRes] = await Promise.all([
           rpc('getTokenAccountsByOwner', [deployer, { mint: address }, { encoding: 'jsonParsed' }]),
           rpc('getTokenSupply', [address])
         ]);
         const balance  = tokenAccts?.value?.[0]?.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0;
         const supply   = parseFloat(supplyRes?.value?.uiAmount || 1);
-        const holdsPct = Math.round((balance / supply) * 100);
-        return { deployer, stillHolds: balance > 0, holdsPct, unknown: false };
+        return { deployer, stillHolds: balance > 0, holdsPct: Math.round((balance / supply) * 100), unknown: false };
       } catch { return { unknown: true }; }
     }
 
-    // ── Score calculation ─────────────────────────────────────────────────────
-    // 25 Mint Authority   (VERIFIED)
-    // 20 Holder Dist      (OBSERVED)
-    // 15 Liquidity        (OBSERVED)
-    // 10 Freeze Authority (VERIFIED)
-    // 10 Contract Age     (OBSERVED)
-    // 10 Token Mechanics  (VERIFIED)
-    // 10 Creator Risk     (INDICATIVE)
     function calcScore(auth, conc, deployedAt, liquidity, creatorRisk) {
       let pts = 0;
-
       pts += auth.mintAuthorityRevoked   ? 25 : 0;
       pts += auth.freezeAuthorityRevoked ? 10 : 0;
-
-      if (!auth.isToken2022)                          pts += 10;
-      else if (auth.dangerousExtensions.length === 0) pts += 8;
+      if (!auth.isToken2022)                            pts += 10;
+      else if (auth.dangerousExtensions.length === 0)   pts += 8;
       else if (auth.transferFeeBps !== null && auth.transferFeeBps < 100) pts += 3;
-
       if (conc) {
         if      (conc.pct < 20) pts += 20;
         else if (conc.pct < 40) pts += 14;
         else if (conc.pct < 60) pts += 7;
         else if (conc.pct < 80) pts += 3;
       }
-
       if (liquidity?.found) {
         if      (liquidity.liquidityUsd > 500000) pts += 15;
         else if (liquidity.liquidityUsd > 100000) pts += 12;
         else if (liquidity.liquidityUsd > 10000)  pts += 8;
         else if (liquidity.liquidityUsd > 1000)   pts += 4;
-        else                                        pts += 1;
+        else                                       pts += 1;
       }
-
       if (deployedAt instanceof Date) {
-        const days = (Date.now() - deployedAt.getTime()) / 86400000;
-        if      (days > 180) pts += 10;
-        else if (days > 30)  pts += 7;
-        else if (days > 7)   pts += 5;
-        else if (days > 1)   pts += 2;
-        else                  pts += 1;
-      } else if (deployedAt?.tooActive) {
-        pts += 10;
-      }
-
-      if      (creatorRisk?.unknown)     pts += 5;
-      else if (creatorRisk?.stillHolds)  pts += 10;
-      else                                pts += 2;
-
+        const d = (Date.now() - deployedAt.getTime()) / 86400000;
+        if      (d > 180) pts += 10;
+        else if (d > 30)  pts += 7;
+        else if (d > 7)   pts += 5;
+        else if (d > 1)   pts += 2;
+        else               pts += 1;
+      } else if (deployedAt?.tooActive) { pts += 10; }
+      if      (creatorRisk?.unknown)    pts += 5;
+      else if (creatorRisk?.stillHolds) pts += 10;
+      else                               pts += 2;
       return Math.min(100, pts);
     }
 
-    // ── UI entry ─────────────────────────────────────────────────────────────
     function analyzeToken() {
       const input = document.getElementById('contractInput').value.trim();
-      if (!input || input.length < 32) {
-        alert('Please enter a valid Solana contract address.');
-        return;
-      }
+      if (!input || input.length < 32) { alert('Please enter a valid Solana contract address.'); return; }
       document.getElementById('howItWorks').style.display = 'none';
       document.getElementById('results').classList.remove('visible');
       document.getElementById('loading').classList.add('visible');
@@ -701,52 +671,37 @@
     }
 
     async function fetchAndRender(address) {
-      const [nameRes, authRes, concRes, ageRes, liqRes, creatorRes] = await Promise.allSettled([
-        getTokenName(address),
-        getMintAuthorities(address),
-        getHolderConcentration(address),
-        getContractAge(address),
-        getLiquidityInfo(address),
-        getCreatorRisk(address)
+      const [nameRes, authRes, concRes, ageRes, liqRes, crRes] = await Promise.allSettled([
+        getTokenName(address), getMintAuthorities(address), getHolderConcentration(address),
+        getContractAge(address), getLiquidityInfo(address), getCreatorRisk(address)
       ]);
-
       if (authRes.status === 'rejected') {
         document.getElementById('loading').classList.remove('visible');
-        document.getElementById('results').innerHTML = `
-          <div class="verdict fail">
-            <div class="verdict-label">Error</div>
-            <div class="verdict-text">Could not fetch data: ${authRes.reason?.message || 'Unknown error'}</div>
-          </div>`;
+        document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Could not fetch data: ${authRes.reason?.message || 'Unknown error'}</div></div>`;
         document.getElementById('results').classList.add('visible');
         return;
       }
-
       try {
         renderResults({
           address,
-          name:          nameRes.status    === 'fulfilled' ? nameRes.value    : null,
-          authorities:   authRes.value,
-          concentration: concRes.status    === 'fulfilled' ? concRes.value    : null,
-          deployedAt:    ageRes.status     === 'fulfilled' ? ageRes.value     : null,
-          liquidity:     liqRes.status     === 'fulfilled' ? liqRes.value     : null,
-          creatorRisk:   creatorRes.status === 'fulfilled' ? creatorRes.value : null
+          name:        nameRes.status === 'fulfilled' ? nameRes.value : null,
+          auth:        authRes.value,
+          conc:        concRes.status === 'fulfilled' ? concRes.value : null,
+          deployedAt:  ageRes.status  === 'fulfilled' ? ageRes.value  : null,
+          liquidity:   liqRes.status  === 'fulfilled' ? liqRes.value  : null,
+          creatorRisk: crRes.status   === 'fulfilled' ? crRes.value   : null
         });
       } catch (err) {
         document.getElementById('loading').classList.remove('visible');
-        document.getElementById('results').innerHTML = `
-          <div class="verdict fail">
-            <div class="verdict-label">Error</div>
-            <div class="verdict-text">Render error: ${err.message}</div>
-          </div>`;
+        document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Render error: ${err.message}</div></div>`;
         document.getElementById('results').classList.add('visible');
         console.error(err);
       }
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
     function conf(level) {
-      const map = { verified: 'VERIFIED', observed: 'OBSERVED', indicative: 'INDICATIVE' };
-      return `<span class="confidence conf-${level}">${map[level]}</span>`;
+      const labels = { verified: 'VERIFIED', observed: 'OBSERVED', indicative: 'INDICATIVE' };
+      return `<span class="confidence conf-${level}">${labels[level]}</span>`;
     }
 
     function fmtUsd(n) {
@@ -755,193 +710,138 @@
       return `$${Math.round(n)}`;
     }
 
-    function renderResults({ address, name, authorities, concentration, deployedAt, liquidity, creatorRisk }) {
+    function renderResults({ address, name, auth, conc, deployedAt, liquidity, creatorRisk }) {
       document.getElementById('loading').classList.remove('visible');
-
       const isAnser = address === ANSER_MINT;
-      const score   = isAnser ? 95 : calcScore(authorities, concentration, deployedAt, liquidity, creatorRisk);
+      const score   = isAnser ? 95 : calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
       const scoreClass   = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
       const verdictClass = score >= 80 ? 'pass' : score >= 50 ? 'partial' : 'fail';
       const verdictText  = score >= 80
         ? 'VERIFIED — This token meets the transparency standard.'
-        : score >= 50
-        ? 'PARTIAL — Some transparency measures in place, but risks remain.'
+        : score >= 50 ? 'PARTIAL — Some transparency measures in place, but risks remain.'
         : 'NOT VERIFIED — Significant transparency failures detected.';
 
-      // ── Metric: Mint Authority ─────────────────────────────────────────────
-      const mintMetric = {
-        name: `Mint Authority ${conf('verified')}`,
-        desc: authorities.mintAuthorityRevoked
-          ? 'Revoked on-chain. No new tokens can ever be created. Fixed supply confirmed.'
-          : 'Still active. The creator can mint unlimited new tokens at any time.',
-        status: authorities.mintAuthorityRevoked ? 'REVOKED ✓' : 'ACTIVE ✗',
-        statusClass: authorities.mintAuthorityRevoked ? 'status-pass' : 'status-fail'
+      const mintM = {
+        name: 'Mint Authority ' + conf('verified'),
+        desc: auth.mintAuthorityRevoked ? 'Revoked on-chain. No new tokens can ever be created. Fixed supply confirmed.' : 'Still active. The creator can mint unlimited new tokens at any time.',
+        status: auth.mintAuthorityRevoked ? 'REVOKED ✓' : 'ACTIVE ✗',
+        cls: auth.mintAuthorityRevoked ? 'status-pass' : 'status-fail'
       };
 
-      // ── Metric: Freeze Authority ───────────────────────────────────────────
-      const freezeMetric = {
-        name: `Freeze Authority ${conf('verified')}`,
-        desc: authorities.freezeAuthorityRevoked
-          ? 'Revoked on-chain. No one can freeze your token accounts.'
-          : 'Still active. The creator can freeze any holder's tokens.',
-        status: authorities.freezeAuthorityRevoked ? 'REVOKED ✓' : 'ACTIVE ✗',
-        statusClass: authorities.freezeAuthorityRevoked ? 'status-pass' : 'status-fail'
+      const freezeM = {
+        name: 'Freeze Authority ' + conf('verified'),
+        desc: auth.freezeAuthorityRevoked ? 'Revoked on-chain. No one can freeze your token accounts.' : 'Still active. The creator can freeze any holder's tokens.',
+        status: auth.freezeAuthorityRevoked ? 'REVOKED ✓' : 'ACTIVE ✗',
+        cls: auth.freezeAuthorityRevoked ? 'status-pass' : 'status-fail'
       };
 
-      // ── Metric: Token Mechanics ────────────────────────────────────────────
-      let mechStatus, mechDesc, mechClass;
-      if (!authorities.isToken2022) {
-        mechStatus = 'CLEAN ✓'; mechClass = 'status-pass';
+      let mechDesc, mechStatus, mechCls;
+      if (!auth.isToken2022) {
         mechDesc = 'Standard SPL token. No hidden transfer fees, hooks, or restrictions possible.';
-      } else if (authorities.dangerousExtensions.length === 0) {
-        mechStatus = 'CLEAN ✓'; mechClass = 'status-pass';
-        mechDesc = 'Token-2022 standard with no dangerous extensions detected.';
+        mechStatus = 'CLEAN ✓'; mechCls = 'status-pass';
+      } else if (auth.dangerousExtensions.length === 0) {
+        mechDesc = 'Token-2022 with no dangerous extensions detected.';
+        mechStatus = 'CLEAN ✓'; mechCls = 'status-pass';
       } else {
-        const feePct = authorities.transferFeeBps !== null
-          ? ` (${(authorities.transferFeeBps/100).toFixed(2)}% fee on every transfer)` : '';
-        mechStatus = 'RISK ✗'; mechClass = 'status-fail';
-        mechDesc = `Token-2022 with dangerous extensions: ${authorities.dangerousExtensions.join(', ')}${feePct}. Exercise caution.`;
+        const fee = auth.transferFeeBps !== null ? ` (${(auth.transferFeeBps/100).toFixed(2)}% fee on every transfer)` : '';
+        mechDesc = 'Token-2022 dangerous extensions: ' + auth.dangerousExtensions.join(', ') + fee + '. Exercise caution.';
+        mechStatus = 'RISK ✗'; mechCls = 'status-fail';
       }
-      const mechMetric = {
-        name: `Token Mechanics ${conf('verified')}`,
-        desc: mechDesc, status: mechStatus, statusClass: mechClass
-      };
+      const mechM = { name: 'Token Mechanics ' + conf('verified'), desc: mechDesc, status: mechStatus, cls: mechCls };
 
-      // ── Metric: Holder Distribution ────────────────────────────────────────
-      let concStatus, concDesc, concClass;
-      if (!concentration) {
-        concStatus = 'N/A'; concClass = 'status-unknown';
+      let concDesc, concStatus, concCls;
+      if (!conc) {
         concDesc = 'Could not retrieve holder data — too many accounts for automated analysis. Check manually on Solscan.';
+        concStatus = 'N/A'; concCls = 'status-unknown';
       } else {
-        const p = concentration.pct;
-        if      (p < 20) { concStatus = `${p}% ✓`; concClass = 'status-pass'; concDesc = `Top 10 wallets hold ${p}% of supply. Healthy distribution.`; }
-        else if (p < 40) { concStatus = `${p}% ⚠`; concClass = 'status-warn'; concDesc = `Top 10 wallets hold ${p}% of supply. Moderate concentration.`; }
-        else if (p < 60) { concStatus = `${p}% ⚠`; concClass = 'status-warn'; concDesc = `Top 10 wallets hold ${p}% of supply. Notable concentration risk.`; }
-        else             { concStatus = `${p}% ✗`; concClass = 'status-fail'; concDesc = `Top 10 wallets hold ${p}% of supply. High concentration — wallet splitting possible.`; }
+        const p = conc.pct;
+        if      (p < 20) { concStatus = p + '% ✓'; concCls = 'status-pass'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Healthy distribution.'; }
+        else if (p < 40) { concStatus = p + '% ⚠'; concCls = 'status-warn'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Moderate concentration.'; }
+        else if (p < 60) { concStatus = p + '% ⚠'; concCls = 'status-warn'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Notable concentration risk.'; }
+        else             { concStatus = p + '% ✗'; concCls = 'status-fail'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. High concentration — wallet splitting possible.'; }
       }
-      const concMetric = {
-        name: `Holder Distribution ${conf('observed')}`,
-        desc: concDesc, status: concStatus, statusClass: concClass
-      };
+      const concM = { name: 'Holder Distribution ' + conf('observed'), desc: concDesc, status: concStatus, cls: concCls };
 
-      // ── Metric: Liquidity ──────────────────────────────────────────────────
-      let liqStatus, liqDesc, liqClass;
+      let liqDesc, liqStatus, liqCls;
       if (!liquidity) {
-        liqStatus = 'NO DATA'; liqClass = 'status-unknown';
-        liqDesc = 'Could not retrieve pool data.';
+        liqDesc = 'Could not retrieve pool data.'; liqStatus = 'NO DATA'; liqCls = 'status-unknown';
       } else if (!liquidity.found) {
-        liqStatus = 'NO POOL ✗'; liqClass = 'status-fail';
-        liqDesc = 'No liquidity pool found on Solana DEXes. Token may not be tradeable yet.';
+        liqDesc = 'No liquidity pool found on Solana DEXes. Token may not be tradeable yet.'; liqStatus = 'NO POOL ✗'; liqCls = 'status-fail';
       } else {
-        const liqFmt  = fmtUsd(liquidity.liquidityUsd);
-        const dexName = (liquidity.dex || 'DEX').toUpperCase();
-        const link    = liquidity.url ? ` <a href="${liquidity.url}" target="_blank" style="color:var(--gray);border-bottom:1px solid var(--gray)">View pool →</a>` : '';
-        const multi   = liquidity.poolCount > 1 ? ` across ${liquidity.poolCount} pools` : '';
-        liqStatus = `${liqFmt} ✓`;
-        liqClass  = liquidity.liquidityUsd > 10000 ? 'status-pass' : 'status-warn';
-        liqDesc   = `${liqFmt} on ${dexName}${multi}. Lock status requires manual verification.${link}`;
+        const fmt  = fmtUsd(liquidity.liquidityUsd);
+        const dex  = (liquidity.dex || 'DEX').toUpperCase();
+        const link = liquidity.url ? ' <a href="' + liquidity.url + '" target="_blank" style="color:var(--gray);border-bottom:1px solid var(--gray)">View pool →</a>' : '';
+        const multi = liquidity.poolCount > 1 ? ' across ' + liquidity.poolCount + ' pools' : '';
+        liqDesc   = fmt + ' total liquidity on ' + dex + multi + '. Lock status requires manual verification.' + link;
+        liqStatus = fmt + ' ✓';
+        liqCls    = liquidity.liquidityUsd > 10000 ? 'status-pass' : 'status-warn';
       }
-      const liqMetric = {
-        name: `Liquidity ${conf('observed')}`,
-        desc: liqDesc, status: liqStatus, statusClass: liqClass
-      };
+      const liqM = { name: 'Liquidity ' + conf('observed'), desc: liqDesc, status: liqStatus, cls: liqCls };
 
-      // ── Metric: Contract Age ───────────────────────────────────────────────
-      let ageStatus, ageDesc, ageClass;
-      if (deployedAt?.tooActive) {
-        ageStatus = 'ACTIVE ✓'; ageClass = 'status-pass';
-        ageDesc = 'Extensive on-chain history detected — a positive signal of established activity.';
+      let ageDesc, ageStatus, ageCls;
+      if (deployedAt && deployedAt.tooActive) {
+        ageDesc = 'Extensive on-chain history — a positive signal of established activity.'; ageStatus = 'ACTIVE ✓'; ageCls = 'status-pass';
       } else if (deployedAt instanceof Date) {
         const days    = Math.floor((Date.now() - deployedAt.getTime()) / 86400000);
         const dateStr = deployedAt.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
-        if      (days < 1)  { ageStatus = 'NEW ✗';       ageClass = 'status-fail'; ageDesc = `Deployed less than 24 hours ago (${dateStr}). Very high risk.`; }
-        else if (days < 7)  { ageStatus = `${days}D ⚠`;  ageClass = 'status-warn'; ageDesc = `Deployed ${days} days ago (${dateStr}). Limited on-chain history.`; }
-        else if (days < 30) { ageStatus = `${days}D ⚠`;  ageClass = 'status-warn'; ageDesc = `Deployed ${days} days ago (${dateStr}).`; }
-        else                { ageStatus = `${days}D ✓`;  ageClass = 'status-pass'; ageDesc = `Deployed ${dateStr}. Established contract.`; }
+        if      (days < 1)  { ageStatus = 'NEW ✗';      ageCls = 'status-fail'; ageDesc = 'Deployed less than 24 hours ago (' + dateStr + '). Very high risk.'; }
+        else if (days < 7)  { ageStatus = days + 'D ⚠'; ageCls = 'status-warn'; ageDesc = 'Deployed ' + days + ' days ago (' + dateStr + '). Limited on-chain history.'; }
+        else if (days < 30) { ageStatus = days + 'D ⚠'; ageCls = 'status-warn'; ageDesc = 'Deployed ' + days + ' days ago (' + dateStr + ').'; }
+        else                { ageStatus = days + 'D ✓'; ageCls = 'status-pass'; ageDesc = 'Deployed ' + dateStr + '. Established contract.'; }
       } else {
-        ageStatus = 'UNKNOWN'; ageClass = 'status-unknown'; ageDesc = 'Could not determine contract age.';
+        ageDesc = 'Could not determine contract age.'; ageStatus = 'UNKNOWN'; ageCls = 'status-unknown';
       }
-      const ageMetric = {
-        name: `Contract Age ${conf('observed')}`,
-        desc: ageDesc, status: ageStatus, statusClass: ageClass
-      };
+      const ageM = { name: 'Contract Age ' + conf('observed'), desc: ageDesc, status: ageStatus, cls: ageCls };
 
-      // ── Metric: Creator Risk ───────────────────────────────────────────────
-      let crStatus, crDesc, crClass;
+      let crDesc, crStatus, crCls;
       if (!creatorRisk || creatorRisk.unknown) {
-        crStatus = 'UNKNOWN'; crClass = 'status-unknown';
-        crDesc = 'Could not identify deployer wallet — token has too many transactions for automated analysis.';
+        crDesc = 'Could not identify deployer wallet — token has too many transactions for automated analysis.'; crStatus = 'UNKNOWN'; crCls = 'status-unknown';
       } else if (creatorRisk.stillHolds) {
-        crStatus = `${creatorRisk.holdsPct}% HELD ✓`; crClass = 'status-pass';
-        crDesc = `Deployer wallet still holds ${creatorRisk.holdsPct}% of supply. Skin in the game is a positive signal — though not a guarantee.`;
+        crStatus = creatorRisk.holdsPct + '% HELD ✓'; crCls = 'status-pass';
+        crDesc = 'Deployer wallet still holds ' + creatorRisk.holdsPct + '% of supply. Skin in the game — a positive signal, though not a guarantee.';
       } else {
-        crStatus = 'SOLD ✗'; crClass = 'status-fail';
-        crDesc = 'Deployer wallet holds 0 tokens. May have sold or transferred to another wallet. Verify independently.';
+        crStatus = 'SOLD ✗'; crCls = 'status-fail';
+        crDesc = 'Deployer wallet holds 0 tokens. May have sold or transferred. Verify independently on Solscan.';
       }
-      const crMetric = {
-        name: `Creator Risk ${conf('indicative')}`,
-        desc: crDesc, status: crStatus, statusClass: crClass
-      };
+      const crM = { name: 'Creator Risk ' + conf('indicative'), desc: crDesc, status: crStatus, cls: crCls };
 
-      const metrics = [mintMetric, concMetric, liqMetric, freezeMetric, ageMetric, mechMetric, crMetric];
+      const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, crM];
       const tokenName = isAnser ? '$ANSER' : (name || 'Unknown Token');
 
-      const html = `
-        <div class="score-header">
-          <div class="token-info">
-            <h2>${tokenName}</h2>
-            <p class="token-address">${address}
-              <a href="https://solscan.io/token/${address}" target="_blank"
-                 style="color:var(--gray);border-bottom:1px solid var(--gray);font-size:0.65rem;margin-left:0.5rem">Solscan ↗</a>
-            </p>
-          </div>
-          <div class="score-circle">
-            <div class="score-number ${scoreClass}">${score}</div>
-            <div class="score-label">/ 100</div>
-          </div>
-        </div>
+      const metricsHtml = metrics.map(m =>
+        '<div class="metric"><div class="metric-left"><div class="metric-name">' + m.name +
+        '</div><div class="metric-desc">' + m.desc +
+        '</div></div><span class="metric-status ' + m.cls + '">' + m.status + '</span></div>'
+      ).join('');
 
-        <div class="verdict ${verdictClass}">
-          <div class="verdict-label">Verdict</div>
-          <div class="verdict-text">${verdictText}</div>
-        </div>
+      document.getElementById('results').innerHTML =
+        '<div class="score-header">' +
+          '<div class="token-info">' +
+            '<h2>' + tokenName + '</h2>' +
+            '<p class="token-address">' + address +
+              ' <a href="https://solscan.io/token/' + address + '" target="_blank" style="color:var(--gray);border-bottom:1px solid var(--gray);font-size:0.65rem;margin-left:0.5rem">Solscan ↗</a>' +
+            '</p>' +
+          '</div>' +
+          '<div class="score-circle">' +
+            '<div class="score-number ' + scoreClass + '">' + score + '</div>' +
+            '<div class="score-label">/ 100</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="verdict ' + verdictClass + '">' +
+          '<div class="verdict-label">Verdict</div>' +
+          '<div class="verdict-text">' + verdictText + '</div>' +
+        '</div>' +
+        '<p class="metrics-title">Metrics breakdown</p>' +
+        metricsHtml +
+        '<div class="results-footer">' +
+          '<p><strong>VERIFIED</strong> = on-chain binary facts. ' +
+          '<strong>OBSERVED</strong> = real data, gameable. ' +
+          '<strong>INDICATIVE</strong> = useful signal, not a guarantee. ' +
+          'This is not financial advice.</p>' +
+          '<p style="margin-top:0.5rem;">The goose doesn't promise anything. That's why you can trust it. — ' +
+          '<a href="https://ansertoken.xyz" style="color:var(--gray)">ansertoken.xyz</a></p>' +
+        '</div>';
 
-        <p class="metrics-title">Metrics breakdown</p>
-        ${metrics.map(m => `
-          <div class="metric">
-            <div class="metric-left">
-              <div class="metric-name">${m.name}</div>
-              <div class="metric-desc">${m.desc}</div>
-            </div>
-            <span class="metric-status ${m.statusClass}">${m.status}</span>
-          </div>
-        `).join('')}
-
-        <div class="results-footer">
-          <p>
-            <strong>VERIFIED</strong> metrics are binary on-chain facts.
-            <strong>OBSERVED</strong> metrics use real data but can be gamed.
-            <strong>INDICATIVE</strong> metrics are useful signals, not guarantees.
-            This is not financial advice.
-          </p>
-          <p style="margin-top:0.5rem;">The goose doesn't promise anything. That's why you can trust it. —
-            <a href="https://ansertoken.xyz" style="color:var(--gray)">ansertoken.xyz</a>
-          </p>
-        </div>
-      `;
-
-      document.getElementById('results').innerHTML = html;
-      document.getElementById('results').classList.add('visible');
-    }
-
-    document.getElementById('contractInput').addEventListener('keypress', e => {
-      if (e.key === 'Enter') analyzeToken();
-    });
-  </script>5rem;">The goose doesn't promise anything. That's why you can trust it. — <a href="https://ansertoken.xyz" style="color:var(--gray)">ansertoken.xyz</a></p>
-        </div>
-      `;
-
-      document.getElementById('results').innerHTML = html;
       document.getElementById('results').classList.add('visible');
     }
 

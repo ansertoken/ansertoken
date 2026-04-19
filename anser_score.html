@@ -881,7 +881,7 @@
       if (!liquidity) {
         liqDesc = 'Could not retrieve pool data.'; liqStatus = 'NO DATA'; liqCls = 'status-unknown';
       } else if (!liquidity.found) {
-        liqDesc = 'No liquidity pool found on Solana DEXes. Token may not be tradeable yet.'; liqStatus = 'NO POOL ✗'; liqCls = 'status-fail';
+        liqDesc = 'No liquidity pool found on Solana DEXes. Token may not be tradeable yet or pool was removed.'; liqStatus = 'NO POOL ✗'; liqCls = 'status-fail';
       } else {
         const fmt  = fmtUsd(liquidity.liquidityUsd);
         const dex  = (liquidity.dex || 'DEX').toUpperCase();
@@ -905,8 +905,15 @@
               + liquidity.liqRatio + '% of market cap — normal for large-cap tokens.</span>';
           }
         }
+        // Threshold context line
+        let thresholdNote = '';
+        if      (liquidity.liquidityUsd > 1000000) thresholdNote = ' Sufficient depth for most trade sizes.';
+        else if (liquidity.liquidityUsd > 200000)  thresholdNote = ' Adequate for small to mid-size trades.';
+        else if (liquidity.liquidityUsd > 30000)   thresholdNote = ' Below $200K — expect slippage on trades above a few thousand dollars.';
+        else                                        thresholdNote = ' Below $30K — even small sells will move the price significantly. High exit risk.';
+
         liqDesc = fmt + ' across ' + liquidity.poolCount + ' pool' + (liquidity.poolCount > 1 ? 's' : '')
-          + ' (' + dex.toUpperCase() + ').' + ratioLine
+          + ' (' + dex.toUpperCase() + ').' + ratioLine + thresholdNote
           + ' Lock status requires manual verification.' + link;
         if      (liquidity.liquidityUsd > 1000000) { liqStatus = 'SUFFICIENT ✓'; liqCls = 'status-pass'; }
         else if (liquidity.liquidityUsd > 200000)  { liqStatus = 'ADEQUATE ✓';   liqCls = 'status-pass'; }
@@ -994,7 +1001,13 @@
         centralizedBanner +
         '<p class="metrics-title">Metrics breakdown</p>' +
         metricsHtml +
-        '<div class="results-footer">' +
+                '<div style="padding:1.5rem 0 0.5rem">' +
+        '<button class="share-btn" onclick="shareVerdict()" id="shareBtn">' +
+          '<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>' +
+          'SHARE VERDICT →' +
+        '</button>' +
+        '</div>' +
+'<div class="results-footer">' +
           '<p><strong>VERIFIED</strong> = on-chain binary facts. ' +
           '<strong>OBSERVED</strong> = real data, gameable (can be gamed). ' +
           '<strong>INDICATIVE</strong> = useful signal, not conclusive. ' +
@@ -1009,69 +1022,86 @@
 
     // Share Verdict
     function shareVerdict() {
-      const tokenName  = document.querySelector('.token-info h2')?.textContent || 'Unknown';
-      const scoreNum   = document.querySelector('.score-number')?.textContent || '?';
-      const verdictTxt = document.querySelector('.verdict-text')?.textContent || '';
+      const tokenName  = document.querySelector('.token-info h2')?.textContent?.trim() || 'Unknown';
+      const scoreNum   = document.querySelector('.score-number')?.textContent?.trim() || '?';
+      const verdictTxt = document.querySelector('.verdict-text')?.textContent?.trim() || '';
       const address    = document.querySelector('.token-address')?.textContent?.trim().split(' ')[0] || '';
+      const subtitle   = document.querySelector('.score-number')?.parentElement?.querySelector('div:last-child')?.textContent?.trim() || '';
       const score      = parseInt(scoreNum);
       const accent     = score >= 80 ? '#1a7a1a' : score >= 50 ? '#8b6914' : '#8b0000';
 
-      const W = 800, H = 420;
+      const W = 900, H = 500;
       const canvas = document.createElement('canvas');
       canvas.width = W * 2; canvas.height = H * 2;
       const ctx = canvas.getContext('2d');
       ctx.scale(2, 2);
 
+      // Background + top bar
       ctx.fillStyle = '#f5f3ee'; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 4);
+      ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 5);
 
-      // Score
-      ctx.font = 'bold 88px serif'; ctx.fillStyle = accent; ctx.textAlign = 'right';
-      ctx.fillText(scoreNum, W - 44, 108);
+      // Score (top right)
+      ctx.font = '900 100px "Georgia", serif';
+      ctx.fillStyle = accent; ctx.textAlign = 'right';
+      ctx.fillText(scoreNum, W - 48, 116);
       ctx.font = '13px monospace'; ctx.fillStyle = '#888';
-      ctx.fillText('/ 100', W - 44, 130);
+      ctx.fillText('/ 100', W - 48, 138);
+      if (subtitle) {
+        ctx.font = '10px monospace';
+        ctx.fillText(subtitle, W - 48, 158);
+      }
 
-      // Token name + address
+      // Token name
       ctx.textAlign = 'left';
-      ctx.font = 'bold 40px serif'; ctx.fillStyle = '#0a0a0a';
-      ctx.fillText(tokenName, 40, 78);
+      ctx.font = '700 46px "Georgia", serif'; ctx.fillStyle = '#0a0a0a';
+      ctx.fillText(tokenName.slice(0, 24), 48, 84);
       ctx.font = '11px monospace'; ctx.fillStyle = '#888';
-      ctx.fillText(address.slice(0,22) + '...' + address.slice(-4), 40, 100);
+      ctx.fillText(address.slice(0, 24) + '...' + address.slice(-6), 48, 108);
 
       // Divider
-      ctx.fillStyle = '#0a0a0a'; ctx.fillRect(40, 125, W - 80, 1);
+      ctx.fillStyle = '#d4d0c8'; ctx.fillRect(48, 140, W - 96, 1);
 
-      // Verdict
-      ctx.font = '11px monospace'; ctx.fillStyle = '#888'; ctx.fillText('VERDICT', 40, 155);
-      ctx.font = 'bold 17px serif'; ctx.fillStyle = '#0a0a0a';
-      const words = verdictTxt.split(' '); let line = '', y = 180;
+      // Verdict label + text
+      ctx.font = '700 10px monospace'; ctx.fillStyle = '#888';
+      ctx.textAlign = 'left'; ctx.fillText('VERDICT', 48, 168);
+      ctx.font = '700 19px "Georgia", serif'; ctx.fillStyle = '#0a0a0a';
+      // Word wrap
+      const words = verdictTxt.split(' '); let line = '', y = 195;
       for (const w of words) {
         const t = line + w + ' ';
-        if (ctx.measureText(t).width > W - 220 && line) { ctx.fillText(line.trim(), 40, y); line = w + ' '; y += 24; }
-        else { line = t; }
+        if (ctx.measureText(t).width > W - 280 && line) {
+          ctx.fillText(line.trim(), 48, y); line = w + ' '; y += 26;
+        } else line = t;
       }
-      ctx.fillText(line.trim(), 40, y);
+      ctx.fillText(line.trim(), 48, y);
 
-      // Metric badges
-      const metrics = document.querySelectorAll('.metric');
-      let mx = 40, my = H - 96;
+      // Metrics badges (up to 6, 2 rows of 3)
+      const metrics = Array.from(document.querySelectorAll('.metric')).slice(0, 6);
+      const badgeW = 258, badgeH = 52, startY = H - 140;
       metrics.forEach((m, i) => {
-        if (i >= 4) return;
-        const nm  = m.querySelector('.metric-name')?.textContent?.replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim().toUpperCase().slice(0,16) || '';
-        const st  = m.querySelector('.metric-status')?.textContent?.trim().slice(0,14) || '';
-        const clr = m.querySelector('.status-pass') ? '#1a7a1a' : m.querySelector('.status-fail') ? '#8b0000' : '#8b6914';
-        ctx.fillStyle = clr; ctx.fillRect(mx, my, 162, 38);
+        const col = i % 3, row = Math.floor(i / 3);
+        const bx = 48 + col * (badgeW + 12);
+        const by = startY + row * (badgeH + 8);
+        const nm  = (m.querySelector('.metric-name')?.textContent || '')
+                      .replace(/VERIFIED|OBSERVED|INDICATIVE/g, '').trim().toUpperCase().slice(0, 18);
+        const st  = (m.querySelector('.metric-status')?.textContent || '').trim().slice(0, 16);
+        const clr = m.querySelector('.status-pass') ? '#1a7a1a'
+                  : m.querySelector('.status-fail') ? '#8b0000' : '#8b6914';
+        ctx.fillStyle = clr; ctx.fillRect(bx, by, badgeW, badgeH);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(bx, by, badgeW, 2);
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 8px monospace'; ctx.fillText(nm, mx+8, my+14);
-        ctx.font = '8px monospace'; ctx.fillText(st, mx+8, my+28);
-        mx += 174;
+        ctx.font = '700 9px monospace'; ctx.textAlign = 'left';
+        ctx.fillText(nm, bx + 10, by + 18);
+        ctx.font = '10px monospace';
+        ctx.fillText(st, bx + 10, by + 36);
       });
 
-      // Branding
-      ctx.font = 'bold 12px monospace'; ctx.fillStyle = '#0a0a0a'; ctx.textAlign = 'left';
-      ctx.fillText('$ANSER TRANSPARENCY SCORE', 40, H - 18);
-      ctx.font = '11px monospace'; ctx.fillStyle = '#888'; ctx.textAlign = 'right';
-      ctx.fillText('ansertoken.xyz/anser_score.html', W - 40, H - 18);
+      // Branding bar
+      ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, H - 32, W, 32);
+      ctx.font = '700 11px monospace'; ctx.fillStyle = '#f5f3ee';
+      ctx.textAlign = 'left'; ctx.fillText('$ANSER TRANSPARENCY SCORE', 48, H - 11);
+      ctx.font = '10px monospace'; ctx.fillStyle = '#888';
+      ctx.textAlign = 'right'; ctx.fillText('ansertoken.xyz/anser_score.html', W - 48, H - 11);
 
       canvas.toBlob(blob => {
         const shareData = {
@@ -1082,8 +1112,10 @@
         if (navigator.canShare && navigator.canShare(shareData)) {
           navigator.share(shareData).catch(() => {});
         } else {
-          const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-          a.download = 'anser-score.png'; a.click();
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'anser-score-' + tokenName.toLowerCase().replace(/\s+/g, '-') + '.png';
+          a.click();
         }
       }, 'image/png');
     }

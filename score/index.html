@@ -1051,7 +1051,7 @@
         + 'Verify any Solana token free before you buy:\nansertoken.xyz/score';
 
       // ── Canvas image ──────────────────────────────────────────────────────
-      const W = 1000, H = 480;
+      const W = 1000, H = 440;
       const canvas = document.createElement('canvas');
       canvas.width = W * 2; canvas.height = H * 2;
       const ctx = canvas.getContext('2d');
@@ -1064,13 +1064,13 @@
       ctx.fillStyle = accent; ctx.fillRect(0, 0, 6, H);
 
       // Score (top right)
-      ctx.font = '900 108px Georgia, serif';
+      ctx.font = '900 96px Georgia, serif';
       ctx.fillStyle = accent; ctx.textAlign = 'right';
-      ctx.fillText(scoreNum, W - 48, 120);
-      ctx.font = '14px monospace'; ctx.fillStyle = '#888';
-      ctx.fillText('/ 100', W - 48, 144);
+      ctx.fillText(scoreNum, W - 48, 108);
+      ctx.font = '13px monospace'; ctx.fillStyle = '#888';
+      ctx.fillText('/ 100', W - 48, 128);
       ctx.font = '11px monospace';
-      ctx.fillText('ANSER TRANSPARENCY SCORE', W - 48, 165);
+      ctx.fillText('ANSER TRANSPARENCY SCORE', W - 48, 148);
 
       // Token name
       ctx.textAlign = 'left';

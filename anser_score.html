@@ -590,35 +590,37 @@
       const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
       const decimals  = supplyRes?.value?.decimals || 0;
 
-      // Run both methods in parallel — take whichever returns valid data first
-      const dasPromise = rpc('getTokenAccounts', {
-        mint: address, limit: 20,
-        sortBy: { sortBy: 'amount', sortDirection: 'desc' }
-      }).then(das => {
-        const accs = (das?.token_accounts || []).map(a => ({
+      // Try DAS first (handles large tokens), fallback to standard RPC
+      let accounts = [];
+
+      // DAS with timeout — most reliable for large tokens
+      try {
+        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+        const das = await Promise.race([
+          rpc('getTokenAccounts', {
+            mint: address, limit: 20,
+            sortBy: { sortBy: 'amount', sortDirection: 'desc' }
+          }),
+          timeoutPromise
+        ]);
+        accounts = (das?.token_accounts || []).map(a => ({
           address: a.address,
           uiAmount: parseFloat(a.amount || 0) / Math.pow(10, decimals)
         }));
-        if (!accs.length) throw new Error('empty');
-        return accs;
-      });
+      } catch {}
 
-      const rpcPromise = rpc('getTokenLargestAccounts', [address]).then(res => {
-        const accs = (res?.value || []).map(a => ({
-          address: a.address,
-          uiAmount: parseFloat(a.uiAmount || 0)
-        }));
-        if (!accs.length) throw new Error('empty');
-        return accs;
-      });
-
-      // Use Promise.any — first successful result wins
-      let accounts;
-      try {
-        accounts = await Promise.any([dasPromise, rpcPromise]);
-      } catch {
-        throw new Error('Could not fetch holder data');
+      // Fallback: standard RPC (works for smaller tokens)
+      if (!accounts.length) {
+        try {
+          const res = await rpc('getTokenLargestAccounts', [address]);
+          accounts = (res?.value || []).map(a => ({
+            address: a.address,
+            uiAmount: parseFloat(a.uiAmount || 0)
+          }));
+        } catch {}
       }
+
+      if (!accounts.length) throw new Error('Could not fetch holder data');
 
       // Sort descending to ensure top holders are first
       accounts.sort((a, b) => b.uiAmount - a.uiAmount);
@@ -968,7 +970,7 @@
       const verifiedCount  = [auth.mintAuthorityRevoked, auth.freezeAuthorityRevoked,
                                !auth.isToken2022 || auth.dangerousExtensions.length === 0]
                               .filter(Boolean).length;
-      const observedCount  = [conc, liquidity?.found, deployedAt].filter(Boolean).length;
+      const observedCount  = [true, liquidity?.found, deployedAt].filter(Boolean).length; // concentration always attempted
       const scoreSubtitle  = verifiedCount + ' verified signal' + (verifiedCount !== 1 ? 's' : '')
                            + ' · ' + observedCount + ' observed';
 

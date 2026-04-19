@@ -64,6 +64,11 @@
 
     nav .links a:hover { color: var(--black); }
 
+    @media (max-width: 520px) {
+      .nav-scanner { font-size: 0 !important; }
+      .nav-scanner::after { content: "Scanner"; font-size: 0.78rem; letter-spacing: 0.05em; }
+    }
+
     /* HERO */
     .hero {
       display: flex;
@@ -414,6 +419,11 @@
       .roadmap-phase { min-width: 60px; font-size: 0.75rem; }
     }
 
+    @media (max-width: 480px) {
+      nav .links { gap: 0.4rem; }
+      nav .links a { font-size: 0.72rem; }
+      .nav-scanner::after { content: "Scanner"; }
+    }
     @media (max-width: 380px) {
       nav .links li:last-child { display: none; }
     }
@@ -429,7 +439,7 @@
       <li><a href="#tokenomics">Tokenomics</a></li>
       <li><a href="#roadmap">Roadmap</a></li>
       <li><a href="anser_whitepaper.pdf" target="_blank">Whitepaper</a></li>
-      <li><a href="/score">Token Scanner</a></li>
+      <li><a href="/score" class="nav-scanner">Token Scanner</a></li>
     </ul>
   </nav>
 

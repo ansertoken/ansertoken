@@ -1139,20 +1139,37 @@
       ctx.fillText('ansertoken.xyz/anser_score.html', W - 48, H - 11);
 
       // Share
-      canvas.toBlob(blob => {
-        const shareData = {
-          title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
-          text: shareText,
-          files: [new File([blob], 'anser-score.png', { type: 'image/png' })]
-        };
-        if (navigator.canShare && navigator.canShare(shareData)) {
-          navigator.share(shareData).catch(() => {});
-        } else {
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'anser-score-' + tokenName.toLowerCase().replace(/\s+/g,'-') + '.png';
-          a.click();
-        }
+      canvas.toBlob(async blob => {
+        const file = new File([blob], 'anser-score.png', { type: 'image/png' });
+
+        // 1. Try with image file (mobile — WhatsApp, Telegram, etc.)
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
+              text: shareText,
+              files: [file]
+            });
+            return;
+          }
+        } catch(e) { /* fall through */ }
+
+        // 2. Try text-only share (some desktop browsers)
+        try {
+          if (navigator.share) {
+            await navigator.share({
+              title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
+              text: shareText
+            });
+            return;
+          }
+        } catch(e) { /* fall through */ }
+
+        // 3. Last resort: download image
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'anser-score-' + tokenName.toLowerCase().replace(/\s+/g,'-') + '.png';
+        a.click();
       }, 'image/png');
     }
 

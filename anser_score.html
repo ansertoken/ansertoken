@@ -875,10 +875,10 @@
         concStatus = 'LARGE TOKEN'; concCls = 'status-unknown';
       } else {
         const p = conc.pct;
-        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest single wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
-        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 10 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.'; }
-        else if (p < 60) { concStatus = 'HIGH RISK'; concCls = 'status-fail'; concDesc = 'WARNING: Top 10 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
-        else             { concStatus = 'CRITICAL';  concCls = 'status-fail'; concDesc = 'CRITICAL: Top 10 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
+        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
+        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.'; }
+        else if (p < 60) { concStatus = 'HIGH RISK'; concCls = 'status-fail'; concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
+        else             { concStatus = 'CRITICAL';  concCls = 'status-fail'; concDesc = 'CRITICAL: Top 20 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
       }
       const concM = { name: 'Holder Distribution ' + conf('observed'), desc: concDesc, status: concStatus, cls: concCls };
 

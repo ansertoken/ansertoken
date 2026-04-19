@@ -1053,8 +1053,25 @@
         + verdictTxt + '\n\n' + metricLines + '\n\n'
         + 'Verify any Solana token free:\nansertoken.xyz/score';
 
-      // Canvas — fixed layout, no overlap
-      const W = 800, H = 520;
+      // Canvas — calculate height after measuring verdict text
+      const W = 800;
+      // Temp canvas to measure text height
+      const tmpCanvas = document.createElement('canvas');
+      const tmpCtx = tmpCanvas.getContext('2d');
+      tmpCtx.font = '700 17px Georgia,serif';
+      const vwordsTemp = verdictTxt.split(' ');
+      let vlineTemp = '', vyTemp = 138;
+      for (const w of vwordsTemp) {
+        const t = vlineTemp + w + ' ';
+        if (tmpCtx.measureText(t).width > W - 200 && vlineTemp) { vlineTemp = w + ' '; vyTemp += 22; }
+        else vlineTemp = t;
+      }
+      const cols = 3, bH = 52, gapY = 7;
+      const totalMetrics = document.querySelectorAll('.metric').length;
+      const badgeRows = Math.ceil(totalMetrics / cols);
+      const badgesH = badgeRows * bH + (badgeRows - 1) * gapY;
+      const badgeStartYCalc = vyTemp + 20;
+      const H = badgeStartYCalc + badgesH + 50; // 50 for bottom bar
       const canvas = document.createElement('canvas');
       canvas.width = W * 2; canvas.height = H * 2;
       const ctx = canvas.getContext('2d');
@@ -1096,7 +1113,7 @@
 
       // Badges — start dynamically after verdict text ends
       const badgeStartY = vy + 20; // vy is the last Y of verdict text
-      const cols = 3, bW = Math.floor((W - 80 - 10 * (cols-1)) / cols), bH = 52, gapY = 7;
+      const bW = Math.floor((W - 80 - 10 * (cols-1)) / cols);
       metrics.forEach((m, i) => {
         const col = i % cols, row = Math.floor(i / cols);
         const bx = 40 + col * (bW + 10);

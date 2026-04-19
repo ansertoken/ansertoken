@@ -1038,7 +1038,7 @@
         const st = (m.querySelector('.metric-status')?.textContent || '').trim();
         const ok = m.querySelector('.status-pass');
         const fail = m.querySelector('.status-fail');
-        const icon = ok ? '\u2705' : fail ? '\U0001F6A8' : '\u26A0\uFE0F';
+        const icon = ok ? '✅' : fail ? '🚨' : '⚠️';
         return icon + ' ' + nm + ': ' + st;
       }).join('\n');
 

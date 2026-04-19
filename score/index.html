@@ -1039,149 +1039,103 @@
       const score      = parseInt(scoreNum);
       const accent     = score >= 80 ? '#1a7a1a' : score >= 50 ? '#8b6914' : '#8b0000';
 
-      // Build metric summary for share text
+      // Share text
       const metrics = Array.from(document.querySelectorAll('.metric'));
       const metricLines = metrics.map(m => {
-        const nm = (m.querySelector('.metric-name')?.textContent || '')
-                    .replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim();
-        const st = (m.querySelector('.metric-status')?.textContent || '').trim();
-        const ok = m.querySelector('.status-pass');
+        const nm   = (m.querySelector('.metric-name')?.textContent || '').replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim();
+        const st   = (m.querySelector('.metric-status')?.textContent || '').trim();
+        const ok   = m.querySelector('.status-pass');
         const fail = m.querySelector('.status-fail');
-        const icon = ok ? '✅' : fail ? '🚨' : '⚠️';
-        return icon + ' ' + nm + ': ' + st;
+        return (ok ? '✅' : fail ? '🚨' : '⚠️') + ' ' + nm + ': ' + st;
       }).join('\n');
 
-      // Share text — informative and engaging
       const shareText = '🪿 ' + tokenName + ' scored ' + scoreNum + '/100 on the ANSER Transparency Score\n\n'
-        + verdictTxt + '\n\n'
-        + metricLines + '\n\n'
-        + 'Verify any Solana token free before you buy:\nansertoken.xyz/score';
+        + verdictTxt + '\n\n' + metricLines + '\n\n'
+        + 'Verify any Solana token free:\nansertoken.xyz/score';
 
-      // ── Canvas image ──────────────────────────────────────────────────────
-      const W = 750, H = 420;
+      // Canvas — fixed layout, no overlap
+      const W = 800, H = 460;
       const canvas = document.createElement('canvas');
       canvas.width = W * 2; canvas.height = H * 2;
       const ctx = canvas.getContext('2d');
       ctx.scale(2, 2);
 
-      // Background
+      // Background + accent bar
       ctx.fillStyle = '#f5f3ee'; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 5);
 
-      // Left accent bar
-      ctx.fillStyle = accent; ctx.fillRect(0, 0, 6, H);
+      // Score top right
+      ctx.font = '900 80px Georgia,serif'; ctx.fillStyle = accent; ctx.textAlign = 'right';
+      ctx.fillText(scoreNum, W - 40, 90);
+      ctx.font = '12px monospace'; ctx.fillStyle = '#888';
+      ctx.fillText('/ 100', W - 40, 110);
+      ctx.font = '9px monospace';
+      ctx.fillText('ANSER TRANSPARENCY SCORE', W - 40, 126);
 
-      // Score (top right)
-      ctx.font = '900 96px Georgia, serif';
-      ctx.fillStyle = accent; ctx.textAlign = 'right';
-      ctx.fillText(scoreNum, W - 36, 100);
-      ctx.font = '13px monospace'; ctx.fillStyle = '#888';
-      ctx.fillText('/ 100', W - 36, 120);
-      ctx.font = '10px monospace';
-      ctx.fillText('ANSER TRANSPARENCY SCORE', W - 36, 136);
-
-      // Token name
+      // Token name top left
       ctx.textAlign = 'left';
-      ctx.font = '700 52px Georgia, serif'; ctx.fillStyle = '#0a0a0a';
-      ctx.fillText(tokenName.slice(0, 20), 48, 88);
-
-      // Address
-      ctx.font = '11px monospace'; ctx.fillStyle = '#aaa';
-      ctx.fillText(address.slice(0,20) + '...' + address.slice(-6), 48, 112);
+      ctx.font = '700 42px Georgia,serif'; ctx.fillStyle = '#0a0a0a';
+      ctx.fillText(tokenName.slice(0, 22), 40, 70);
+      ctx.font = '10px monospace'; ctx.fillStyle = '#aaa';
+      ctx.fillText(address.slice(0,22) + '...' + address.slice(-6), 40, 90);
 
       // Divider
-      ctx.fillStyle = '#d4d0c8'; ctx.fillRect(48, 140, W - 96, 1);
+      ctx.fillStyle = '#d4d0c8'; ctx.fillRect(40, 110, W - 80, 1);
 
-      // Verdict text (word wrap) — no label, just the text
-      ctx.font = '700 20px Georgia, serif'; ctx.fillStyle = '#0a0a0a';
-      const words = verdictTxt.split(' '); let line = '', y = 175;
-      for (const w of words) {
-        const t = line + w + ' ';
-        if (ctx.measureText(t).width > W - 280 && line) {
-          ctx.fillText(line.trim(), 48, y); line = w + ' '; y += 28;
-        } else line = t;
+      // Verdict text — fixed position, word wrap within bounds
+      ctx.font = '700 17px Georgia,serif'; ctx.fillStyle = '#0a0a0a'; ctx.textAlign = 'left';
+      const maxVW = W - 200;
+      const vwords = verdictTxt.split(' '); let vline = '', vy = 138;
+      for (const w of vwords) {
+        const t = vline + w + ' ';
+        if (ctx.measureText(t).width > maxVW && vline) {
+          ctx.fillText(vline.trim(), 40, vy); vline = w + ' '; vy += 22;
+        } else vline = t;
       }
-      ctx.fillText(line.trim(), 48, y);
+      ctx.fillText(vline.trim(), 40, vy);
 
-      // Metric badges — all metrics, up to 3 per row
-      const allMetrics = Array.from(document.querySelectorAll('.metric'));
-      const badgeCols = 2;
-      const badgeRows = Math.ceil(allMetrics.length / badgeCols);
-      const badgeH = 54, badgeGapX = 8, badgeGapY = 6;
-      const badgeW = Math.floor((W - 96 - badgeGapX * (badgeCols - 1)) / badgeCols);
-      const badgesBlockH = badgeRows * badgeH + (badgeRows - 1) * badgeGapY;
-      const startX = 48;
-      const startY = H - badgesBlockH - 44;
-
-      allMetrics.forEach((m, i) => {
-        const col = i % badgeCols, row = Math.floor(i / badgeCols);
-        const bx = startX + col * (badgeW + badgeGapX);
-        const by = startY + row * (badgeH + badgeGapY);
-
-        const nm  = (m.querySelector('.metric-name')?.textContent || '')
-                      .replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim().toUpperCase().slice(0,20);
-        const st  = (m.querySelector('.metric-status')?.textContent || '').trim().slice(0,18);
-        const isPass = m.querySelector('.status-pass');
-        const isFail = m.querySelector('.status-fail');
-        const clr = isPass ? '#1a7a1a' : isFail ? '#8b0000' : '#8b6914';
-
-        // Badge background
-        ctx.fillStyle = clr;
-        ctx.fillRect(bx, by, badgeW, badgeH);
-
-        // Subtle inner highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.fillRect(bx, by, badgeW, 2);
-
-        // Text
-        ctx.fillStyle = 'rgba(255,255,255,0.65)';
-        ctx.font = '700 9px monospace';
-        ctx.textAlign = 'left';
-        ctx.fillText(nm, bx + 12, by + 22);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '700 13px monospace';
-        ctx.fillText(st, bx + 12, by + 46);
+      // Badges — start at fixed Y below verdict (always 175)
+      const badgeStartY = 180;
+      const cols = 3, bW = Math.floor((W - 80 - 10 * (cols-1)) / cols), bH = 52, gapY = 7;
+      metrics.forEach((m, i) => {
+        const col = i % cols, row = Math.floor(i / cols);
+        const bx = 40 + col * (bW + 10);
+        const by = badgeStartY + row * (bH + gapY);
+        const nm  = (m.querySelector('.metric-name')?.textContent || '').replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim().toUpperCase().slice(0,20);
+        const st  = (m.querySelector('.metric-status')?.textContent || '').trim().slice(0,16);
+        const clr = m.querySelector('.status-pass') ? '#1a7a1a' : m.querySelector('.status-fail') ? '#8b0000' : '#8b6914';
+        ctx.fillStyle = clr; ctx.fillRect(bx, by, bW, bH);
+        ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.font = '700 8px monospace'; ctx.textAlign = 'left';
+        ctx.fillText(nm, bx+8, by+16);
+        ctx.fillStyle = '#fff'; ctx.font = '700 11px monospace';
+        ctx.fillText(st, bx+8, by+38);
       });
 
-      // Bottom branding bar
-      ctx.fillStyle = '#0a0a0a';
-      ctx.fillRect(0, H - 34, W, 34);
-      ctx.font = '700 12px monospace'; ctx.fillStyle = '#f5f3ee';
-      ctx.textAlign = 'left';
-      ctx.fillText('$ANSER · The contract doesn\'t lie.', 48, H - 11);
-      ctx.font = '11px monospace'; ctx.fillStyle = '#666';
-      ctx.textAlign = 'right';
-      ctx.fillText('ansertoken.xyz/score', W - 48, H - 11);
+      // Bottom bar
+      ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, H-30, W, 30);
+      ctx.font = '700 10px monospace'; ctx.fillStyle = '#f5f3ee'; ctx.textAlign = 'left';
+      ctx.fillText("$ANSER · The contract doesn\'t lie.", 40, H-10);
+      ctx.font = '10px monospace'; ctx.fillStyle = '#666'; ctx.textAlign = 'right';
+      ctx.fillText('ansertoken.xyz/score', W-40, H-10);
 
       // Share
       canvas.toBlob(async blob => {
         const file = new File([blob], 'anser-score.png', { type: 'image/png' });
-
-        // 1. Try with image file (mobile — WhatsApp, Telegram, etc.)
-        // 1. Try with image (mobile)
+        // 1. Try with image file (mobile)
         try {
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
-              text: shareText,
-              files: [file]
-            });
+            await navigator.share({ title: tokenName + ' — ANSER Score: ' + scoreNum + '/100', text: shareText, files: [file] });
             return;
           }
         } catch(e) {}
-
-        // 2. Text-only share (desktop Chrome/Edge — opens WhatsApp, Mail etc)
+        // 2. Text-only share (desktop — opens WhatsApp, Mail, etc)
         try {
           if (navigator.share) {
-            await navigator.share({
-              title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
-              text: shareText
-            });
+            await navigator.share({ title: tokenName + ' — ANSER Score: ' + scoreNum + '/100', text: shareText });
             return;
           }
         } catch(e) {}
-
-        // 3. Last resort: download image + copy text
+        // 3. Fallback: download + clipboard
         try { await navigator.clipboard.writeText(shareText); } catch(e) {}
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);

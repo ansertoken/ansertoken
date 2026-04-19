@@ -1099,20 +1099,16 @@
       // Divider
       ctx.fillStyle = '#d4d0c8'; ctx.fillRect(40, 110, W - 80, 1);
 
-      // Verdict text — fixed position, word wrap within bounds
-      ctx.font = '700 17px Georgia,serif'; ctx.fillStyle = '#0a0a0a'; ctx.textAlign = 'left';
-      const maxVW = W - 200;
-      const vwords = verdictTxt.split(' '); let vline = '', vy = 138;
-      for (const w of vwords) {
-        const t = vline + w + ' ';
-        if (ctx.measureText(t).width > maxVW && vline) {
-          ctx.fillText(vline.trim(), 40, vy); vline = w + ' '; vy += 22;
-        } else vline = t;
+      // Verdict — truncated to single line to guarantee no overlap
+      ctx.font = '700 14px Georgia,serif'; ctx.fillStyle = '#0a0a0a'; ctx.textAlign = 'left';
+      let vtext = verdictTxt;
+      while (vtext.length > 5 && ctx.measureText(vtext).width > W - 100) {
+        vtext = vtext.slice(0, -4) + '...';
       }
-      ctx.fillText(vline.trim(), 40, vy);
+      ctx.fillText(vtext, 40, 130);
 
-      // Badges — start dynamically after verdict text ends
-      const badgeStartY = vy + 20; // vy is the last Y of verdict text
+      // Badges — always at fixed Y 150, guaranteed no overlap
+      const badgeStartY = 150;
       const bW = Math.floor((W - 80 - 10 * (cols-1)) / cols);
       metrics.forEach((m, i) => {
         const col = i % cols, row = Math.floor(i / cols);

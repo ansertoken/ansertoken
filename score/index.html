@@ -1048,10 +1048,10 @@
       const shareText = '🪿 ' + tokenName + ' scored ' + scoreNum + '/100 on the ANSER Transparency Score\n\n'
         + verdictTxt + '\n\n'
         + metricLines + '\n\n'
-        + 'Verify any Solana token free before you buy:\nansertoken.xyz/score.html';
+        + 'Verify any Solana token free before you buy:\nansertoken.xyz/score';
 
       // ── Canvas image ──────────────────────────────────────────────────────
-      const W = 1000, H = 520;
+      const W = 1000, H = 480;
       const canvas = document.createElement('canvas');
       canvas.width = W * 2; canvas.height = H * 2;
       const ctx = canvas.getContext('2d');
@@ -1103,7 +1103,7 @@
       const badgeW = Math.floor((W - 96 - badgeGapX * (badgeCols - 1)) / badgeCols);
       const badgesBlockH = badgeRows * badgeH + (badgeRows - 1) * badgeGapY;
       const startX = 48;
-      const startY = H - badgesBlockH - 50;
+      const startY = H - badgesBlockH - 44;
 
       allMetrics.forEach((m, i) => {
         const col = i % badgeCols, row = Math.floor(i / badgeCols);
@@ -1144,7 +1144,7 @@
       ctx.fillText('$ANSER · The contract doesn\'t lie.', 48, H - 11);
       ctx.font = '11px monospace'; ctx.fillStyle = '#666';
       ctx.textAlign = 'right';
-      ctx.fillText('ansertoken.xyz/score.html', W - 48, H - 11);
+      ctx.fillText('ansertoken.xyz/score', W - 48, H - 11);
 
       // Share
       canvas.toBlob(async blob => {

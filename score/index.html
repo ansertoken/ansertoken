@@ -586,6 +586,11 @@
     }
 
     async function getHolderConcentration(address) {
+      // Cache per address in session to ensure consistency
+      const cacheKey = 'anser_conc_' + address;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) return JSON.parse(cached);
+
       const supplyRes = await rpc('getTokenSupply', [address]);
       const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
       const decimals  = supplyRes?.value?.decimals || 0;
@@ -630,7 +635,9 @@
       const top20pct = supply > 0 ? Math.round((top20sum / supply) * 100) : 100;
       const top1pct  = supply > 0 ? Math.round((top1amt  / supply) * 100) : 100;
 
-      return { pct: top20pct, top1pct, count: accounts.length };
+      const result = { pct: top20pct, top1pct, count: accounts.length };
+      try { sessionStorage.setItem(cacheKey, JSON.stringify(result)); } catch(e) {}
+      return result;
     }
 
     async function getContractAge(address) {
@@ -1051,7 +1058,7 @@
         + 'Verify any Solana token free before you buy:\nansertoken.xyz/score';
 
       // ── Canvas image ──────────────────────────────────────────────────────
-      const W = 1000, H = 440;
+      const W = 750, H = 420;
       const canvas = document.createElement('canvas');
       canvas.width = W * 2; canvas.height = H * 2;
       const ctx = canvas.getContext('2d');
@@ -1066,11 +1073,11 @@
       // Score (top right)
       ctx.font = '900 96px Georgia, serif';
       ctx.fillStyle = accent; ctx.textAlign = 'right';
-      ctx.fillText(scoreNum, W - 48, 105);
+      ctx.fillText(scoreNum, W - 36, 100);
       ctx.font = '13px monospace'; ctx.fillStyle = '#888';
-      ctx.fillText('/ 100', W - 48, 125);
+      ctx.fillText('/ 100', W - 36, 120);
       ctx.font = '10px monospace';
-      ctx.fillText('ANSER TRANSPARENCY SCORE', W - 48, 142);
+      ctx.fillText('ANSER TRANSPARENCY SCORE', W - 36, 136);
 
       // Token name
       ctx.textAlign = 'left';
@@ -1097,7 +1104,7 @@
 
       // Metric badges — all metrics, up to 3 per row
       const allMetrics = Array.from(document.querySelectorAll('.metric'));
-      const badgeCols = 3;
+      const badgeCols = 2;
       const badgeRows = Math.ceil(allMetrics.length / badgeCols);
       const badgeH = 54, badgeGapX = 8, badgeGapY = 6;
       const badgeW = Math.floor((W - 96 - badgeGapX * (badgeCols - 1)) / badgeCols);
@@ -1151,38 +1158,30 @@
         const file = new File([blob], 'anser-score.png', { type: 'image/png' });
 
         // 1. Try with image file (mobile — WhatsApp, Telegram, etc.)
-        // Mobile: share with image file
-        const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
-        if (isMobile) {
-          try {
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              await navigator.share({
-                title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
-                text: shareText,
-                files: [file]
-              });
-              return;
-            }
-          } catch(e) {}
-        }
+        // 1. Try with image (mobile)
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
+              text: shareText,
+              files: [file]
+            });
+            return;
+          }
+        } catch(e) {}
 
-        // Desktop + mobile fallback: text-only share (opens apps on both)
+        // 2. Text-only share (desktop Chrome/Edge — opens WhatsApp, Mail etc)
         try {
           if (navigator.share) {
             await navigator.share({
               title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
               text: shareText
             });
-            // Also trigger image download alongside share
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'anser-score-' + tokenName.toLowerCase().replace(/\s+/g,'-') + '.png';
-            a.click();
             return;
           }
         } catch(e) {}
 
-        // Last resort: clipboard + download
+        // 3. Last resort: download image + copy text
         try { await navigator.clipboard.writeText(shareText); } catch(e) {}
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);

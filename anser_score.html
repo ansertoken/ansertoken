@@ -1017,93 +1017,132 @@
     }
 
 
-    // Share Verdict
+    // Share Score
     function shareVerdict() {
       const tokenName  = document.querySelector('.token-info h2')?.textContent?.trim() || 'Unknown';
       const scoreNum   = document.querySelector('.score-number')?.textContent?.trim() || '?';
       const verdictTxt = document.querySelector('.verdict-text')?.textContent?.trim() || '';
       const address    = document.querySelector('.token-address')?.textContent?.trim().split(' ')[0] || '';
-      const subtitle   = document.querySelector('.score-number')?.parentElement?.querySelector('div:last-child')?.textContent?.trim() || '';
       const score      = parseInt(scoreNum);
       const accent     = score >= 80 ? '#1a7a1a' : score >= 50 ? '#8b6914' : '#8b0000';
 
-      const W = 900, H = 500;
+      // Build metric summary for share text
+      const metrics = Array.from(document.querySelectorAll('.metric'));
+      const metricLines = metrics.slice(0, 4).map(m => {
+        const nm = (m.querySelector('.metric-name')?.textContent || '')
+                    .replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim();
+        const st = (m.querySelector('.metric-status')?.textContent || '').trim();
+        const ok = m.querySelector('.status-pass');
+        return (ok ? '✅' : '⚠️') + ' ' + nm + ': ' + st;
+      }).join('\n');
+
+      // Share text — informative and engaging
+      const shareText = '🪿 ' + tokenName + ' scored ' + scoreNum + '/100 on the ANSER Transparency Score\n\n'
+        + verdictTxt + '\n\n'
+        + metricLines + '\n\n'
+        + 'Verify any Solana token free before you buy:\nansertoken.xyz/anser_score.html';
+
+      // ── Canvas image ──────────────────────────────────────────────────────
+      const W = 1000, H = 520;
       const canvas = document.createElement('canvas');
       canvas.width = W * 2; canvas.height = H * 2;
       const ctx = canvas.getContext('2d');
       ctx.scale(2, 2);
 
-      // Background + top bar
+      // Background
       ctx.fillStyle = '#f5f3ee'; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 5);
+
+      // Left accent bar
+      ctx.fillStyle = accent; ctx.fillRect(0, 0, 6, H);
 
       // Score (top right)
-      ctx.font = '900 100px "Georgia", serif';
+      ctx.font = '900 108px Georgia, serif';
       ctx.fillStyle = accent; ctx.textAlign = 'right';
-      ctx.fillText(scoreNum, W - 48, 116);
-      ctx.font = '13px monospace'; ctx.fillStyle = '#888';
-      ctx.fillText('/ 100', W - 48, 138);
-      if (subtitle) {
-        ctx.font = '10px monospace';
-        ctx.fillText(subtitle, W - 48, 158);
-      }
+      ctx.fillText(scoreNum, W - 48, 120);
+      ctx.font = '14px monospace'; ctx.fillStyle = '#888';
+      ctx.fillText('/ 100', W - 48, 144);
+      ctx.font = '11px monospace';
+      ctx.fillText('ANSER TRANSPARENCY SCORE', W - 48, 165);
 
       // Token name
       ctx.textAlign = 'left';
-      ctx.font = '700 46px "Georgia", serif'; ctx.fillStyle = '#0a0a0a';
-      ctx.fillText(tokenName.slice(0, 24), 48, 84);
-      ctx.font = '11px monospace'; ctx.fillStyle = '#888';
-      ctx.fillText(address.slice(0, 24) + '...' + address.slice(-6), 48, 108);
+      ctx.font = '700 52px Georgia, serif'; ctx.fillStyle = '#0a0a0a';
+      ctx.fillText(tokenName.slice(0, 20), 48, 88);
+
+      // Address
+      ctx.font = '11px monospace'; ctx.fillStyle = '#aaa';
+      ctx.fillText(address.slice(0,20) + '...' + address.slice(-6), 48, 112);
 
       // Divider
       ctx.fillStyle = '#d4d0c8'; ctx.fillRect(48, 140, W - 96, 1);
 
-      // Verdict label + text
+      // Verdict label
       ctx.font = '700 10px monospace'; ctx.fillStyle = '#888';
-      ctx.textAlign = 'left'; ctx.fillText('VERDICT', 48, 168);
-      ctx.font = '700 19px "Georgia", serif'; ctx.fillStyle = '#0a0a0a';
-      // Word wrap
-      const words = verdictTxt.split(' '); let line = '', y = 195;
+      ctx.fillText('VERDICT', 48, 168);
+
+      // Verdict text (word wrap)
+      ctx.font = '700 20px Georgia, serif'; ctx.fillStyle = '#0a0a0a';
+      const words = verdictTxt.split(' '); let line = '', y = 196;
       for (const w of words) {
         const t = line + w + ' ';
         if (ctx.measureText(t).width > W - 280 && line) {
-          ctx.fillText(line.trim(), 48, y); line = w + ' '; y += 26;
+          ctx.fillText(line.trim(), 48, y); line = w + ' '; y += 28;
         } else line = t;
       }
       ctx.fillText(line.trim(), 48, y);
 
-      // Metrics badges (up to 6, 2 rows of 3)
-      const metrics = Array.from(document.querySelectorAll('.metric')).slice(0, 6);
-      const badgeW = 258, badgeH = 52, startY = H - 140;
-      metrics.forEach((m, i) => {
-        const col = i % 3, row = Math.floor(i / 3);
-        const bx = 48 + col * (badgeW + 12);
+      // Metric badges — 3 per row, max 6, bigger and more readable
+      const badgeW = 290, badgeH = 64, cols = 3;
+      const totalBadgesW = cols * badgeW + (cols - 1) * 10;
+      const startX = 48;
+      const startY = H - 160;
+
+      metrics.slice(0, 6).forEach((m, i) => {
+        const col = i % cols, row = Math.floor(i / cols);
+        const bx = startX + col * (badgeW + 10);
         const by = startY + row * (badgeH + 8);
+
         const nm  = (m.querySelector('.metric-name')?.textContent || '')
-                      .replace(/VERIFIED|OBSERVED|INDICATIVE/g, '').trim().toUpperCase().slice(0, 18);
-        const st  = (m.querySelector('.metric-status')?.textContent || '').trim().slice(0, 16);
-        const clr = m.querySelector('.status-pass') ? '#1a7a1a'
-                  : m.querySelector('.status-fail') ? '#8b0000' : '#8b6914';
-        ctx.fillStyle = clr; ctx.fillRect(bx, by, badgeW, badgeH);
-        ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(bx, by, badgeW, 2);
-        ctx.fillStyle = '#fff';
-        ctx.font = '700 9px monospace'; ctx.textAlign = 'left';
-        ctx.fillText(nm, bx + 10, by + 18);
-        ctx.font = '10px monospace';
-        ctx.fillText(st, bx + 10, by + 36);
+                      .replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim().toUpperCase().slice(0,20);
+        const st  = (m.querySelector('.metric-status')?.textContent || '').trim().slice(0,18);
+        const isPass = m.querySelector('.status-pass');
+        const isFail = m.querySelector('.status-fail');
+        const clr = isPass ? '#1a7a1a' : isFail ? '#8b0000' : '#8b6914';
+
+        // Badge background
+        ctx.fillStyle = clr;
+        ctx.fillRect(bx, by, badgeW, badgeH);
+
+        // Subtle inner highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(bx, by, badgeW, 2);
+
+        // Text
+        ctx.fillStyle = 'rgba(255,255,255,0.65)';
+        ctx.font = '700 9px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(nm, bx + 12, by + 22);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 13px monospace';
+        ctx.fillText(st, bx + 12, by + 46);
       });
 
-      // Branding bar
-      ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, H - 32, W, 32);
-      ctx.font = '700 11px monospace'; ctx.fillStyle = '#f5f3ee';
-      ctx.textAlign = 'left'; ctx.fillText('$ANSER TRANSPARENCY SCORE', 48, H - 11);
-      ctx.font = '10px monospace'; ctx.fillStyle = '#888';
-      ctx.textAlign = 'right'; ctx.fillText('ansertoken.xyz/anser_score.html', W - 48, H - 11);
+      // Bottom branding bar
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, H - 34, W, 34);
+      ctx.font = '700 12px monospace'; ctx.fillStyle = '#f5f3ee';
+      ctx.textAlign = 'left';
+      ctx.fillText('$ANSER · The contract doesn\'t lie.', 48, H - 11);
+      ctx.font = '11px monospace'; ctx.fillStyle = '#666';
+      ctx.textAlign = 'right';
+      ctx.fillText('ansertoken.xyz/anser_score.html', W - 48, H - 11);
 
+      // Share
       canvas.toBlob(blob => {
         const shareData = {
           title: tokenName + ' — ANSER Score: ' + scoreNum + '/100',
-          text: verdictTxt + '\n\nVerify any Solana token free: ansertoken.xyz/anser_score.html',
+          text: shareText,
           files: [new File([blob], 'anser-score.png', { type: 'image/png' })]
         };
         if (navigator.canShare && navigator.canShare(shareData)) {
@@ -1111,7 +1150,7 @@
         } else {
           const a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
-          a.download = 'anser-score-' + tokenName.toLowerCase().replace(/\s+/g, '-') + '.png';
+          a.download = 'anser-score-' + tokenName.toLowerCase().replace(/\s+/g,'-') + '.png';
           a.click();
         }
       }, 'image/png');

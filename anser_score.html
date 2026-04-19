@@ -468,7 +468,7 @@
       <input type="text" id="contractInput" placeholder="Enter Solana contract address..." maxlength="44">
       <button onclick="analyzeToken()">ANALYZE →</button>
     </div>
-    <p class="search-hint">Example: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v (USDC)</p>
+    <p class="search-hint">Example: DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263 (BONK)</p>
   </div>
 
   <hr class="divider">
@@ -1001,14 +1001,14 @@
                 '<div style="padding:1.5rem 0 0.5rem">' +
         '<button class="share-btn" onclick="shareVerdict()" id="shareBtn">' +
           '<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>' +
-          'SHARE VERDICT →' +
+          'SHARE SCORE →' +
         '</button>' +
         '</div>' +
 '<div class="results-footer">' +
           '<p><strong>VERIFIED</strong> = on-chain binary facts. ' +
           '<strong>OBSERVED</strong> = real data, gameable (can be gamed). ' +
           '<strong>INDICATIVE</strong> = useful signal, not conclusive. ' +
-          '<strong>LARGE TOKEN / DEEP SCAN</strong> = metric unavailable for high-activity tokens, verify manually. '+ '<strong>TRAP</strong> = exit risk, price likely collapses on sells. '+ 'Not financial advice.</p>' +
+          '<strong>LARGE TOKEN / DEEP SCAN</strong> = metric unavailable for high-activity tokens — verify manually. '+ '<strong>TRAP</strong> = exit risk, price likely collapses on sells. '+ '<strong>HIGH RISK / CRITICAL</strong> = wallet concentration dangerously high. '+ '<strong>MINTABLE / FREEZEABLE</strong> = creator retains dangerous token controls. '+ '<strong>SOLD / MOVED</strong> = deployer no longer holds tokens — verify intent. '+ 'Not financial advice.</p>' +
           '<p style="margin-top:0.5rem;">The goose doesn\'t promise anything. That\'s why you can trust it. — ' +
           '<a href="https://ansertoken.xyz" style="color:var(--gray)">ansertoken.xyz</a></p>' +
         '</div>';

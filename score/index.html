@@ -1054,7 +1054,7 @@
         + 'Verify any Solana token free:\nansertoken.xyz/score';
 
       // Canvas — fixed layout, no overlap
-      const W = 800, H = 460;
+      const W = 800, H = 520;
       const canvas = document.createElement('canvas');
       canvas.width = W * 2; canvas.height = H * 2;
       const ctx = canvas.getContext('2d');
@@ -1094,8 +1094,8 @@
       }
       ctx.fillText(vline.trim(), 40, vy);
 
-      // Badges — start at fixed Y below verdict (always 175)
-      const badgeStartY = 180;
+      // Badges — start dynamically after verdict text ends
+      const badgeStartY = vy + 20; // vy is the last Y of verdict text
       const cols = 3, bW = Math.floor((W - 80 - 10 * (cols-1)) / cols), bH = 52, gapY = 7;
       metrics.forEach((m, i) => {
         const col = i % cols, row = Math.floor(i / cols);

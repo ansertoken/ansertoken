@@ -489,7 +489,7 @@
       <div class="criteria-item">
         <div class="criteria-weight">20</div>
         <div class="criteria-name">Holder Distribution</div>
-        <div class="criteria-desc">What % of supply do the top 10 wallets hold? High concentration is a red flag — though wallet splitting can game this metric.</div>
+        <div class="criteria-desc">What % of supply do the top 20 wallets hold? High concentration is a red flag — though wallet splitting can game this metric.</div>
       </div>
       <div class="criteria-item">
         <div class="criteria-weight">15</div>
@@ -589,39 +589,44 @@
       const supplyRes = await rpc('getTokenSupply', [address]);
       const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
       const decimals  = supplyRes?.value?.decimals || 0;
-      let accounts = [];
 
-      // Try DAS first (returns up to 20 sorted by amount)
+      // Run both methods in parallel — take whichever returns valid data first
+      const dasPromise = rpc('getTokenAccounts', {
+        mint: address, limit: 20,
+        sortBy: { sortBy: 'amount', sortDirection: 'desc' }
+      }).then(das => {
+        const accs = (das?.token_accounts || []).map(a => ({
+          address: a.address,
+          uiAmount: parseFloat(a.amount || 0) / Math.pow(10, decimals)
+        }));
+        if (!accs.length) throw new Error('empty');
+        return accs;
+      });
+
+      const rpcPromise = rpc('getTokenLargestAccounts', [address]).then(res => {
+        const accs = (res?.value || []).map(a => ({
+          address: a.address,
+          uiAmount: parseFloat(a.uiAmount || 0)
+        }));
+        if (!accs.length) throw new Error('empty');
+        return accs;
+      });
+
+      // Use Promise.any — first successful result wins
+      let accounts;
       try {
-        const das = await rpc('getTokenAccounts', {
-          mint: address, limit: 20,
-          sortBy: { sortBy: 'amount', sortDirection: 'desc' }
-        });
-        if (das?.token_accounts?.length) {
-          accounts = das.token_accounts.map(a => ({
-            address: a.address,
-            uiAmount: parseFloat(a.amount || 0) / Math.pow(10, decimals)
-          }));
-        }
-      } catch {}
-
-      // Fallback to standard RPC
-      if (!accounts.length) {
-        try {
-          const largest = await rpc('getTokenLargestAccounts', [address]);
-          accounts = (largest?.value || []).map(a => ({
-            address: a.address,
-            uiAmount: parseFloat(a.uiAmount || 0)
-          }));
-        } catch {}
+        accounts = await Promise.any([dasPromise, rpcPromise]);
+      } catch {
+        throw new Error('Could not fetch holder data');
       }
 
-      if (!accounts.length) throw new Error('Could not fetch holder data');
+      // Sort descending to ensure top holders are first
+      accounts.sort((a, b) => b.uiAmount - a.uiAmount);
 
-      const top20sum  = accounts.reduce((s, h) => s + h.uiAmount, 0);
-      const top1amt   = accounts[0]?.uiAmount || 0;
-      const top20pct  = supply > 0 ? Math.round((top20sum / supply) * 100) : 100;
-      const top1pct   = supply > 0 ? Math.round((top1amt  / supply) * 100) : 100;
+      const top20sum = accounts.reduce((s, h) => s + h.uiAmount, 0);
+      const top1amt  = accounts[0]?.uiAmount || 0;
+      const top20pct = supply > 0 ? Math.round((top20sum / supply) * 100) : 100;
+      const top1pct  = supply > 0 ? Math.round((top1amt  / supply) * 100) : 100;
 
       return { pct: top20pct, top1pct, count: accounts.length };
     }

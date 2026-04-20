@@ -806,7 +806,15 @@
       ]);
       if (authRes.status === 'rejected') {
         document.getElementById('loading').classList.remove('visible');
-        document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Could not fetch data: ${authRes.reason?.message || 'Unknown error'}</div></div>`;
+        // Reconciliation line
+      const hasHolderRisk = conc && conc.pct >= 40;
+      const reconcile = (score >= 75 && hasHolderRisk)
+        ? '<div style="font-size:0.75rem;color:var(--yellow);padding:0.5rem 0 0.75rem;letter-spacing:0.03em;">'
+          + '⚠ Structurally sound, but distribution risk present — verify top wallet concentration before investing.'
+          + '</div>'
+        : '';
+
+      document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Could not fetch data: ${authRes.reason?.message || 'Unknown error'}</div></div>`;
         document.getElementById('results').classList.add('visible');
         return;
       }
@@ -822,7 +830,15 @@
         });
       } catch (err) {
         document.getElementById('loading').classList.remove('visible');
-        document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Render error: ${err.message}</div></div>`;
+        // Reconciliation line
+      const hasHolderRisk = conc && conc.pct >= 40;
+      const reconcile = (score >= 75 && hasHolderRisk)
+        ? '<div style="font-size:0.75rem;color:var(--yellow);padding:0.5rem 0 0.75rem;letter-spacing:0.03em;">'
+          + '⚠ Structurally sound, but distribution risk present — verify top wallet concentration before investing.'
+          + '</div>'
+        : '';
+
+      document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Render error: ${err.message}</div></div>`;
         document.getElementById('results').classList.add('visible');
         console.error(err);
       }
@@ -844,11 +860,12 @@
       const isAnser = address === ANSER_MINT;
       const score   = isAnser ? 95 : calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
       const scoreClass   = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
-      const verdictClass = score >= 80 ? 'pass' : score >= 50 ? 'partial' : 'fail';
-      const verdictText  = score >= 80
-        ? 'VERIFIED — This token meets the transparency standard.'
-        : score >= 50 ? 'PARTIAL — Some transparency measures in place, but risks remain.'
-        : 'NOT VERIFIED — Significant transparency failures detected.';
+      const verdictClass = score >= 90 ? 'pass' : score >= 75 ? 'pass' : score >= 60 ? 'partial' : score >= 40 ? 'fail' : 'fail';
+      const verdictText  = score >= 90 ? 'PRISTINE — Exceptional transparency. All signals positive.'
+        : score >= 75 ? 'STRUCTURALLY SOUND — Strong fundamentals. Minor risks noted.'
+        : score >= 60 ? 'PARTIAL RISK — Some transparency measures in place, but risks remain.'
+        : score >= 40 ? 'HIGH RISK — Significant transparency failures detected.'
+        : 'CRITICAL — Extreme risk. Do not invest without thorough independent research.';
 
       const mintM = {
         name: 'Mint Authority ' + conf('verified'),
@@ -989,6 +1006,14 @@
           + '</div>'
         : '';
 
+      // Reconciliation line
+      const hasHolderRisk = conc && conc.pct >= 40;
+      const reconcile = (score >= 75 && hasHolderRisk)
+        ? '<div style="font-size:0.75rem;color:var(--yellow);padding:0.5rem 0 0.75rem;letter-spacing:0.03em;">'
+          + '⚠ Structurally sound, but distribution risk present — verify top wallet concentration before investing.'
+          + '</div>'
+        : '';
+
       document.getElementById('results').innerHTML =
         '<div class="score-header">' +
           '<div class="token-info">' +
@@ -1009,6 +1034,7 @@
         '</div>' +
         (!conc ? '<div style="font-size:0.7rem;color:var(--gray);margin-bottom:1rem;padding:0.5rem 0;border-bottom:1px solid var(--light)">⚠ Score reduced — holder distribution unavailable for this token.</div>' : '') +
         centralizedBanner +
+        reconcile +
         '<p class="metrics-title">Metrics breakdown</p>' +
         metricsHtml +
                 '<div style="padding:1.5rem 0 0.5rem">' +

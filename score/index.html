@@ -2,6 +2,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/favicon.png">
   <title>ANSER Transparency Score</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -450,6 +452,7 @@
 
   <header>
     <a href="https://ansertoken.xyz" class="logo">
+      <img src="/goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;margin-right:0.5rem;vertical-align:middle;">
       $ANSER
       <span>TRANSPARENCY SCORE</span>
     </a>
@@ -525,6 +528,7 @@
       <ul style="list-style:none;padding:0;margin-top:0.75rem;">
         <li style="padding:0.2rem 0;">🚨 <strong>Top-20 wallets control ≥80% of supply</strong> → Score capped at 49 (HIGH RISK)</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>Top-20 wallets control ≥60% of supply</strong> → Score capped at 65 (PARTIAL RISK)</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Holder distribution unavailable</strong> (high-activity tokens) → Score capped at 70 — concentration risk unverifiable</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Mint authority still active</strong> → Score capped at 60</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>Freeze authority still active</strong> → Score capped at 70</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Dangerous Token-2022 extensions detected</strong> → Score capped at 40</li>
@@ -875,10 +879,13 @@
       // Cap score based on critical signals — one red flag limits total trust
       if (!isAnser) {
         const holderPct = conc?.pct || 0;
-        if (holderPct >= 80)       score = Math.min(score, 49); // CRITICAL concentration → max 49
-        else if (holderPct >= 60)  score = Math.min(score, 65); // HIGH RISK concentration → max 65
-        if (!auth.mintAuthorityRevoked)   score = Math.min(score, 60); // Active mint → max 60
-        if (!auth.freezeAuthorityRevoked) score = Math.min(score, 70); // Active freeze → max 70
+        if (holderPct >= 80)       score = Math.min(score, 49);
+        else if (holderPct >= 60)  score = Math.min(score, 65);
+        // When holder data unavailable for large-cap tokens, cap at 70
+        // — we cannot verify the most important concentration risk
+        else if (!conc && liquidity && liquidity.liquidityUsd > 100000) score = Math.min(score, 70);
+        if (!auth.mintAuthorityRevoked)   score = Math.min(score, 60);
+        if (!auth.freezeAuthorityRevoked) score = Math.min(score, 70);
         if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) score = Math.min(score, 40);
       }
       const scoreClass   = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';

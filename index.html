@@ -47,6 +47,8 @@
       letter-spacing: 0.15em;
       text-decoration: none;
       color: var(--black);
+      display: flex;
+      align-items: center;
     }
 
     nav .links {
@@ -433,7 +435,10 @@
 
   <!-- NAV -->
   <nav>
-    <a href="#" class="logo">$ANSER 🪿</a>
+    <a href="#" class="logo">
+      <img src="goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;margin-right:0.5rem;vertical-align:middle;">
+      $ANSER
+    </a>
     <ul class="links">
       <li><a href="#about">About</a></li>
       <li><a href="#tokenomics">Tokenomics</a></li>

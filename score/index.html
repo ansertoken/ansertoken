@@ -1224,17 +1224,20 @@
     });
   </script>
 
+  
+<script>
   // CÓDIGO NUEVO: Lee el enlace de Telegram y auto-escanea
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const contractFromUrl = urlParams.get('ca');
-      
-      if (contractFromUrl) {
-        document.getElementById('contractInput').value = contractFromUrl;
-        // Un pequeño retraso para asegurar que la web cargó bien
-        setTimeout(() => { analyzeToken(); }, 300); 
-      }
-    });
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const contractFromUrl = urlParams.get('ca');
+    
+    if (contractFromUrl) {
+      document.getElementById('contractInput').value = contractFromUrl;
+      // Un pequeño retraso para asegurar que la web cargó bien
+      setTimeout(() => { analyzeToken(); }, 300); 
+    }
+  });
+</script>
 
   
 </body>

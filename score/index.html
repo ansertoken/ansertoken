@@ -4,7 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/favicon.png">
-  <title>ANSER Transparency Score</title>
+  <title>The ANSER | Transparency Score</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -452,15 +452,15 @@
 
   <header>
     <a href="https://theanser.app" class="logo">
-      <img src="/goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;margin-right:0.5rem;vertical-align:middle;">
-      $ANSER
+      <img src="/goose.png" alt="The ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;margin-right:0.5rem;vertical-align:middle;">
+      The ANSER
       <span>TRANSPARENCY SCORE</span>
     </a>
     <a href="https://theanser.app" class="back-link">← theanser.app</a>
   </header>
 
   <div class="hero">
-    <p class="hero-label">Powered by $ANSER · Solana</p>
+    <p class="hero-label">Powered by The ANSER · Solana</p>
     <h1>The contract<br>doesn't lie.</h1>
     <p>Enter any Solana token contract address and the goose will tell you the truth. No promises. No opinions. Just on-chain facts.</p>
   </div>
@@ -538,10 +538,10 @@
   </div>
 
   <footer>
-    <p class="footer-text">$ANSER · Solana · 2026 · The goose doesn't promise anything.</p>
+    <p class="footer-text">The ANSER · Solana · 2026 · The goose doesn't promise anything.</p>
     <div class="footer-links">
-      <a href="https://x.com/anser_token" target="_blank">X</a>
-      <a href="https://t.me/ansertoken" target="_blank">Telegram</a>
+      <a href="https://x.com/theanserapp" target="_blank">X</a>
+      <a href="https://t.me/theanser" target="_blank">Telegram</a>
       <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank">Whitepaper</a>
     </div>
   </footer>
@@ -603,7 +603,6 @@
     }
 
     async function getHolderConcentration(address) {
-      // Cache per address in session to ensure consistency
       const cacheKey = 'anser_conc_' + address;
       const cached = sessionStorage.getItem(cacheKey);
       if (cached) return JSON.parse(cached);
@@ -612,10 +611,8 @@
       const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
       const decimals  = supplyRes?.value?.decimals || 0;
 
-      // Try DAS first (handles large tokens), fallback to standard RPC
       let accounts = [];
 
-      // DAS with timeout — most reliable for large tokens
       try {
         const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
         const das = await Promise.race([
@@ -631,7 +628,6 @@
         }));
       } catch {}
 
-      // Fallback: standard RPC (works for smaller tokens)
       if (!accounts.length) {
         try {
           const res = await rpc('getTokenLargestAccounts', [address]);
@@ -644,7 +640,6 @@
 
       if (!accounts.length) throw new Error('Could not fetch holder data');
 
-      // Sort descending to ensure top holders are first
       accounts.sort((a, b) => b.uiAmount - a.uiAmount);
 
       const top20sum = accounts.reduce((s, h) => s + h.uiAmount, 0);
@@ -668,14 +663,12 @@
     }
 
     async function getLiquidityInfo(address) {
-      // Jupiter for price + market cap, DexScreener for pool breakdown
       try {
         const [jupRes, dexRes] = await Promise.allSettled([
           fetch(`https://api.jup.ag/price/v2?ids=${address}&showExtraInfo=true`).then(r => r.json()),
           fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`).then(r => r.json())
         ]);
 
-        // DexScreener pools
         const pairs = dexRes.status === 'fulfilled'
           ? (dexRes.value.pairs || []).filter(p => p.chainId === 'solana')
           : [];
@@ -686,17 +679,14 @@
 
         if (!main && (!jupRes.value?.data?.[address])) return { found: false };
 
-        // Jupiter: price + derived market cap
         let price = null, marketCap = null, supply = null;
         if (jupRes.status === 'fulfilled') {
           const jupData = jupRes.value?.data?.[address];
           price = jupData?.price ? parseFloat(jupData.price) : null;
-          // Jupiter extraInfo has contextSlot; mcap = price * supply (we get supply separately)
         }
 
-        // Prefer circulating market cap over FDV — more accurate for ratio
         const mcap = main?.marketCap || pairs.find(p => p.marketCap)?.marketCap || null;
-        const fdv  = main?.fdv       || pairs.find(p => p.fdv)?.fdv             || null;
+        const fdv  = main?.fdv        || pairs.find(p => p.fdv)?.fdv               || null;
         const capToUse = mcap || fdv || null;
 
         if (capToUse && totalLiquidity) {
@@ -728,7 +718,6 @@
 
     async function getCreatorRisk(address) {
       try {
-        // Try DAS API first — returns creator directly for many tokens
         let deployer = null;
         try {
           const asset = await rpc('getAsset', { id: address });
@@ -737,7 +726,6 @@
             || null;
         } catch {}
 
-        // Fallback: find deployer from first transaction (only works for low-activity tokens)
         if (!deployer) {
           const sigs = await rpc('getSignaturesForAddress', [address, { limit: 1000 }]);
           if (!sigs?.length || sigs.length >= 1000) return { unknown: true };
@@ -752,7 +740,6 @@
 
         if (!deployer) return { unknown: true };
 
-        // Check if deployer still holds tokens
         const [tokenAccts, supplyRes] = await Promise.all([
           rpc('getTokenAccountsByOwner', [deployer, { mint: address }, { encoding: 'jsonParsed' }]),
           rpc('getTokenSupply', [address])
@@ -770,29 +757,35 @@
       if (!auth.isToken2022)                            pts += 10;
       else if (auth.dangerousExtensions.length === 0)   pts += 8;
       else if (auth.transferFeeBps !== null && auth.transferFeeBps < 100) pts += 3;
+      
       if (conc) {
-        if      (conc.pct < 20) pts += 20;
-        else if (conc.pct < 40) pts += 14;
-        else if (conc.pct < 60) pts += 7;
-        else if (conc.pct < 80) pts += 3;
+        // AJUSTE: Más permisivo con tokens con >1M de liquidez (Exchanges/Pools)
+        const isEstablished = liquidity?.liquidityUsd > 1000000;
+        const thresholdMultiplier = isEstablished ? 1.5 : 1;
+        const p = conc.pct;
+
+        if      (p < (20 * thresholdMultiplier)) pts += 20;
+        else if (p < (40 * thresholdMultiplier)) pts += 14;
+        else if (p < (60 * thresholdMultiplier)) pts += 7;
+        else if (p < (80 * thresholdMultiplier)) pts += 3;
       }
+
       if (liquidity?.found) {
-        const isSmallCap = liquidity.marketCap && liquidity.marketCap < 10000000; // < $10M
+        const isSmallCap = liquidity.marketCap && liquidity.marketCap < 10000000;
         if (isSmallCap && liquidity.liqRatio !== null) {
-          // Small cap: LP/MCAP ratio is the exit-risk signal that matters
           if      (liquidity.liqRatio >= 20) pts += 15;
           else if (liquidity.liqRatio >= 10) pts += 12;
           else if (liquidity.liqRatio >= 3)  pts += 6;
-          else                                pts += 1;
+          else                               pts += 1;
         } else {
-          // Large cap or unknown mcap: absolute liquidity is sufficient signal
           if      (liquidity.liquidityUsd > 1000000) pts += 15;
           else if (liquidity.liquidityUsd > 200000)  pts += 12;
           else if (liquidity.liquidityUsd > 50000)   pts += 8;
           else if (liquidity.liquidityUsd > 5000)    pts += 4;
-          else                                        pts += 1;
+          else                                       pts += 1;
         }
       }
+
       if (deployedAt instanceof Date) {
         const d = (Date.now() - deployedAt.getTime()) / 86400000;
         if      (d > 180) pts += 10;
@@ -801,6 +794,7 @@
         else if (d > 1)   pts += 2;
         else               pts += 1;
       } else if (deployedAt?.tooActive) { pts += 10; }
+
       if      (creatorRisk?.unknown)    pts += 5;
       else if (creatorRisk?.stillHolds) pts += 10;
       else                               pts += 2;
@@ -823,15 +817,7 @@
       ]);
       if (authRes.status === 'rejected') {
         document.getElementById('loading').classList.remove('visible');
-        // Reconciliation line
-      const hasHolderRisk = conc && conc.pct >= 40;
-      const reconcile = (score >= 75 && hasHolderRisk)
-        ? '<div style="font-size:0.75rem;color:var(--yellow);padding:0.5rem 0 0.75rem;letter-spacing:0.03em;">'
-          + '⚠ Structurally sound, but distribution risk present — verify top wallet concentration before investing.'
-          + '</div>'
-        : '';
-
-      document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Could not fetch data: ${authRes.reason?.message || 'Unknown error'}</div></div>`;
+        document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Could not fetch data: ${authRes.reason?.message || 'Unknown error'}</div></div>`;
         document.getElementById('results').classList.add('visible');
         return;
       }
@@ -847,17 +833,8 @@
         });
       } catch (err) {
         document.getElementById('loading').classList.remove('visible');
-        // Reconciliation line
-      const hasHolderRisk = conc && conc.pct >= 40;
-      const reconcile = (score >= 75 && hasHolderRisk)
-        ? '<div style="font-size:0.75rem;color:var(--yellow);padding:0.5rem 0 0.75rem;letter-spacing:0.03em;">'
-          + '⚠ Structurally sound, but distribution risk present — verify top wallet concentration before investing.'
-          + '</div>'
-        : '';
-
-      document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Render error: ${err.message}</div></div>`;
+        document.getElementById('results').innerHTML = `<div class="verdict fail"><div class="verdict-label">Error</div><div class="verdict-text">Render error: ${err.message}</div></div>`;
         document.getElementById('results').classList.add('visible');
-        console.error(err);
       }
     }
 
@@ -876,18 +853,20 @@
       document.getElementById('loading').classList.remove('visible');
       const isAnser = address === ANSER_MINT;
       let score = isAnser ? 95 : calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
-      // Cap score based on critical signals — one red flag limits total trust
+
       if (!isAnser) {
         const holderPct = conc?.pct || 0;
-        if (holderPct >= 80)       score = Math.min(score, 49);
-        else if (holderPct >= 60)  score = Math.min(score, 65);
-        // When holder data unavailable for large-cap tokens, cap at 70
-        // — we cannot verify the most important concentration risk
+        const isEstablished = liquidity?.liquidityUsd > 1000000;
+        const capThreshold = isEstablished ? 1.3 : 1; 
+
+        if (holderPct >= 80 * capThreshold)       score = Math.min(score, 49);
+        else if (holderPct >= 60 * capThreshold)  score = Math.min(score, 65);
         else if (!conc && liquidity && liquidity.liquidityUsd > 100000) score = Math.min(score, 70);
         if (!auth.mintAuthorityRevoked)   score = Math.min(score, 60);
         if (!auth.freezeAuthorityRevoked) score = Math.min(score, 70);
         if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) score = Math.min(score, 40);
       }
+
       const scoreClass   = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
       const verdictClass = score >= 90 ? 'pass' : score >= 75 ? 'pass' : score >= 60 ? 'partial' : score >= 40 ? 'fail' : 'fail';
       const verdictText  = score >= 90 ? 'PRISTINE — Exceptional transparency. All signals positive.'
@@ -946,8 +925,6 @@
         const fmt  = fmtUsd(liquidity.liquidityUsd);
         const dex  = (liquidity.dex || 'DEX').toUpperCase();
         const link = liquidity.url ? ' <a href="' + liquidity.url + '" target="_blank" style="color:var(--gray);border-bottom:1px solid var(--gray)">View pool →</a>' : '';
-        const multi = liquidity.poolCount > 1 ? ' across ' + liquidity.poolCount + ' pools' : '';
-        // LP/MCAP ratio — only meaningful signal for small caps
         let ratioLine = '';
         if (liquidity.liqRatio !== null) {
           const isSmallCap = liquidity.marketCap < 10000000;
@@ -960,25 +937,23 @@
             ratioLine = ' <span style="color:' + ratioColor + ';font-weight:500">'
               + liquidity.liqRatio + '% of market cap — ' + ratioVerdict + '</span>';
           } else {
-            // Large cap: ratio less relevant, absolute depth is fine
             ratioLine = ' <span style="color:var(--gray)">'
               + liquidity.liqRatio + '% of market cap — normal for large-cap tokens.</span>';
           }
         }
-        // Threshold context line
         let thresholdNote = '';
         if      (liquidity.liquidityUsd > 1000000) thresholdNote = ' Sufficient depth for most trade sizes.';
         else if (liquidity.liquidityUsd > 200000)  thresholdNote = ' Adequate for small to mid-size trades.';
         else if (liquidity.liquidityUsd > 30000)   thresholdNote = ' Below $200K — expect slippage on trades above a few thousand dollars.';
-        else                                        thresholdNote = ' Below $30K — even small sells will move the price significantly. High exit risk.';
+        else                                       thresholdNote = ' Below $30K — even small sells will move the price significantly. High exit risk.';
 
         liqDesc = fmt + ' across ' + liquidity.poolCount + ' pool' + (liquidity.poolCount > 1 ? 's' : '')
           + ' (' + dex.toUpperCase() + ').' + ratioLine + thresholdNote
           + ' Lock status requires manual verification.' + link;
         if      (liquidity.liquidityUsd > 1000000) { liqStatus = 'SUFFICIENT ✓'; liqCls = 'status-pass'; }
         else if (liquidity.liquidityUsd > 200000)  { liqStatus = 'ADEQUATE ✓';   liqCls = 'status-pass'; }
-        else if (liquidity.liquidityUsd > 30000)   { liqStatus = 'LOW ⚠';        liqCls = 'status-warn'; }
-        else                                        { liqStatus = 'TRAP ✗';        liqCls = 'status-fail'; }
+        else if (liquidity.liquidityUsd > 30000)   { liqStatus = 'LOW ⚠';         liqCls = 'status-warn'; }
+        else                                       { liqStatus = 'TRAP ✗';        liqCls = 'status-fail'; }
       }
       const liqM = { name: 'Liquidity ' + conf('observed'), desc: liqDesc, status: liqStatus, cls: liqCls };
 
@@ -999,14 +974,14 @@
 
       let crDesc, crStatus, crCls;
       if (!creatorRisk || creatorRisk.unknown) {
-        crDesc = 'Not automatically verifiable for high-activity tokens. Manual verification recommended — check deployer wallet on Solscan.';
+        crDesc = 'Not automatically verifiable for high-activity tokens. Manual verification recommended.';
         crStatus = 'DEEP SCAN'; crCls = 'status-unknown';
       } else if (creatorRisk.stillHolds && creatorRisk.holdsPct > 0) {
         crStatus = creatorRisk.holdsPct + '% HELD ✓'; crCls = 'status-pass';
-        crDesc = 'Deployer wallet holds ' + creatorRisk.holdsPct + '% of supply. Skin in the game — a positive signal, though not a guarantee.';
+        crDesc = 'Deployer wallet holds ' + creatorRisk.holdsPct + '% of supply. Skin in the game.';
       } else {
         crStatus = 'SOLD / MOVED ⚠'; crCls = 'status-warn';
-        crDesc = 'Deployer wallet holds 0 tokens. May have sold, transferred, or distributed to team. Verify on Solscan.';
+        crDesc = 'Deployer wallet holds 0 tokens. May have sold or distributed.';
       }
       const crM = { name: 'Creator Risk ' + conf('indicative'), desc: crDesc, status: crStatus, cls: crCls };
 
@@ -1019,11 +994,10 @@
         '</div></div><span class="metric-status ' + m.cls + '">' + m.status + '</span></div>'
       ).join('');
 
-      // Score subtitle
       const verifiedCount  = [auth.mintAuthorityRevoked, auth.freezeAuthorityRevoked,
                                !auth.isToken2022 || auth.dangerousExtensions.length === 0]
                               .filter(Boolean).length;
-      const observedCount  = [true, liquidity?.found, deployedAt].filter(Boolean).length; // concentration always attempted
+      const observedCount  = [true, liquidity?.found, deployedAt].filter(Boolean).length; 
       const scoreSubtitle  = verifiedCount + ' verified signal' + (verifiedCount !== 1 ? 's' : '')
                            + ' · ' + observedCount + ' observed';
 
@@ -1031,15 +1005,14 @@
       const centralizedBanner = isCentralized
         ? '<div style="padding:0.75rem 1.5rem;margin-bottom:1.5rem;border-left:4px solid var(--yellow);background:var(--light);font-size:0.75rem;line-height:1.7;">'
           + '<span style="font-size:0.6rem;letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;display:block;margin-bottom:0.2rem;">Context</span>'
-          + 'This appears to be a <strong>centralized or institutional token</strong>. Mint and freeze authority may be intentional for regulated stablecoins and exchange tokens. This tool is optimised for Solana meme and DeFi tokens.'
+          + 'Centralized or institutional token detected. This tool is optimised for Solana meme and DeFi tokens.'
           + '</div>'
         : '';
 
-      // Reconciliation line
       const hasHolderRisk = conc && conc.pct >= 40;
       const reconcile = (score >= 75 && hasHolderRisk)
         ? '<div style="font-size:0.75rem;color:var(--yellow);padding:0.5rem 0 0.75rem;letter-spacing:0.03em;">'
-          + '⚠ Structurally sound, but distribution risk present — verify top wallet concentration before investing.'
+          + '⚠ Structurally sound, but distribution risk present.'
           + '</div>'
         : '';
 
@@ -1061,184 +1034,4 @@
           '<div class="verdict-label">Verdict</div>' +
           '<div class="verdict-text">' + verdictText + '</div>' +
         '</div>' +
-        (!conc ? '<div style="font-size:0.7rem;color:var(--gray);margin-bottom:1rem;padding:0.5rem 0;border-bottom:1px solid var(--light)">⚠ Score reduced — holder distribution unavailable for this token.</div>' : '') +
-        centralizedBanner +
-        reconcile +
-        '<p class="metrics-title">Metrics breakdown</p>' +
-        metricsHtml +
-                '<div style="padding:1.5rem 0 0.5rem">' +
-        '<button class="share-btn" onclick="shareVerdict()" id="shareBtn">' +
-          '<svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>' +
-          'SHARE SCORE →' +
-        '</button>' +
-        '</div>' +
-'<div class="results-footer">' +
-          '<p><strong>VERIFIED</strong> = on-chain binary facts. ' +
-          '<strong>OBSERVED</strong> = real data, gameable (can be gamed). ' +
-          '<strong>INDICATIVE</strong> = useful signal, not conclusive. ' +
-          '<strong>LARGE TOKEN / DEEP SCAN</strong> = metric unavailable for high-activity tokens — verify manually. '+ '<strong>TRAP</strong> = exit risk, price likely collapses on sells. '+ '<strong>HIGH RISK / CRITICAL</strong> = wallet concentration dangerously high. '+ '<strong>MINTABLE / FREEZEABLE</strong> = creator retains dangerous token controls. '+ '<strong>SOLD / MOVED</strong> = deployer no longer holds tokens — verify intent. '+ 'Not financial advice.</p>' +
-          '<p style="margin-top:0.5rem;">The goose doesn\'t promise anything. That\'s why you can trust it. — ' +
-          '<a href="https://theanser.app" style="color:var(--gray)">theanser.app</a></p>' +
-        '</div>';
-
-      document.getElementById('results').classList.add('visible');
-    }
-
-
-    // Share Score
-    function shareVerdict() {
-      const tokenName  = document.querySelector('.token-info h2')?.textContent?.trim() || 'Unknown';
-      const scoreNum   = document.querySelector('.score-number')?.textContent?.trim() || '?';
-      const verdictTxt = document.querySelector('.verdict-text')?.textContent?.trim() || '';
-      const address    = document.querySelector('.token-address')?.textContent?.trim().split(' ')[0] || '';
-      const score      = parseInt(scoreNum);
-      const accent     = score >= 80 ? '#1a7a1a' : score >= 50 ? '#8b6914' : '#8b0000';
-
-      // Share text
-      const metrics = Array.from(document.querySelectorAll('.metric'));
-      const metricLines = metrics.map(m => {
-        const nm   = (m.querySelector('.metric-name')?.textContent || '').replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim();
-        const st   = (m.querySelector('.metric-status')?.textContent || '').trim();
-        const ok   = m.querySelector('.status-pass');
-        const fail = m.querySelector('.status-fail');
-        return (ok ? '✅' : fail ? '🚨' : '⚠️') + ' ' + nm + ': ' + st;
-      }).join('\n');
-
-      const shareText = '🪿 ' + tokenName + ' scored ' + scoreNum + '/100 on the ANSER Transparency Score\n\n'
-        + verdictTxt + '\n\n' + metricLines + '\n\n'
-        + 'Verify any Solana token free:\ntheanser.app/score';
-
-      // Canvas — calculate height after measuring verdict text
-      const W = 800;
-      // Temp canvas to measure text height
-      const tmpCanvas = document.createElement('canvas');
-      const tmpCtx = tmpCanvas.getContext('2d');
-      tmpCtx.font = '700 17px Georgia,serif';
-      const vwordsTemp = verdictTxt.split(' ');
-      let vlineTemp = '', vyTemp = 138;
-      for (const w of vwordsTemp) {
-        const t = vlineTemp + w + ' ';
-        if (tmpCtx.measureText(t).width > W - 200 && vlineTemp) { vlineTemp = w + ' '; vyTemp += 22; }
-        else vlineTemp = t;
-      }
-      const cols = 3, bH = 52, gapY = 7;
-      const totalMetrics = document.querySelectorAll('.metric').length;
-      const badgeRows = Math.ceil(totalMetrics / cols);
-      const badgesH = badgeRows * bH + (badgeRows - 1) * gapY;
-      const badgeStartYCalc = vyTemp + 20;
-      const H = badgeStartYCalc + badgesH + 50; // 50 for bottom bar
-      const canvas = document.createElement('canvas');
-      canvas.width = W * 2; canvas.height = H * 2;
-      const ctx = canvas.getContext('2d');
-      ctx.scale(2, 2);
-
-      // Background + accent bar
-      ctx.fillStyle = '#f5f3ee'; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 5);
-
-      // Score top right
-      ctx.font = '900 80px Georgia,serif'; ctx.fillStyle = accent; ctx.textAlign = 'right';
-      ctx.fillText(scoreNum, W - 40, 90);
-      ctx.font = '12px monospace'; ctx.fillStyle = '#888';
-      ctx.fillText('/ 100', W - 40, 110);
-      ctx.font = '9px monospace';
-      ctx.fillText('ANSER TRANSPARENCY SCORE', W - 40, 126);
-
-      // Token name top left
-      ctx.textAlign = 'left';
-      ctx.font = '700 42px Georgia,serif'; ctx.fillStyle = '#0a0a0a';
-      ctx.fillText(tokenName.slice(0, 22), 40, 70);
-      ctx.font = '10px monospace'; ctx.fillStyle = '#aaa';
-      ctx.fillText(address.slice(0,22) + '...' + address.slice(-6), 40, 90);
-
-      // Divider
-      ctx.fillStyle = '#d4d0c8'; ctx.fillRect(40, 110, W - 80, 1);
-
-      // Verdict — truncated to single line to guarantee no overlap
-      ctx.font = '700 14px Georgia,serif'; ctx.fillStyle = '#0a0a0a'; ctx.textAlign = 'left';
-      let vtext = verdictTxt;
-      while (vtext.length > 5 && ctx.measureText(vtext).width > W - 100) {
-        vtext = vtext.slice(0, -4) + '...';
-      }
-      ctx.fillText(vtext, 40, 130);
-
-      // Badges — always at fixed Y 150, guaranteed no overlap
-      const badgeStartY = 150;
-      const bW = Math.floor((W - 80 - 10 * (cols-1)) / cols);
-      metrics.forEach((m, i) => {
-        const col = i % cols, row = Math.floor(i / cols);
-        const bx = 40 + col * (bW + 10);
-        const by = badgeStartY + row * (bH + gapY);
-        const nm  = (m.querySelector('.metric-name')?.textContent || '').replace(/VERIFIED|OBSERVED|INDICATIVE/g,'').trim().toUpperCase().slice(0,20);
-        const st  = (m.querySelector('.metric-status')?.textContent || '').trim().slice(0,16);
-        const clr = m.querySelector('.status-pass') ? '#1a7a1a' : m.querySelector('.status-fail') ? '#8b0000' : '#8b6914';
-        ctx.fillStyle = clr; ctx.fillRect(bx, by, bW, bH);
-        ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.font = '700 8px monospace'; ctx.textAlign = 'left';
-        ctx.fillText(nm, bx+8, by+16);
-        ctx.fillStyle = '#fff'; ctx.font = '700 11px monospace';
-        ctx.fillText(st, bx+8, by+38);
-      });
-
-      // Bottom bar
-      ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, H-30, W, 30);
-      ctx.font = '700 10px monospace'; ctx.fillStyle = '#f5f3ee'; ctx.textAlign = 'left';
-      ctx.fillText("$ANSER · The contract doesn\'t lie.", 40, H-10);
-      ctx.font = '10px monospace'; ctx.fillStyle = '#666'; ctx.textAlign = 'right';
-      ctx.fillText('theanser.app/score', W-40, H-10);
-
-      // Share
-      canvas.toBlob(async blob => {
-        const file = new File([blob], 'anser-score.png', { type: 'image/png' });
-        // 1. Try with image file (mobile)
-        try {
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ title: tokenName + ' — ANSER Score: ' + scoreNum + '/100', text: shareText, files: [file] });
-            return;
-          }
-        } catch(e) {}
-        // 2. Text-only share (desktop — opens WhatsApp, Mail, etc)
-        try {
-          if (navigator.share) {
-            await navigator.share({ title: tokenName + ' — ANSER Score: ' + scoreNum + '/100', text: shareText });
-            return;
-          }
-        } catch(e) {}
-        // 3. Fallback: download + clipboard
-        try { await navigator.clipboard.writeText(shareText); } catch(e) {}
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'anser-score-' + tokenName.toLowerCase().replace(/\s+/g,'-') + '.png';
-        a.click();
-        const btn = document.getElementById('shareBtn');
-        if (btn) {
-          const orig = btn.innerHTML;
-          btn.textContent = 'IMAGE DOWNLOADED · TEXT COPIED ✓';
-          btn.style.opacity = '0.7';
-          setTimeout(() => { btn.innerHTML = orig; btn.style.opacity = '1'; }, 3000);
-        }
-      }, 'image/png');
-    }
-
-    document.getElementById('contractInput').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') analyzeToken();
-    });
-  </script>
-
-  
-<script>
-  // CÓDIGO NUEVO: Lee el enlace de Telegram y auto-escanea
-  window.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const contractFromUrl = urlParams.get('ca');
-    
-    if (contractFromUrl) {
-      document.getElementById('contractInput').value = contractFromUrl;
-      // Un pequeño retraso para asegurar que la web cargó bien
-      setTimeout(() => { analyzeToken(); }, 300); 
-    }
-  });
-</script>
-
-  
-</body>
-</html>
+        (!conc ? '<div style="font

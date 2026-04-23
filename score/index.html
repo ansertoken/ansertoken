@@ -1,91 +1,59 @@
 <html lang="en">
-
 <head>
 
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <link rel="icon" type="image/png" href="/favicon.png">
-
   <link rel="apple-touch-icon" href="/favicon.png">
-
   <title>ANSER Transparency Score</title>
-
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
-
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-
 
     :root {
 
       --black: #0a0a0a;
-
       --white: #f5f3ee;
-
       --gray: #888;
-
       --light: #e8e4dc;
-
       --accent: #0a0a0a;
-
       --green: #1a7a1a;
-
       --red: #8b0000;
-
       --yellow: #8b6914;
 
     }
 
 
-
     body {
 
       background: var(--white);
-
       color: var(--black);
-
       font-family: 'IBM Plex Mono', monospace;
-
       min-height: 100vh;
 
     }
-
-
 
     /* HEADER */
 
     header {
 
       border-bottom: 2px solid var(--black);
-
       padding: 1.5rem 2rem;
-
       display: flex;
-
       align-items: center;
-
       justify-content: space-between;
 
     }
 
 
-
     .logo {
 
       font-family: 'Playfair Display', serif;
-
       font-size: 1.4rem;
-
       font-weight: 900;
-
       letter-spacing: -0.02em;
-
       text-decoration: none;
-
       color: var(--black);
 
     }
@@ -95,15 +63,10 @@
     .logo span {
 
       font-size: 0.75rem;
-
       font-family: 'IBM Plex Mono', monospace;
-
       font-weight: 400;
-
       color: var(--gray);
-
       display: block;
-
       letter-spacing: 0.1em;
 
     }
@@ -113,13 +76,9 @@
     .back-link {
 
       font-size: 0.75rem;
-
       color: var(--gray);
-
       text-decoration: none;
-
       letter-spacing: 0.05em;
-
       border-bottom: 1px solid var(--gray);
 
     }
@@ -131,63 +90,44 @@
     .hero {
 
       padding: 4rem 2rem 2rem;
-
       max-width: 800px;
-
       margin: 0 auto;
 
     }
 
 
-
     .hero-label {
 
       font-size: 0.7rem;
-
       letter-spacing: 0.2em;
-
       color: var(--gray);
-
       margin-bottom: 1rem;
-
       text-transform: uppercase;
 
     }
 
 
-
     .hero h1 {
 
       font-family: 'Playfair Display', serif;
-
       font-size: clamp(2rem, 6vw, 3.5rem);
-
       font-weight: 900;
-
       line-height: 1.1;
-
       letter-spacing: -0.02em;
-
       margin-bottom: 1rem;
 
     }
 
 
-
     .hero p {
 
       font-size: 0.85rem;
-
       color: var(--gray);
-
       line-height: 1.8;
-
       max-width: 500px;
-
       margin-bottom: 3rem;
 
     }
-
 
 
     /* SEARCH */
@@ -195,21 +135,16 @@
     .search-container {
 
       max-width: 800px;
-
       margin: 0 auto;
-
       padding: 0 2rem 3rem;
 
     }
 
 
-
     .search-box {
 
       display: flex;
-
       border: 2px solid var(--black);
-
       background: var(--white);
 
     }
@@ -219,19 +154,12 @@
     .search-box input {
 
       flex: 1;
-
       padding: 1rem 1.25rem;
-
       font-family: 'IBM Plex Mono', monospace;
-
       font-size: 0.85rem;
-
       border: none;
-
       background: transparent;
-
       outline: none;
-
       color: var(--black);
 
     }
@@ -249,21 +177,13 @@
     .search-box button {
 
       padding: 1rem 2rem;
-
       background: var(--black);
-
       color: var(--white);
-
       border: none;
-
       font-family: 'IBM Plex Mono', monospace;
-
       font-size: 0.8rem;
-
       letter-spacing: 0.1em;
-
       cursor: pointer;
-
       transition: background 0.15s;
 
     }
@@ -277,11 +197,8 @@
     .search-hint {
 
       font-size: 0.7rem;
-
       color: var(--gray);
-
       margin-top: 0.75rem;
-
       letter-spacing: 0.05em;
 
     }
@@ -293,9 +210,7 @@
     .divider {
 
       border: none;
-
       border-top: 1px solid var(--light);
-
       margin: 0 2rem;
 
     }
@@ -307,11 +222,8 @@
     .results {
 
       max-width: 800px;
-
       margin: 0 auto;
-
       padding: 2rem;
-
       display: none;
 
     }
@@ -327,19 +239,12 @@
     .score-header {
 
       display: flex;
-
       align-items: flex-start;
-
       justify-content: space-between;
-
       margin-bottom: 2rem;
-
       padding-bottom: 2rem;
-
       border-bottom: 2px solid var(--black);
-
       flex-wrap: wrap;
-
       gap: 1rem;
 
     }
@@ -349,11 +254,8 @@
     .token-info h2 {
 
       font-family: 'Playfair Display', serif;
-
       font-size: 1.8rem;
-
       font-weight: 700;
-
       margin-bottom: 0.25rem;
 
     }
@@ -363,11 +265,8 @@
     .token-address {
 
       font-size: 0.7rem;
-
       color: var(--gray);
-
       letter-spacing: 0.05em;
-
       word-break: break-all;
 
     }
@@ -377,7 +276,6 @@
     .score-circle {
 
       text-align: center;
-
       flex-shrink: 0;
 
     }
@@ -387,11 +285,8 @@
     .score-number {
 
       font-family: 'Playfair Display', serif;
-
       font-size: 4rem;
-
       font-weight: 900;
-
       line-height: 1;
 
     }
@@ -401,13 +296,9 @@
     .score-label {
 
       font-size: 0.65rem;
-
       letter-spacing: 0.15em;
-
       color: var(--gray);
-
       text-transform: uppercase;
-
       margin-top: 0.25rem;
 
     }
@@ -415,9 +306,7 @@
 
 
     .score-high { color: var(--green); }
-
     .score-mid { color: var(--yellow); }
-
     .score-low { color: var(--red); }
 
 
@@ -427,11 +316,8 @@
     .verdict {
 
       padding: 1rem 1.5rem;
-
       margin-bottom: 2rem;
-
       border-left: 4px solid var(--black);
-
       background: var(--light);
 
     }
@@ -441,13 +327,9 @@
     .verdict-label {
 
       font-size: 0.65rem;
-
       letter-spacing: 0.15em;
-
       text-transform: uppercase;
-
       color: var(--gray);
-
       margin-bottom: 0.25rem;
 
     }
@@ -457,9 +339,7 @@
     .verdict-text {
 
       font-family: 'Playfair Display', serif;
-
       font-size: 1rem;
-
       font-weight: 700;
 
     }
@@ -467,9 +347,7 @@
 
 
     .verdict.pass { border-color: var(--green); }
-
     .verdict.fail { border-color: var(--red); }
-
     .verdict.partial { border-color: var(--yellow); }
 
 
@@ -479,13 +357,9 @@
     .metrics-title {
 
       font-size: 0.65rem;
-
       letter-spacing: 0.2em;
-
       text-transform: uppercase;
-
       color: var(--gray);
-
       margin-bottom: 1rem;
 
     }
@@ -495,15 +369,10 @@
     .metric {
 
       display: flex;
-
       align-items: flex-start;
-
       justify-content: space-between;
-
       padding: 1rem 0;
-
       border-bottom: 1px solid var(--light);
-
       gap: 1rem;
 
     }
@@ -512,8 +381,6 @@
 
     .metric:last-child { border-bottom: none; }
 
-
-
     .metric-left { flex: 1; }
 
 
@@ -521,9 +388,7 @@
     .metric-name {
 
       font-size: 0.85rem;
-
       font-weight: 500;
-
       margin-bottom: 0.25rem;
 
     }
@@ -533,9 +398,7 @@
     .metric-desc {
 
       font-size: 0.7rem;
-
       color: var(--gray);
-
       line-height: 1.6;
 
     }
@@ -545,17 +408,11 @@
     .metric-status {
 
       font-size: 0.75rem;
-
       font-weight: 500;
-
       letter-spacing: 0.05em;
-
       white-space: nowrap;
-
       padding: 0.3rem 0.75rem;
-
       border: 1px solid currentColor;
-
       flex-shrink: 0;
 
     }
@@ -563,11 +420,8 @@
 
 
     .status-pass { color: var(--green); }
-
     .status-fail { color: var(--red); }
-
     .status-warn { color: var(--yellow); }
-
     .status-unknown { color: var(--gray); }
 
 
@@ -577,15 +431,10 @@
     .results-footer {
 
       margin-top: 2rem;
-
       padding-top: 1.5rem;
-
       border-top: 1px solid var(--light);
-
       font-size: 0.7rem;
-
       color: var(--gray);
-
       line-height: 1.8;
 
     }
@@ -597,13 +446,9 @@
     .loading {
 
       display: none;
-
       max-width: 800px;
-
       margin: 0 auto;
-
       padding: 3rem 2rem;
-
       text-align: center;
 
     }
@@ -617,11 +462,8 @@
     .loading-text {
 
       font-size: 0.8rem;
-
       color: var(--gray);
-
       letter-spacing: 0.1em;
-
       animation: pulse 1.5s ease-in-out infinite;
 
     }
@@ -631,7 +473,6 @@
     @keyframes pulse {
 
       0%, 100% { opacity: 1; }
-
       50% { opacity: 0.3; }
 
     }
@@ -643,11 +484,8 @@
     .how-it-works {
 
       max-width: 800px;
-
       margin: 0 auto;
-
       padding: 3rem 2rem;
-
       border-top: 1px solid var(--light);
 
     }
@@ -657,13 +495,9 @@
     .section-title {
 
       font-size: 0.65rem;
-
       letter-spacing: 0.2em;
-
       text-transform: uppercase;
-
       color: var(--gray);
-
       margin-bottom: 1.5rem;
 
     }
@@ -673,13 +507,9 @@
     .criteria-grid {
 
       display: grid;
-
       grid-template-columns: repeat(2, 1fr);
-
       gap: 1px;
-
       background: var(--light);
-
       border: 1px solid var(--light);
 
     }
@@ -695,7 +525,6 @@
     .criteria-item {
 
       background: var(--white);
-
       padding: 1.25rem;
 
     }
@@ -705,11 +534,8 @@
     .criteria-weight {
 
       font-family: 'Playfair Display', serif;
-
       font-size: 1.5rem;
-
       font-weight: 900;
-
       margin-bottom: 0.5rem;
 
     }
@@ -719,9 +545,7 @@
     .criteria-name {
 
       font-size: 0.8rem;
-
       font-weight: 500;
-
       margin-bottom: 0.35rem;
 
     }
@@ -731,9 +555,7 @@
     .criteria-desc {
 
       font-size: 0.7rem;
-
       color: var(--gray);
-
       line-height: 1.6;
 
     }
@@ -745,19 +567,12 @@
     footer {
 
       border-top: 2px solid var(--black);
-
       padding: 2rem;
-
       display: flex;
-
       justify-content: space-between;
-
       align-items: center;
-
       flex-wrap: wrap;
-
       gap: 1rem;
-
       margin-top: 3rem;
 
     }
@@ -767,9 +582,7 @@
     .footer-text {
 
       font-size: 0.7rem;
-
       color: var(--gray);
-
       letter-spacing: 0.05em;
 
     }
@@ -779,7 +592,6 @@
     .footer-links {
 
       display: flex;
-
       gap: 1.5rem;
 
     }
@@ -789,15 +601,10 @@
     .footer-links a {
 
       font-size: 0.7rem;
-
       color: var(--gray);
-
       text-decoration: none;
-
       letter-spacing: 0.05em;
-
       border-bottom: 1px solid transparent;
-
       transition: border-color 0.15s;
 
     }
@@ -811,17 +618,11 @@
     @media (max-width: 600px) {
 
       header { padding: 1rem; }
-
       .hero { padding: 2rem 1rem 1rem; }
-
       .search-container { padding: 0 1rem 2rem; }
-
       .search-box button { padding: 1rem; font-size: 0.75rem; }
-
       .results, .loading, .how-it-works { padding: 1.5rem 1rem; }
-
       .score-header { flex-direction: column-reverse; }
-
       footer { padding: 1.5rem 1rem; }
 
     }
@@ -831,29 +632,19 @@
     .confidence {
 
       font-size: 0.55rem;
-
       letter-spacing: 0.1em;
-
       padding: 0.12rem 0.35rem;
-
       border: 1px solid currentColor;
-
       vertical-align: middle;
-
       margin-left: 0.4rem;
-
       font-family: 'IBM Plex Mono', monospace;
-
       text-transform: uppercase;
-
       opacity: 0.7;
 
     }
 
     .conf-verified   { color: var(--green); }
-
     .conf-observed   { color: var(--yellow); }
-
     .conf-indicative { color: var(--gray); }
 
 
@@ -861,37 +652,23 @@
     .share-btn {
 
       display: inline-flex;
-
       align-items: center;
-
       gap: 0.6rem;
-
       padding: 0.7rem 1.75rem 0.7rem 1.25rem;
-
       background: transparent;
-
       color: var(--black);
-
       border: 1.5px solid var(--black);
-
       font-family: 'IBM Plex Mono', monospace;
-
       font-size: 0.72rem;
-
       letter-spacing: 0.12em;
-
       cursor: pointer;
-
       transition: background 0.15s, color 0.15s;
-
       text-transform: uppercase;
 
     }
 
     .share-btn:hover { background: var(--black); color: var(--white); }
-
     .share-btn:hover svg { fill: var(--white); }
-
     .share-btn svg { width: 13px; height: 13px; fill: var(--black); transition: fill 0.15s; flex-shrink:0; }
 
   </style>
@@ -907,9 +684,7 @@
     <a href="https://theanser.app" class="logo">
 
       <img src="/goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;margin-right:0.5rem;vertical-align:middle;">
-
       $ANSER
-
       <span>TRANSPARENCY SCORE</span>
 
     </a>
@@ -923,9 +698,7 @@
   <div class="hero">
 
     <p class="hero-label">Powered by $ANSER · Solana</p>
-
     <h1>The contract<br>doesn't lie.</h1>
-
     <p>Enter any Solana token contract address and the goose will tell you the truth. No promises. No opinions. Just on-chain facts.</p>
 
   </div>
@@ -933,163 +706,100 @@
 
 
   <div class="search-container">
-
     <div class="search-box">
-
       <input type="text" id="contractInput" placeholder="Solana contract address..." maxlength="44">
-
       <button onclick="analyzeToken()">ANALYZE →</button>
-
     </div>
-
     <p class="search-hint">Example: DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263 (BONK)</p>
-
   </div>
-
 
 
   <hr class="divider">
 
 
-
   <div class="loading" id="loading">
-
     <p class="loading-text">THE GOOSE IS READING THE CHAIN...</p>
-
   </div>
-
 
 
   <div class="results" id="results"></div>
 
 
-
   <div class="how-it-works" id="howItWorks">
-
     <p class="section-title">How the score works</p>
-
     <div class="criteria-grid">
-
       <div class="criteria-item">
-
         <div class="criteria-weight">25</div>
-
         <div class="criteria-name">Mint Authority</div>
-
         <div class="criteria-desc">Is the ability to create new tokens permanently revoked? Fixed supply is non-negotiable. <em>On-chain binary fact.</em></div>
-
       </div>
 
       <div class="criteria-item">
-
         <div class="criteria-weight">20</div>
-
         <div class="criteria-name">Holder Distribution</div>
-
         <div class="criteria-desc">What % of supply do the top 20 wallets hold? High concentration is a red flag — though wallet splitting can game this metric.</div>
-
       </div>
 
       <div class="criteria-item">
-
         <div class="criteria-weight">15</div>
-
         <div class="criteria-name">Liquidity</div>
-
         <div class="criteria-desc">How does liquidity compare to market cap? A token with 1% LP/MCAP ratio is a liquidity trap — the price collapses the moment someone sells. We score the ratio, not just the raw number.</div>
-
       </div>
 
       <div class="criteria-item">
-
         <div class="criteria-weight">10</div>
-
         <div class="criteria-name">Freeze Authority</div>
-
         <div class="criteria-desc">Can the creator freeze your token accounts? This should be revoked. <em>On-chain binary fact.</em></div>
-
       </div>
 
       <div class="criteria-item">
-
         <div class="criteria-weight">10</div>
-
         <div class="criteria-name">Contract Age</div>
-
         <div class="criteria-desc">How old is the contract? New contracts with no history carry higher risk. Age alone is not safety.</div>
-
       </div>
 
       <div class="criteria-item">
-
         <div class="criteria-weight">10</div>
-
         <div class="criteria-name">Token Mechanics</div>
-
         <div class="criteria-desc">Does the token use Token-2022 extensions like hidden transfer fees, permanent delegate, or transfer hooks? <em>On-chain binary fact.</em></div>
-
       </div>
 
 
 
       <div class="criteria-item criteria-item-full">
-
         <div class="criteria-weight">10</div>
-
         <div class="criteria-name">Creator Risk</div>
-
         <div class="criteria-desc">Does the deployer wallet still hold tokens? A creator who sold everything is a warning signal. <em>Applies to tokens with limited transaction history. High-activity tokens are flagged as not applicable.</em></div>
-
       </div>
-
     </div>
 
 
 
     <div style="margin-top:1.5rem;padding:1.25rem 1.5rem;border-left:3px solid var(--red);background:var(--light);font-size:0.8rem;line-height:1.8;">
-
       <p style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);margin-bottom:0.5rem;">Score Caps — Critical Signal Override</p>
-
       <p>Certain signals are severe enough to limit the total score regardless of other metrics. A token cannot be considered trustworthy if one fundamental risk is extreme.</p>
 
       <ul style="list-style:none;padding:0;margin-top:0.75rem;">
-
         <li style="padding:0.2rem 0;">🚨 <strong>Top-20 wallets control ≥80% of supply</strong> → Score capped at 49 (HIGH RISK)</li>
-
         <li style="padding:0.2rem 0;">⚠️ <strong>Top-20 wallets control ≥60% of supply</strong> → Score capped at 65 (PARTIAL RISK)</li>
-
         <li style="padding:0.2rem 0;">⚠️ <strong>Holder distribution unavailable</strong> (high-activity tokens) → Score capped at 70 — concentration risk unverifiable</li>
-
         <li style="padding:0.2rem 0;">🚨 <strong>Mint authority still active</strong> → Score capped at 60</li>
-
         <li style="padding:0.2rem 0;">⚠️ <strong>Freeze authority still active</strong> → Score capped at 70</li>
-
         <li style="padding:0.2rem 0;">🚨 <strong>Dangerous Token-2022 extensions detected</strong> → Score capped at 40</li>
-
       </ul>
-
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
-
     </div>
-
   </div>
 
 
 
   <footer>
-
     <p class="footer-text">$ANSER · Solana · 2026 · The goose doesn't promise anything.</p>
-
     <div class="footer-links">
-
       <a href="https://x.com/theanserapp" target="_blank">X</a>
-
       <a href="https://t.me/theanser" target="_blank">Telegram</a>
-
       <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank">Whitepaper</a>
-
     </div>
-
   </footer>
 
 
@@ -1099,105 +809,67 @@
     // API key is handled server-side by the Cloudflare Worker proxy
 
     const RPC_URL = 'https://anser-proxy.ansertoken.workers.dev';
-
     const ANSER_MINT = 'ANSER_MINT_ADDRESS_PLACEHOLDER';
 
 
 
     async function rpc(method, params) {
-
       const res  = await fetch(RPC_URL, {
 
         method: 'POST',
-
         headers: { 'Content-Type': 'application/json' },
-
         body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
 
       });
 
       const data = await res.json();
-
       if (data.error) throw new Error(data.error.message);
-
       return data.result;
 
     }
 
 
-
     async function getTokenName(address) {
 
       try {
-
         const a = await rpc('getAsset', { id: address });
-
         return a?.content?.metadata?.name || a?.content?.metadata?.symbol || a?.token_info?.symbol || null;
-
       } catch { return null; }
-
     }
 
 
 
     async function getMintAuthorities(address) {
-
       const result = await rpc('getAccountInfo', [address, { encoding: 'base64' }]);
-
       if (!result?.value?.data) throw new Error('Account not found or not a token mint.');
-
       const raw = atob(result.value.data[0]);
-
       const u8  = new Uint8Array(raw.length);
-
       for (let i = 0; i < raw.length; i++) u8[i] = raw.charCodeAt(i);
-
       const view = new DataView(u8.buffer);
-
       const mintAuthorityRevoked   = view.getUint32(0,  true) === 0;
-
       const freezeAuthorityRevoked = view.getUint32(46, true) === 0;
-
       const isToken2022 = result.value.owner === 'TokenzQdBNbequF8Li1WhHnkPdmEep1qEkfLBs9w9vF';
-
       const dangerousExtensions = [];
-
       let transferFeeBps = null;
 
       if (isToken2022 && u8.length > 83) {
-
         const DANGER = { 1: 'Transfer Fee', 6: 'Permanent Delegate', 8: 'Non-Transferable', 12: 'Transfer Hook' };
-
         let offset = 83;
-
         while (offset + 4 <= u8.length) {
-
           const type = view.getUint16(offset, true);
-
           const len  = view.getUint16(offset + 2, true);
-
           if (type === 0 && len === 0) break;
-
           if (DANGER[type]) {
-
             dangerousExtensions.push(DANGER[type]);
-
             if (type === 1 && len >= 116) {
-
               const fv = new DataView(u8.buffer, offset + 4);
-
               transferFeeBps = fv.getUint16(96, true);
-
             }
-
           }
 
           offset += 4 + len;
-
           if (offset >= u8.length || len === 0) break;
-
         }
-
       }
 
       return { mintAuthorityRevoked, freezeAuthorityRevoked, isToken2022, dangerousExtensions, transferFeeBps };
@@ -1211,19 +883,13 @@
       // Cache per address in session to ensure consistency
 
       const cacheKey = 'anser_conc_' + address;
-
       const cached = sessionStorage.getItem(cacheKey);
-
       if (cached) return JSON.parse(cached);
 
 
-
       const supplyRes = await rpc('getTokenSupply', [address]);
-
       const supply    = parseFloat(supplyRes?.value?.uiAmount || 0);
-
       const decimals  = supplyRes?.value?.decimals || 0;
-
 
 
       // Try DAS first (handles large tokens), fallback to standard RPC
@@ -1231,21 +897,15 @@
       let accounts = [];
 
 
-
       // DAS with timeout — most reliable for large tokens
 
       try {
 
         const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
-
         const das = await Promise.race([
-
           rpc('getTokenAccounts', {
-
             mint: address, limit: 20,
-
             sortBy: { sortBy: 'amount', sortDirection: 'desc' }
-
           }),
 
           timeoutPromise
@@ -1253,15 +913,12 @@
         ]);
 
         accounts = (das?.token_accounts || []).map(a => ({
-
           address: a.address,
-
           uiAmount: parseFloat(a.amount || 0) / Math.pow(10, decimals)
 
         }));
 
       } catch {}
-
 
 
       // Fallback: standard RPC (works for smaller tokens)

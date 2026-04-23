@@ -2105,7 +2105,26 @@
 
   </script>
 
+<script>
+  // Script para capturar el contrato de la URL y ejecutar el análisis
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const contractFromUrl = urlParams.get('ca');
+    const inputField = document.getElementById('contractInput');
 
+    if (contractFromUrl && inputField) {
+      // 1. Rellena el input con la dirección del contrato
+      inputField.value = contractFromUrl;
+      
+      // 2. Ejecuta la función de análisis automáticamente
+      setTimeout(() => {
+        if (typeof analyzeToken === 'function') {
+          analyzeToken();
+        }
+      }, 500); // Pequeño retraso para asegurar que el resto del script cargó
+    }
+  });
+</script>
 
 </body>
 

@@ -1517,18 +1517,17 @@
 
       } else {
 
-
         const p = conc.pct;
-        // Large established tokens: top wallets often CEX cold wallets — add context
-        const isLargeCap = liquidity && liquidity.liquidityUsd > 500000;
-        const cexNote = (isLargeCap && p >= 40)
-          ? ' Note: for established tokens, top wallets often include CEX cold wallets (Binance, Coinbase, etc.) — verify identities on Solscan.'
-          : '';
-        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
-        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.' + cexNote; }
-        else if (p < 60) { concStatus = isLargeCap ? p + '% ⚠' : 'HIGH RISK'; concCls = isLargeCap ? 'status-warn' : 'status-fail'; concDesc = 'Top 20 wallets control ' + p + '% of supply. ' + (isLargeCap ? '' : 'High dump risk — a coordinated sell could collapse the price. ') + cexNote; }
-        else             { concStatus = isLargeCap ? p + '% ⚠' : 'CRITICAL';  concCls = isLargeCap ? 'status-warn' : 'status-fail'; concDesc = 'Top 20 wallets control ' + p + '% of supply. ' + (isLargeCap ? '' : 'Extreme concentration — this token can be rugged at any time. ') + cexNote; }
 
+        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
+
+        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.'; }
+
+        else if (p < 60) { concStatus = 'HIGH RISK'; concCls = 'status-fail'; concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
+
+        else             { concStatus = 'CRITICAL';  concCls = 'status-fail'; concDesc = 'CRITICAL: Top 20 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
+
+      }
 
       const concM = { name: 'Holder Distribution ' + conf('observed'), desc: concDesc, status: concStatus, cls: concCls };
 
@@ -1593,12 +1592,12 @@
         // Threshold context line
 
         let thresholdNote = '';
-        const _smallCapNote = liquidity.marketCap && liquidity.marketCap < 10000000 && liquidity.liqRatio !== null;
         if      (liquidity.liquidityUsd > 1000000) thresholdNote = ' Sufficient depth for most trade sizes.';
         else if (liquidity.liquidityUsd > 200000)  thresholdNote = ' Adequate for small to mid-size trades.';
         else if (liquidity.liquidityUsd > 30000)   thresholdNote = ' Below $200K — expect slippage on larger trades.';
-        else if (_smallCapNote && liquidity.liqRatio >= 10) thresholdNote = ' Absolute depth is low — size your trades carefully to avoid slippage.';
-        else                                        thresholdNote = ' Below $30K — even small sells will move the price significantly. High exit risk.';
+        else if (liquidity.marketCap && liquidity.marketCap < 10000000 && liquidity.liqRatio !== null && liquidity.liqRatio >= 10)
+          thresholdNote = ' Absolute depth is low — size your trades carefully to avoid slippage.';
+        else thresholdNote = ' Below $30K — even small sells will move the price significantly. High exit risk.';
 
 
 
@@ -1608,9 +1607,7 @@
 
           + ' Lock status requires manual verification.' + link;
 
-        // Badge follows ratio for small caps — avoids TRAP vs "low exit risk" contradiction
-        const _smallCapBadge = liquidity.marketCap && liquidity.marketCap < 10000000 && liquidity.liqRatio !== null;
-        if (_smallCapBadge) {
+        if (liquidity.marketCap && liquidity.marketCap < 10000000 && liquidity.liqRatio !== null) {
           if      (liquidity.liqRatio >= 20) { liqStatus = 'SUFFICIENT ✓'; liqCls = 'status-pass'; }
           else if (liquidity.liqRatio >= 10) { liqStatus = 'ADEQUATE ✓';   liqCls = 'status-pass'; }
           else if (liquidity.liqRatio >= 3)  { liqStatus = 'LOW ⚠';        liqCls = 'status-warn'; }

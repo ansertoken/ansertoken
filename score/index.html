@@ -1416,10 +1416,11 @@
       if (!isAnser) {
 
         const holderPct = conc?.pct || 0;
-
-        if (holderPct >= 80)       score = Math.min(score, 49);
-
-        else if (holderPct >= 60)  score = Math.min(score, 65);
+        const isLargeCap = liquidity && liquidity.liquidityUsd > 500000;
+        if      (holderPct >= 80 && !isLargeCap) score = Math.min(score, 49);
+        else if (holderPct >= 60 && !isLargeCap) score = Math.min(score, 65);
+        else if (holderPct >= 80 &&  isLargeCap) score = Math.min(score, 65);
+        else if (holderPct >= 60 &&  isLargeCap) score = Math.min(score, 75);
 
         // When holder data unavailable for large-cap tokens, cap at 70
 
@@ -1523,9 +1524,20 @@
 
         else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.'; }
 
-        else if (p < 60) { concStatus = 'HIGH RISK'; concCls = 'status-fail'; concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
-
-        else             { concStatus = 'CRITICAL';  concCls = 'status-fail'; concDesc = 'CRITICAL: Top 20 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
+        else if (p < 60) {
+          const isCex = liquidity && liquidity.liquidityUsd > 500000;
+          if (isCex) { concStatus = p + '% ⚠'; concCls = 'status-warn';
+            concDesc = 'Top 20 wallets hold ' + p + '% of supply. For large-cap tokens this often reflects exchange cold wallets (Binance, Coinbase, etc.) — not coordinated dump risk. Verify wallet labels on Solscan.';
+          } else { concStatus = 'HIGH RISK'; concCls = 'status-fail';
+            concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
+        }
+        else {
+          const isCex80 = liquidity && liquidity.liquidityUsd > 500000;
+          if (isCex80) { concStatus = p + '% ⚠'; concCls = 'status-warn';
+            concDesc = 'Top 20 wallets hold ' + p + '% of supply. Very high — but deep liquidity suggests significant exchange custody. Cross-reference on Solscan.';
+          } else { concStatus = 'CRITICAL'; concCls = 'status-fail';
+            concDesc = 'CRITICAL: Top 20 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
+        }
 
       }
 
@@ -1782,7 +1794,7 @@
           '<div class="verdict-text">' + verdictText + '</div>' +
 
         '</div>' +
-
+        (voice ? '<div style="font-size:0.82rem;font-style:italic;color:#555;padding:0.5rem 1.5rem 1rem;letter-spacing:0.02em;border-left:2px solid #ccc;">' + voice + '</div>' : '') +
         (!conc ? '<div style="font-size:0.7rem;color:var(--gray);margin-bottom:1rem;padding:0.5rem 0;border-bottom:1px solid var(--light)">⚠ Score reduced — holder distribution unavailable for this token.</div>' : '') +
 
         centralizedBanner +

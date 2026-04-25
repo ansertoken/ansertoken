@@ -439,13 +439,16 @@
       <img src="goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;margin-right:0.5rem;vertical-align:middle;">
       $ANSER
     </a>
-    <ul class="links">
-      <li><a href="#about">About</a></li>
-      <li><a href="#tokenomics">Tokenomics</a></li>
-      <li><a href="#roadmap">Sequence</a></li>
-      <li><a href="anser_whitepaper.pdf" target="_blank">Whitepaper</a></li>
-      <li><a href="/score" class="nav-scanner">Token Scanner</a></li>
+    <ul class="links" id="navLinks">
+      <li><a href="#about" onclick="closeNav()">About</a></li>
+      <li><a href="#tokenomics" onclick="closeNav()">Tokenomics</a></li>
+      <li><a href="#roadmap" onclick="closeNav()">Sequence</a></li>
+      <li><a href="anser_whitepaper.pdf" target="_blank" onclick="closeNav()">Whitepaper</a></li>
+      <li><a href="/score" onclick="closeNav()">Token Scanner</a></li>
     </ul>
+    <button class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <!-- HERO -->
@@ -669,6 +672,19 @@
   <!-- SCROLL TO TOP -->
   <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
 
+
+  <script>
+    function toggleNav() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+    function closeNav() {
+      document.getElementById('navLinks').classList.remove('open');
+    }
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('nav')) closeNav();
+    });
+  </script>
   <script>
     var btn = document.getElementById('scrollTop');
     window.addEventListener('scroll', function() {

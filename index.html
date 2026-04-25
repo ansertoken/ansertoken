@@ -66,9 +66,16 @@
 
     nav .links a:hover { color: var(--black); }
 
-    @media (max-width: 520px) {
+    @media (max-width: 600px) {
       .nav-scanner { font-size: 0 !important; }
       .nav-scanner::after { content: "Scanner"; font-size: 0.78rem; letter-spacing: 0.05em; }
+      nav .links li:nth-child(4) { display: none; } /* hide Whitepaper on mobile */
+    }
+    @media (max-width: 480px) {
+      nav .links li:nth-child(3) { display: none; } /* hide Sequence on mobile */
+    }
+    @media (max-width: 380px) {
+      nav .links li:nth-child(2) { display: none; } /* hide Tokenomics on mobile */
     }
 
     /* HERO */
@@ -424,10 +431,6 @@
     @media (max-width: 480px) {
       nav .links { gap: 0.4rem; }
       nav .links a { font-size: 0.72rem; }
-      .nav-scanner::after { content: "Scanner"; }
-    }
-    @media (max-width: 380px) {
-      nav .links li:last-child { display: none; }
     }
   </style>
 </head>

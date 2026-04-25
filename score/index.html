@@ -1408,6 +1408,7 @@
       document.getElementById('loading').classList.remove('visible');
 
       const isAnser = address === ANSER_MINT;
+      const voice = isAnser ? 'The goose built this. It passes its own test.' : gooseVoice(score, auth, conc, liquidity);
 
       let score = isAnser ? 95 : calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
 
@@ -1416,7 +1417,8 @@
       if (!isAnser) {
 
         const holderPct = conc?.pct || 0;
-        const isLargeCap = liquidity && liquidity.liquidityUsd > 500000;
+
+        const isLargeCap = liquidity?.liquidityUsd > 500000;
         if      (holderPct >= 80 && !isLargeCap) score = Math.min(score, 49);
         else if (holderPct >= 60 && !isLargeCap) score = Math.min(score, 65);
         else if (holderPct >= 80 &&  isLargeCap) score = Math.min(score, 65);
@@ -1449,6 +1451,31 @@
         : score >= 40 ? 'HIGH RISK — Significant transparency failures detected.'
 
         : 'CRITICAL — Extreme risk. Do not invest without thorough independent research.';
+
+      function gooseVoice(score, auth, conc, liquidity) {
+        const p = conc?.pct || 0;
+        const liqUsd = liquidity?.liquidityUsd || 0;
+        const ratio = liquidity?.liqRatio || 0;
+        const large = liqUsd > 500000;
+        if (auth?.dangerousExtensions?.length > 0)
+          return 'Hidden mechanics detected. The contract is not what it appears.';
+        if (!auth?.mintAuthorityRevoked && !auth?.freezeAuthorityRevoked)
+          return 'Creator can mint and freeze. Full control retained. Nothing is locked.';
+        if (!auth?.mintAuthorityRevoked)
+          return 'Supply is not fixed. What exists today may not be what exists tomorrow.';
+        if (!auth?.freezeAuthorityRevoked)
+          return 'Creator can freeze any wallet. Your tokens are not fully yours.';
+        if (p >= 80 && !large) return 'A few wallets hold almost everything. One decision ends the price.';
+        if (p >= 60 && !large) return 'Concentration is extreme. The exit belongs to the few.';
+        if (liqUsd > 0 && liqUsd < 5000) return 'Liquidity is near zero. Selling may be impossible in practice.';
+        if (ratio > 0 && ratio < 3 && liqUsd < 30000) return 'Liquidity is thin. Exit doors are narrow.';
+        if (p >= 40 && p < 60 && !large) return 'Solid structure. But too much power at the top.';
+        if (score >= 90) return 'Nothing hidden. What you see is what exists.';
+        if (score >= 75 && p < 40) return 'Clean contract. Distribution is healthy.';
+        if (score >= 75) return 'Structure is sound. Verify top wallet intent before investing.';
+        if (score >= 60) return 'Some signals are clean. Others are not. Read the breakdown.';
+        return 'Multiple risk signals. Do not trust the price action alone.';
+      }
 
 
 
@@ -1525,15 +1552,15 @@
         else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.'; }
 
         else if (p < 60) {
-          const isCex = liquidity && liquidity.liquidityUsd > 500000;
-          if (isCex) { concStatus = p + '% ⚠'; concCls = 'status-warn';
-            concDesc = 'Top 20 wallets hold ' + p + '% of supply. For large-cap tokens this often reflects exchange cold wallets (Binance, Coinbase, etc.) — not coordinated dump risk. Verify wallet labels on Solscan.';
+          if (liquidity?.liquidityUsd > 500000) {
+            concStatus = p + '% ⚠'; concCls = 'status-warn';
+            concDesc = 'Top 20 wallets hold ' + p + '% of supply. For established tokens this often reflects exchange cold wallets — not coordinated dump risk. Verify wallet labels on Solscan.';
           } else { concStatus = 'HIGH RISK'; concCls = 'status-fail';
             concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
         }
         else {
-          const isCex80 = liquidity && liquidity.liquidityUsd > 500000;
-          if (isCex80) { concStatus = p + '% ⚠'; concCls = 'status-warn';
+          if (liquidity?.liquidityUsd > 500000) {
+            concStatus = p + '% ⚠'; concCls = 'status-warn';
             concDesc = 'Top 20 wallets hold ' + p + '% of supply. Very high — but deep liquidity suggests significant exchange custody. Cross-reference on Solscan.';
           } else { concStatus = 'CRITICAL'; concCls = 'status-fail';
             concDesc = 'CRITICAL: Top 20 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
@@ -1794,7 +1821,8 @@
           '<div class="verdict-text">' + verdictText + '</div>' +
 
         '</div>' +
-        (voice ? '<div style="font-size:0.82rem;font-style:italic;color:#555;padding:0.5rem 1.5rem 1rem;letter-spacing:0.02em;border-left:2px solid #ccc;">' + voice + '</div>' : '') +
+        (voice ? '<div style="font-size:0.82rem;font-style:italic;color:#555;padding:0.4rem 1.5rem 1rem;letter-spacing:0.02em;border-left:2px solid #bbb;">' + voice + '</div>' : '') +
+
         (!conc ? '<div style="font-size:0.7rem;color:var(--gray);margin-bottom:1rem;padding:0.5rem 0;border-bottom:1px solid var(--light)">⚠ Score reduced — holder distribution unavailable for this token.</div>' : '') +
 
         centralizedBanner +

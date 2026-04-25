@@ -1517,17 +1517,18 @@
 
       } else {
 
+
         const p = conc.pct;
-
+        // Large established tokens: top wallets often CEX cold wallets — add context
+        const isLargeCap = liquidity && liquidity.liquidityUsd > 500000;
+        const cexNote = (isLargeCap && p >= 40)
+          ? ' Note: for established tokens, top wallets often include CEX cold wallets (Binance, Coinbase, etc.) — verify identities on Solscan.'
+          : '';
         if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
+        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.' + cexNote; }
+        else if (p < 60) { concStatus = isLargeCap ? p + '% ⚠' : 'HIGH RISK'; concCls = isLargeCap ? 'status-warn' : 'status-fail'; concDesc = 'Top 20 wallets control ' + p + '% of supply. ' + (isLargeCap ? '' : 'High dump risk — a coordinated sell could collapse the price. ') + cexNote; }
+        else             { concStatus = isLargeCap ? p + '% ⚠' : 'CRITICAL';  concCls = isLargeCap ? 'status-warn' : 'status-fail'; concDesc = 'Top 20 wallets control ' + p + '% of supply. ' + (isLargeCap ? '' : 'Extreme concentration — this token can be rugged at any time. ') + cexNote; }
 
-        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells.'; }
-
-        else if (p < 60) { concStatus = 'HIGH RISK'; concCls = 'status-fail'; concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price.'; }
-
-        else             { concStatus = 'CRITICAL';  concCls = 'status-fail'; concDesc = 'CRITICAL: Top 20 wallets control ' + p + '% of supply. Extreme concentration — this token can be rugged at any time.'; }
-
-      }
 
       const concM = { name: 'Holder Distribution ' + conf('observed'), desc: concDesc, status: concStatus, cls: concCls };
 

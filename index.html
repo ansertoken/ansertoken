@@ -39,6 +39,7 @@
       align-items: center;
       padding: 1.5rem 2rem;
       border-bottom: 1px solid var(--light);
+      position: relative;
     }
 
     nav .logo {
@@ -66,13 +67,38 @@
 
     nav .links a:hover { color: var(--black); }
 
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+    .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--black); }
+
     @media (max-width: 600px) {
+      .nav-toggle { display: flex; }
+      nav .links {
+        display: none;
+        position: absolute;
+        top: 100%; left: 0; right: 0;
+        background: var(--white);
+        flex-direction: column;
+        gap: 0;
+        border-bottom: 2px solid var(--black);
+        z-index: 100;
+        list-style: none;
+      }
+      nav .links.open { display: flex; }
+      nav .links li { border-bottom: 1px solid var(--light); }
+      nav .links a { display: block; padding: 0.85rem 2rem; font-size: 0.9rem; color: var(--black); letter-spacing: 0.05em; }
+    }
+
+    @media (max-width: 520px) {
       .nav-scanner { font-size: 0 !important; }
       .nav-scanner::after { content: "Scanner"; font-size: 0.78rem; letter-spacing: 0.05em; }
-    }
-    @media (max-width: 480px) {
-    }
-    @media (max-width: 380px) {
     }
 
     /* HERO */
@@ -428,6 +454,10 @@
     @media (max-width: 480px) {
       nav .links { gap: 0.4rem; }
       nav .links a { font-size: 0.72rem; }
+      .nav-scanner::after { content: "Scanner"; }
+    }
+    @media (max-width: 380px) {
+      nav .links li:last-child { display: none; }
     }
   </style>
 </head>
@@ -446,7 +476,7 @@
       <li><a href="anser_whitepaper.pdf" target="_blank" onclick="closeNav()">Whitepaper</a></li>
       <li><a href="/score" onclick="closeNav()">Token Scanner</a></li>
     </ul>
-    <button class="nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Menu">
+    <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
       <span></span><span></span><span></span>
     </button>
   </nav>
@@ -672,7 +702,6 @@
   <!-- SCROLL TO TOP -->
   <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
 
-
   <script>
     function toggleNav() {
       document.getElementById('navLinks').classList.toggle('open');
@@ -680,11 +709,11 @@
     function closeNav() {
       document.getElementById('navLinks').classList.remove('open');
     }
-    // Close on outside click
     document.addEventListener('click', function(e) {
       if (!e.target.closest('nav')) closeNav();
     });
   </script>
+
   <script>
     var btn = document.getElementById('scrollTop');
     window.addEventListener('scroll', function() {

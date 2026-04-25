@@ -1408,7 +1408,6 @@
       document.getElementById('loading').classList.remove('visible');
 
       const isAnser = address === ANSER_MINT;
-      const voice = isAnser ? 'The goose built this. It passes its own test.' : gooseVoice(score, auth, conc, liquidity);
 
       let score = isAnser ? 95 : calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
 
@@ -1437,6 +1436,10 @@
         if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) score = Math.min(score, 40);
 
       }
+
+      const voice = isAnser
+        ? 'The goose built this. It passes its own test.'
+        : gooseVoice(score, auth, conc, liquidity);
 
       const scoreClass   = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
 

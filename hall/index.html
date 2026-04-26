@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>Hall of Shame — $ANSER | The goose warned you.</title>
+  <meta name="description" content="A public record of tokens the ANSER scanner flagged as high risk — before they collapsed. Not opinions. Timestamps and on-chain facts.">
+  <meta property="og:title" content="ANSER Hall of Shame — The goose warned you.">
+  <meta property="og:description" content="Tokens flagged by the ANSER scanner before they rugged. Verified. Timestamped. Immutable.">
+  <meta property="og:image" content="https://theanser.app/goose.png">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black:  #0a0a0a;
+      --white:  #f9f9f9;
+      --gray:   #888;
+      --light:  #eeeeee;
+      --green:  #1a7a1a;
+      --red:    #8b0000;
+      --yellow: #8b6914;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 2px solid var(--black);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      text-decoration: none;
+      color: var(--black);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .logo img { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #111; object-fit: cover; }
+    .logo span { font-size: 0.75rem; font-family: 'IBM Plex Mono', monospace; font-weight: 400; color: var(--gray); display: block; letter-spacing: 0.1em; }
+    .back-link { font-size: 0.75rem; color: var(--gray); text-decoration: none; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray); }
+
+    .hero { padding: 4rem 2rem 2rem; max-width: 900px; margin: 0 auto; }
+    .hero-label { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--red); margin-bottom: 1rem; text-transform: uppercase; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .hero p { font-size: 0.85rem; color: var(--gray); line-height: 1.8; max-width: 560px; margin-bottom: 0.5rem; }
+
+    .counter-section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+      display: flex;
+      gap: 3rem;
+    }
+    .counter-item { }
+    .counter-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--red);
+      line-height: 1;
+    }
+    .counter-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--gray);
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    hr.divider { border: none; border-top: 1px solid var(--light); margin: 0 2rem; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+    .empty-state p {
+      font-size: 0.85rem;
+      color: var(--gray);
+      line-height: 1.8;
+      margin-bottom: 0.5rem;
+    }
+    .empty-state .waiting {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-style: italic;
+      color: var(--black);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ENTRIES */
+    .entries { max-width: 900px; margin: 0 auto; padding: 2rem; display: none; }
+    .entries.has-entries { display: block; }
+
+    .entry {
+      border: 1px solid var(--light);
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      position: relative;
+    }
+    .entry:hover { border-color: var(--red); }
+
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .entry-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .entry-score {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--red);
+      line-height: 1;
+      text-align: right;
+    }
+    .entry-score-label {
+      font-size: 0.6rem;
+      color: var(--gray);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .entry-voice {
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--black);
+      border-left: 2px solid var(--red);
+      padding-left: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .entry-meta {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .meta-item { }
+    .meta-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--gray); text-transform: uppercase; margin-bottom: 0.2rem; }
+    .meta-value { font-size: 0.8rem; color: var(--black); }
+
+    .entry-flags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .flag {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid var(--red);
+      color: var(--red);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .entry-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .entry-link {
+      font-size: 0.7rem;
+      color: var(--gray);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--gray);
+    }
+    .entry-link:hover { color: var(--black); border-color: var(--black); }
+
+    .warned-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      padding: 0.3rem 0.75rem;
+      background: var(--red);
+      color: var(--white);
+      text-transform: uppercase;
+    }
+
+    /* HOW IT WORKS */
+    .how-section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--light);
+    }
+    .section-title { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray); margin-bottom: 1.5rem; }
+    .how-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+    .how-item { padding: 1.25rem; border: 1px solid var(--light); }
+    .how-num { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; margin-bottom: 0.5rem; }
+    .how-name { font-size: 0.8rem; font-weight: 500; margin-bottom: 0.35rem; }
+    .how-desc { font-size: 0.7rem; color: var(--gray); line-height: 1.6; }
+
+    footer {
+      border-top: 2px solid var(--black);
+      padding: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+    .footer-text { font-size: 0.7rem; color: var(--gray); letter-spacing: 0.05em; }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { font-size: 0.7rem; color: var(--gray); text-decoration: none; letter-spacing: 0.05em; border-bottom: 1px solid transparent; }
+    .footer-links a:hover { border-color: var(--gray); }
+
+    @media (max-width: 600px) {
+      header { padding: 1rem; }
+      .hero { padding: 2rem 1rem 1rem; }
+      .counter-section { padding: 0 1rem 1.5rem; gap: 2rem; }
+      .entries, .how-section { padding: 1.5rem 1rem; }
+      .how-grid { grid-template-columns: 1fr; }
+      footer { padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="https://theanser.app" class="logo">
+    <img src="/goose.png" alt="$ANSER">
+    $ANSER
+    <span>HALL OF SHAME</span>
+  </a>
+  <a href="https://theanser.app" class="back-link">← theanser.app</a>
+</header>
+
+<div class="hero">
+  <p class="hero-label">Verified · Timestamped · Immutable</p>
+  <h1>The goose<br>warned you.</h1>
+  <p>A public record of tokens the ANSER scanner flagged as high risk — before they collapsed.</p>
+  <p>No opinions. No editorializing. Audit score, Goose Voice, timestamp. Then the outcome.</p>
+  <p style="font-style:italic;color:var(--black);margin-top:0.5rem">The contract doesn't lie. The record doesn't either.</p>
+</div>
+
+<div class="counter-section">
+  <div class="counter-item">
+    <div class="counter-num" id="totalWarned">0</div>
+    <div class="counter-label">Tokens warned</div>
+  </div>
+  <div class="counter-item">
+    <div class="counter-num" id="totalRugged">0</div>
+    <div class="counter-label">Confirmed rugs</div>
+  </div>
+  <div class="counter-item">
+    <div class="counter-num" id="avgScore">—</div>
+    <div class="counter-label">Avg score at warning</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- EMPTY STATE — shown when no entries -->
+<div class="empty-state" id="emptyState">
+  <p class="waiting">The goose is watching.</p>
+  <p>No entries yet. The scanner is running.</p>
+  <p>When a token flagged here collapses, it will appear below — with the original audit score, the Goose Voice, and the on-chain evidence.</p>
+  <p style="margin-top:1rem;color:var(--black)">The record starts now.</p>
+</div>
+
+<!-- ENTRIES — hidden until populated -->
+<div class="entries" id="entriesContainer">
+  <!-- Entries injected here. Template:
+
+  <div class="entry">
+    <span class="warned-badge">⚠ The goose warned you</span>
+    <div class="entry-header">
+      <div>
+        <div class="entry-name">[Token Name] ($SYMBOL)</div>
+        <div style="font-size:0.7rem;color:var(--gray);margin-top:0.25rem">[Contract Address]</div>
+      </div>
+      <div class="entry-score">
+        [XX]
+        <div class="entry-score-label">/ 100 at audit</div>
+      </div>
+    </div>
+    <div class="entry-voice">"[Goose Voice]"</div>
+    <div class="entry-meta">
+      <div class="meta-item">
+        <div class="meta-label">Audit date</div>
+        <div class="meta-value">[DD Mon YYYY]</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Rug date</div>
+        <div class="meta-value">[DD Mon YYYY]</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Days to collapse</div>
+        <div class="meta-value">[X] days</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Verdict at audit</div>
+        <div class="meta-value">[HIGH RISK / CRITICAL]</div>
+      </div>
+    </div>
+    <div class="entry-flags">
+      <span class="flag">Mint Active</span>
+      <span class="flag">78% top-20</span>
+      <span class="flag">Liquidity trap</span>
+    </div>
+    <div class="entry-links">
+      <a href="https://theanser.app/score/?ca=[address]" target="_blank" class="entry-link">Original audit ↗</a>
+      <a href="https://solscan.io/token/[address]" target="_blank" class="entry-link">Solscan ↗</a>
+      <a href="[dexscreener_url]" target="_blank" class="entry-link">Price chart ↗</a>
+    </div>
+  </div>
+
+  -->
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="how-section">
+  <p class="section-title">How this record works</p>
+  <div class="how-grid">
+    <div class="how-item">
+      <div class="how-num">01</div>
+      <div class="how-name">Audit first</div>
+      <div class="how-desc">A token is scanned with the ANSER scanner and receives a score below 50 — HIGH RISK or CRITICAL. The Goose Voice delivers its verdict. Timestamped.</div>
+    </div>
+    <div class="how-item">
+      <div class="how-num">02</div>
+      <div class="how-name">Outcome documented</div>
+      <div class="how-desc">When a flagged token collapses, is abandoned, or rugs — it enters this record. No speculation. Only confirmed outcomes with on-chain evidence.</div>
+    </div>
+    <div class="how-item">
+      <div class="how-num">03</div>
+      <div class="how-name">Record is permanent</div>
+      <div class="how-desc">Entries are never removed. The goose does not forgive and does not forget. This record exists to show that the signals were there — before the collapse.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p class="footer-text">$ANSER · Solana · 2026 · The goose doesn't promise anything.</p>
+  <div class="footer-links">
+    <a href="https://theanser.app/score/" target="_blank">Scanner</a>
+    <a href="https://x.com/theanserapp" target="_blank">X</a>
+    <a href="https://t.me/theanser" target="_blank">Telegram</a>
+    <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank">Whitepaper</a>
+  </div>
+</footer>
+
+<script>
+  // Entries data — add objects here as rugs are documented
+  const entries = [
+    // {
+    //   name: "Token Name",
+    //   symbol: "SYM",
+    //   address: "contract_address",
+    //   score: 23,
+    //   voice: "Liquidity is thin. Exit doors are narrow.",
+    //   verdict: "CRITICAL",
+    //   auditDate: "2026-05-01",
+    //   rugDate: "2026-05-03",
+    //   flags: ["Mint Active", "87% top-20", "Liquidity trap"],
+    //   dexscreenerUrl: "https://dexscreener.com/solana/...",
+    // },
+  ];
+
+  function renderEntries() {
+    const container = document.getElementById('entriesContainer');
+    const emptyState = document.getElementById('emptyState');
+
+    if (entries.length === 0) {
+      emptyState.style.display = 'block';
+      container.classList.remove('has-entries');
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    container.classList.add('has-entries');
+
+    // Update counters
+    document.getElementById('totalWarned').textContent = entries.length;
+    document.getElementById('totalRugged').textContent = entries.filter(e => e.rugDate).length;
+    const avgScore = Math.round(entries.reduce((s, e) => s + e.score, 0) / entries.length);
+    document.getElementById('avgScore').textContent = avgScore;
+
+    // Render entries
+    container.innerHTML = entries.map(e => {
+      const auditDate = new Date(e.auditDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+      const rugDate   = e.rugDate ? new Date(e.rugDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Pending';
+      const days      = e.rugDate ? Math.floor((new Date(e.rugDate) - new Date(e.auditDate)) / 86400000) : '—';
+      const flags     = e.flags.map(f => `<span class="flag">${f}</span>`).join('');
+      const short     = e.address.slice(0, 8) + '...' + e.address.slice(-6);
+
+      return `
+        <div class="entry">
+          <span class="warned-badge">⚠ The goose warned you</span>
+          <div class="entry-header">
+            <div>
+              <div class="entry-name">${e.name} ($${e.symbol})</div>
+              <div style="font-size:0.7rem;color:var(--gray);margin-top:0.25rem">${short}</div>
+            </div>
+            <div class="entry-score">
+              ${e.score}
+              <div class="entry-score-label">/ 100 at audit</div>
+            </div>
+          </div>
+          <div class="entry-voice">"${e.voice}"</div>
+          <div class="entry-meta">
+            <div class="meta-item"><div class="meta-label">Audit date</div><div class="meta-value">${auditDate}</div></div>
+            <div class="meta-item"><div class="meta-label">Rug date</div><div class="meta-value">${rugDate}</div></div>
+            <div class="meta-item"><div class="meta-label">Days to collapse</div><div class="meta-value">${days}</div></div>
+            <div class="meta-item"><div class="meta-label">Verdict</div><div class="meta-value">${e.verdict}</div></div>
+          </div>
+          <div class="entry-flags">${flags}</div>
+          <div class="entry-links">
+            <a href="https://theanser.app/score/?ca=${e.address}" target="_blank" class="entry-link">Original audit ↗</a>
+            <a href="https://solscan.io/token/${e.address}" target="_blank" class="entry-link">Solscan ↗</a>
+            ${e.dexscreenerUrl ? `<a href="${e.dexscreenerUrl}" target="_blank" class="entry-link">Price chart ↗</a>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  renderEntries();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>$ANSER — Milestone Verification</title>
+  <meta name="description" content="Every commitment $ANSER has made, verified on-chain. No promises — only facts.">
+  <meta property="og:title" content="$ANSER Milestone Verification">
+  <meta property="og:description" content="Every commitment verified on-chain. The goose doesn't promise anything. It delivers.">
+  <meta property="og:image" content="https://theanser.app/goose.png">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black:  #0a0a0a;
+      --white:  #f9f9f9;
+      --gray:   #888;
+      --light:  #eeeeee;
+      --green:  #1a7a1a;
+      --red:    #8b0000;
+      --yellow: #8b6914;
+      --done:   #1a7a1a;
+      --pending: #888;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      border-bottom: 2px solid var(--black);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      text-decoration: none;
+      color: var(--black);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .logo img { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #111; object-fit: cover; }
+    .logo span { font-size: 0.75rem; font-family: 'IBM Plex Mono', monospace; font-weight: 400; color: var(--gray); display: block; letter-spacing: 0.1em; }
+    .back-link { font-size: 0.75rem; color: var(--gray); text-decoration: none; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray); }
+
+    /* HERO */
+    .hero { padding: 4rem 2rem 2rem; max-width: 860px; margin: 0 auto; }
+    .hero-label { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--gray); margin-bottom: 1rem; text-transform: uppercase; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .hero p { font-size: 0.85rem; color: var(--gray); line-height: 1.8; max-width: 520px; margin-bottom: 1rem; }
+
+    /* PROGRESS BAR */
+    .progress-section { max-width: 860px; margin: 0 auto; padding: 0 2rem 2rem; }
+    .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; }
+    .progress-label { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray); }
+    .progress-count { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 900; color: var(--green); }
+    .progress-bar-outer { height: 3px; background: var(--light); width: 100%; }
+    .progress-bar-inner { height: 3px; background: var(--black); transition: width 0.8s ease; }
+
+    /* DIVIDER */
+    hr.divider { border: none; border-top: 1px solid var(--light); margin: 0 2rem; }
+
+    /* PHASES */
+    .phases { max-width: 860px; margin: 0 auto; padding: 2rem; }
+
+    .phase-block { margin-bottom: 3rem; }
+
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--light);
+    }
+    .phase-tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      min-width: 70px;
+    }
+    .phase-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; flex: 1; }
+    .phase-badge {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid currentColor;
+      text-transform: uppercase;
+    }
+    .badge-done    { color: var(--green); }
+    .badge-active  { color: var(--black); background: var(--black); color: var(--white); border-color: var(--black); }
+    .badge-pending { color: var(--gray); }
+
+    /* MILESTONE ITEMS */
+    .milestone {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--light);
+    }
+    .milestone:last-child { border-bottom: none; }
+
+    .milestone-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+    .icon-done    { color: var(--green); }
+    .icon-pending { color: var(--gray); }
+    .icon-locked  { color: var(--light); }
+
+    .milestone-content { flex: 1; }
+    .milestone-title {
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+      color: var(--black);
+    }
+    .milestone-title.pending { color: var(--gray); }
+
+    .milestone-meta {
+      font-size: 0.7rem;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    .milestone-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.65rem;
+      color: var(--gray);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--gray);
+      margin-top: 0.25rem;
+    }
+    .milestone-link:hover { color: var(--black); border-color: var(--black); }
+
+    .milestone-status {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid currentColor;
+      flex-shrink: 0;
+      align-self: center;
+    }
+    .status-done    { color: var(--green); }
+    .status-pending { color: var(--gray); }
+    .status-next    { color: var(--black); }
+
+    /* TIMESTAMP */
+    .timestamp {
+      font-size: 0.65rem;
+      color: var(--gray);
+      letter-spacing: 0.05em;
+    }
+
+    /* FOOTER NOTE */
+    .footer-note {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem;
+      border-top: 1px solid var(--light);
+      font-size: 0.7rem;
+      color: var(--gray);
+      line-height: 1.8;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 2px solid var(--black);
+      padding: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .footer-text { font-size: 0.7rem; color: var(--gray); letter-spacing: 0.05em; }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { font-size: 0.7rem; color: var(--gray); text-decoration: none; letter-spacing: 0.05em; border-bottom: 1px solid transparent; transition: border-color 0.15s; }
+    .footer-links a:hover { border-color: var(--gray); }
+
+    @media (max-width: 600px) {
+      header { padding: 1rem; }
+      .hero { padding: 2rem 1rem 1rem; }
+      .progress-section { padding: 0 1rem 1.5rem; }
+      .phases { padding: 1.5rem 1rem; }
+      .phase-header { flex-wrap: wrap; gap: 0.5rem; }
+      footer { padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="https://theanser.app" class="logo">
+    <img src="/goose.png" alt="$ANSER">
+    $ANSER
+    <span>MILESTONE VERIFICATION</span>
+  </a>
+  <a href="https://theanser.app" class="back-link">← theanser.app</a>
+</header>
+
+<div class="hero">
+  <p class="hero-label">On-chain · Verifiable · Immutable</p>
+  <h1>Every promise,<br>verified.</h1>
+  <p>This is not a roadmap. Roadmaps are promises. This is a sequence of verifiable actions — each one timestamped, each one on-chain when applicable.</p>
+  <p style="font-style:italic;color:var(--black)">The goose doesn't promise anything. It delivers.</p>
+</div>
+
+<div class="progress-section">
+  <div class="progress-header">
+    <span class="progress-label">Phase 0 progress</span>
+    <span class="progress-count" id="progressCount">6 / 7 completed</span>
+  </div>
+  <div class="progress-bar-outer">
+    <div class="progress-bar-inner" id="progressBar" style="width: 85%"></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="phases">
+
+  <!-- PHASE 0 — GENESIS -->
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag">Phase 0</span>
+      <span class="phase-title">Genesis</span>
+      <span class="phase-badge badge-active">IN PROGRESS</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-done">✓</div>
+      <div class="milestone-content">
+        <div class="milestone-title">@theanserapp active on X</div>
+        <div class="milestone-meta">Account live. Organic content strategy active.</div>
+        <a href="https://x.com/theanserapp" target="_blank" class="milestone-link">x.com/theanserapp ↗</a>
+      </div>
+      <span class="milestone-status status-done">DONE</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-done">✓</div>
+      <div class="milestone-content">
+        <div class="milestone-title">Whitepaper v1.0 published</div>
+        <div class="milestone-meta">Public domain. Copy it, share it, translate it.</div>
+        <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank" class="milestone-link">anser_whitepaper.pdf ↗</a>
+      </div>
+      <span class="milestone-status status-done">DONE</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-done">✓</div>
+      <div class="milestone-content">
+        <div class="milestone-title">theanser.app live with HTTPS</div>
+        <div class="milestone-meta">Landing, scanner, and whitepaper — all live on Cloudflare.</div>
+        <a href="https://theanser.app" target="_blank" class="milestone-link">theanser.app ↗</a>
+      </div>
+      <span class="milestone-status status-done">DONE</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-done">✓</div>
+      <div class="milestone-content">
+        <div class="milestone-title">Telegram channel launched</div>
+        <div class="milestone-meta">t.me/theanser — The Goose Nest.</div>
+        <a href="https://t.me/theanser" target="_blank" class="milestone-link">t.me/theanser ↗</a>
+      </div>
+      <span class="milestone-status status-done">DONE</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-done">✓</div>
+      <div class="milestone-content">
+        <div class="milestone-title">ANSER Token Scanner live</div>
+        <div class="milestone-meta">7 on-chain metrics. Score 0–100. Goose Voice. Free, public, forever.</div>
+        <a href="https://theanser.app/score/" target="_blank" class="milestone-link">theanser.app/score ↗</a>
+      </div>
+      <span class="milestone-status status-done">DONE</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-done">✓</div>
+      <div class="milestone-content">
+        <div class="milestone-title">Telegram bot @TheAnser_bot live</div>
+        <div class="milestone-meta">On-chain audit from any Telegram chat. Running 24/7 on Render.</div>
+        <a href="https://t.me/TheAnser_bot" target="_blank" class="milestone-link">t.me/TheAnser_bot ↗</a>
+      </div>
+      <span class="milestone-status status-done">DONE</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Community building — ongoing</div>
+        <div class="milestone-meta">Organic growth. No paid promotions. No pumps. Never.</div>
+      </div>
+      <span class="milestone-status status-next">ACTIVE</span>
+    </div>
+  </div>
+
+  <!-- PHASE 1 — DEPLOY -->
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag">Phase 1</span>
+      <span class="phase-title">Deploy</span>
+      <span class="phase-badge badge-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">SPL token deployed on Solana mainnet</div>
+        <div class="milestone-meta">Contract address will be published here immediately on deploy.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Mint authority revoked on-chain</div>
+        <div class="milestone-meta">Irreversible. Fixed supply forever. Verifiable on Solscan.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Creator vesting deployed — Streamflow (100M)</div>
+        <div class="milestone-meta">6-month cliff + 2-year linear vest. Lock verified before pool opens.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">DAO vesting deployed — Streamflow (200M)</div>
+        <div class="milestone-meta">4-year linear vest. ~4.2M tokens/month. Community governed.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Staking contract deployed (100M)</div>
+        <div class="milestone-meta">Emission timeline decided by DAO governance.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Anti-snipe launch sequence executed</div>
+        <div class="milestone-meta">30-minute delay + 1% fee tier. All locks verified before pool creation.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+  </div>
+
+  <!-- PHASE 2 — TRADING -->
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag">Phase 2</span>
+      <span class="phase-title">Trading</span>
+      <span class="phase-badge badge-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Liquidity pool opened — Raydium CPMM</div>
+        <div class="milestone-meta">50M tokens + SOL. 30-minute delay active at open.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Liquidity locked — Unicrypt (min. 1 year)</div>
+        <div class="milestone-meta">LP tokens locked at pool creation. No rug possible. Unicrypt link published here.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Security audit published</div>
+        <div class="milestone-meta">Full audit report public before trading begins.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">$ANSER listed on DexScreener and Jupiter</div>
+        <div class="milestone-meta">Tradeable. Verifiable. No hidden mechanics.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+  </div>
+
+  <!-- PHASE 3 — GROWTH -->
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag">Phase 3</span>
+      <span class="phase-title">Growth</span>
+      <span class="phase-badge badge-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">500 holders milestone — +100M tokens to pool</div>
+        <div class="milestone-meta">Announced minimum 24 hours in advance. On-chain verifiable.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">2,000 holders milestone — +100M tokens to pool</div>
+        <div class="milestone-meta">Announced minimum 24 hours in advance. On-chain verifiable.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">Community airdrop — 100M tokens</div>
+        <div class="milestone-meta">50,000 tokens to each of the first 2,000 verified on-chain holders. Snapshot criteria published before execution.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">DAO governance via Realms</div>
+        <div class="milestone-meta">Community takes control. No tokens moved without public governance vote.</div>
+      </div>
+      <span class="milestone-status status-pending">PENDING</span>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag">Phase 4</span>
+      <span class="phase-title">Whatever the DAO decides</span>
+      <span class="phase-badge badge-pending">UNKNOWN</span>
+    </div>
+    <div class="milestone">
+      <div class="milestone-icon icon-pending">○</div>
+      <div class="milestone-content">
+        <div class="milestone-title pending">We genuinely do not know.</div>
+        <div class="milestone-meta">The community will decide. That is the point. Any future action will appear here — timestamped and verifiable.</div>
+      </div>
+      <span class="milestone-status status-pending">DAO</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  <p><strong>How to verify.</strong> Every completed milestone includes a direct link to the on-chain transaction, contract address, or public record. When a milestone is marked DONE, the proof is one click away. When it is marked PENDING, nothing has happened yet — and nothing will happen without it appearing here first.</p>
+  <p style="margin-top:0.5rem">The goose doesn't promise anything. That's why you can trust it. — <a href="https://theanser.app" style="color:var(--gray)">theanser.app</a></p>
+</div>
+
+<footer>
+  <p class="footer-text">$ANSER · Solana · 2026 · The goose doesn't promise anything.</p>
+  <div class="footer-links">
+    <a href="https://x.com/theanserapp" target="_blank">X</a>
+    <a href="https://t.me/theanser" target="_blank">Telegram</a>
+    <a href="https://t.me/TheAnser_bot" target="_blank">Bot</a>
+    <a href="https://theanser.app/score/" target="_blank">Scanner</a>
+    <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank">Whitepaper</a>
+  </div>
+</footer>
+
+</body>
+</html>

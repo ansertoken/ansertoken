@@ -39,7 +39,10 @@
       align-items: center;
       padding: 1.5rem 2rem;
       border-bottom: 1px solid var(--light);
-      position: relative;
+      position: sticky;
+      top: 0;
+      background: var(--white);
+      z-index: 200;
     }
 
     nav .logo {
@@ -96,9 +99,14 @@
       nav .links a { display: block; padding: 0.85rem 2rem; font-size: 0.9rem; color: var(--black); letter-spacing: 0.05em; }
     }
 
-    @media (max-width: 520px) {
-      .nav-scanner { font-size: 0 !important; }
-      .nav-scanner::after { content: "Scanner"; font-size: 0.78rem; letter-spacing: 0.05em; }
+    @media (max-width: 600px) {
+      .nav-hide-600 { display: none !important; }
+    }
+    @media (max-width: 480px) {
+      .nav-hide-480 { display: none !important; }
+    }
+    @media (max-width: 380px) {
+      .nav-hide-380 { display: none !important; }
     }
 
     /* HERO */
@@ -451,14 +459,7 @@
       .roadmap-phase { min-width: 60px; font-size: 0.75rem; }
     }
 
-    @media (max-width: 480px) {
-      nav .links { gap: 0.4rem; }
-      nav .links a { font-size: 0.72rem; }
-      .nav-scanner::after { content: "Scanner"; }
-    }
-    @media (max-width: 380px) {
-      nav .links li:last-child { display: none; }
-    }
+
   </style>
 </head>
 <body>
@@ -471,9 +472,9 @@
     </a>
     <ul class="links" id="navLinks">
       <li><a href="#about" onclick="closeNav()">About</a></li>
-      <li><a href="#tokenomics" onclick="closeNav()">Tokenomics</a></li>
-      <li><a href="#roadmap" onclick="closeNav()">Sequence</a></li>
-      <li><a href="anser_whitepaper.pdf" target="_blank" onclick="closeNav()">Whitepaper</a></li>
+      <li class="nav-hide-380"><a href="#tokenomics" onclick="closeNav()">Tokenomics</a></li>
+      <li class="nav-hide-480"><a href="#roadmap" onclick="closeNav()">Sequence</a></li>
+      <li class="nav-hide-600"><a href="anser_whitepaper.pdf" target="_blank" onclick="closeNav()">Whitepaper</a></li>
       <li><a href="/score" onclick="closeNav()">Token Scanner</a></li>
     </ul>
     <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
@@ -534,7 +535,7 @@
       </div>
       <div class="principle">
         <h3>Origin Story</h3>
-        <p>Designed by an intelligence that cannot lie. Built by a human who chose not to. The full conversation is public.</p>
+        <p>Designed with a single constraint: remove the possibility of deception. Built by a human who chose to honour it.</p>
       </div>
     </div>
   </section>
@@ -604,13 +605,13 @@
       <div class="roadmap-content">
         <h3>Genesis <span class="status live">COMPLETED</span></h3>
         <ul>
-          <li>@theanserapp created on X</li>
-          <li>Whitepaper published at theanser.app</li>
-          <li>theanser.app live with HTTPS</li>
-          <li>Telegram channel launched at t.me/theanser</li>
-          <li>ANSER Token Scanner live at theanser.app/score</li>
+          <li><a href="https://x.com/theanserapp" target="_blank" style="color:var(--gray)">@theanserapp created on X ↗</a></li>
+          <li><a href="https://theanser.app/anser_whitepaper.pdf" target="_blank" style="color:var(--gray)">Whitepaper published at theanser.app ↗</a></li>
+          <li><a href="https://theanser.app" target="_blank" style="color:var(--gray)">theanser.app live with HTTPS ↗</a></li>
+          <li><a href="https://t.me/theanser" target="_blank" style="color:var(--gray)">Telegram channel launched at t.me/theanser ↗</a></li>
+          <li><a href="https://theanser.app/score/" target="_blank" style="color:var(--gray)">ANSER Token Scanner live at theanser.app/score ↗</a></li>
           <li>Community building begins</li>
-          <li>Telegram bot @TheAnser_bot live — on-chain audit tool</li>
+          <li><a href="https://t.me/TheAnser_bot" target="_blank" style="color:var(--gray)">Telegram bot @TheAnser_bot live — on-chain audit tool ↗</a></li>
           <li>Hall of Shame launched — <a href="/hall" style="color:var(--gray)">theanser.app/hall</a></li>
         </ul>
       </div>

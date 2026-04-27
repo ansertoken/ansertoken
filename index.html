@@ -50,11 +50,20 @@
       font-family: 'Playfair Display', serif;
       font-size: 1.4rem;
       font-weight: 900;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.02em;
       text-decoration: none;
       color: var(--black);
-      display: flex;
+      display: inline-flex;
       align-items: center;
+      gap: 0.5rem;
+    }
+    nav .logo span {
+      font-size: 0.65rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 400;
+      color: #888;
+      display: block;
+      letter-spacing: 0.1em;
     }
 
     nav .links {
@@ -489,8 +498,8 @@
   <!-- NAV -->
   <nav>
     <a href="#" class="logo">
-      <img src="goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;margin-right:0;">
-      <div>$ANSER<span style="font-size:0.65rem;font-family:'IBM Plex Mono',monospace;font-weight:400;color:#888;display:block;letter-spacing:0.12em;">SOLANA · 2026</span></div>
+      <img src="goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;">
+      <div>$ANSER<span>SOLANA · 2026</span></div>
     </a>
     <ul class="links" id="navLinks">
       <li><a href="#about" onclick="closeNav()">About</a></li>

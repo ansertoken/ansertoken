@@ -48,15 +48,14 @@
 
 
     .logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.4rem;
-      font-weight: 900;
-      letter-spacing: 0.02em;
+
+      font-family: 'Georgia', serif;
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 0.15em;
       text-decoration: none;
       color: var(--black);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
+
     }
 
 
@@ -683,8 +682,11 @@
   <header>
 
     <a href="https://theanser.app" class="logo">
-      <img src="/goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;">
-      <div>$ANSER<span>TRANSPARENCY SCORE</span></div>
+
+      <img src="/goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;margin-right:0.5rem;vertical-align:middle;">
+      $ANSER
+      <span>TRANSPARENCY SCORE</span>
+
     </a>
 
     <a href="https://theanser.app" class="back-link">← theanser.app</a>
@@ -1063,6 +1065,10 @@
 
           const liqRatio = (totalLiquidity / capToUse) * 100;
 
+          const vol24h = pairs.reduce((s, p) => s + (p.volume?.h24 || 0), 0);
+          const pairCreatedAt = main?.pairCreatedAt ? new Date(main.pairCreatedAt) : null;
+          const volMcapRatio = capToUse > 0 ? Math.round((vol24h / capToUse) * 100) : null;
+
           return {
 
             found: true,
@@ -1079,13 +1085,22 @@
 
             poolCount: pairs.length,
 
-            price
+            price,
+
+            vol24h,
+
+            pairCreatedAt,
+
+            volMcapRatio
 
           };
 
         }
 
 
+
+        const vol24h_b = pairs.reduce((s, p) => s + (p.volume?.h24 || 0), 0);
+        const pairCreatedAt_b = main?.pairCreatedAt ? new Date(main.pairCreatedAt) : null;
 
         return {
 
@@ -1103,7 +1118,13 @@
 
           poolCount: pairs.length,
 
-          price
+          price,
+
+          vol24h: vol24h_b,
+
+          pairCreatedAt: pairCreatedAt_b,
+
+          volMcapRatio: null
 
         };
 
@@ -1437,11 +1458,28 @@
 
         if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) score = Math.min(score, 40);
 
+        // Token age cap: < 48h gets capped at 60 — clean mechanics ≠ safe for brand-new tokens
+        if (deployedAt instanceof Date) {
+          const hoursOld = (Date.now() - deployedAt.getTime()) / 3600000;
+          if (hoursOld < 48) score = Math.min(score, 60);
+        }
+        if (liquidity?.pairCreatedAt instanceof Date) {
+          const poolHours = (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000;
+          if (poolHours < 48) score = Math.min(score, 60);
+        }
+
+        // VOL/MCAP ratio: abnormal volume relative to mcap = likely pump/wash trading
+        const _vmr = liquidity?.volMcapRatio;
+        if (_vmr !== null && _vmr !== undefined) {
+          if      (_vmr > 500) score = Math.min(score, 49);
+          else if (_vmr > 200) score = Math.min(score, 65);
+        }
+
       }
 
       const voice = isAnser
         ? 'The goose built this. It passes its own test.'
-        : gooseVoice(score, auth, conc, liquidity);
+        : gooseVoice(score, auth, conc, liquidity, deployedAt);
 
       const scoreClass   = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
 
@@ -1457,11 +1495,21 @@
 
         : 'CRITICAL — Extreme risk. Do not invest without thorough independent research.';
 
-      function gooseVoice(score, auth, conc, liquidity) {
+      function gooseVoice(score, auth, conc, liquidity, deployedAt) {
         const p = conc?.pct || 0;
         const liqUsd = liquidity?.liquidityUsd || 0;
         const ratio = liquidity?.liqRatio || 0;
         const large = liqUsd > 500000;
+        const vmr = liquidity?.volMcapRatio;
+        const hoursOld = deployedAt instanceof Date ? (Date.now() - deployedAt.getTime()) / 3600000 : 999;
+        const poolHours = liquidity?.pairCreatedAt instanceof Date ? (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000 : 999;
+        const isVeryNew = hoursOld < 48 || poolHours < 48;
+        if (vmr !== null && vmr !== undefined && vmr > 500)
+          return 'Volume exceeds market cap ' + Math.round(vmr/100) + 'x in 24 hours. The price is being moved, not discovered.';
+        if (vmr !== null && vmr !== undefined && vmr > 200)
+          return 'Abnormal volume. Something is coordinating the price action. Verify before acting.';
+        if (isVeryNew)
+          return 'Contract is hours old. On-chain mechanics can be clean and still be a trap. Time reveals intent.';
         if (auth?.dangerousExtensions?.length > 0)
           return 'Hidden mechanics detected. The contract is not what it appears.';
         if (!auth?.mintAuthorityRevoked && !auth?.freezeAuthorityRevoked)
@@ -1833,6 +1881,46 @@
         centralizedBanner +
 
         reconcile +
+
+        // Dynamic warning blocks
+        (function() {
+          let warnings = '';
+          // Very new token warning
+          const _ageH = deployedAt instanceof Date ? (Date.now() - deployedAt.getTime()) / 3600000 : null;
+          const _poolH = liquidity?.pairCreatedAt instanceof Date ? (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000 : null;
+          const _isNew = (_ageH !== null && _ageH < 48) || (_poolH !== null && _poolH < 48);
+          if (_isNew && !isAnser) {
+            const _h = Math.round(_ageH || _poolH || 0);
+            warnings += '<div style="border:1px solid var(--red);padding:0.75rem 1rem;margin:0 0 0.75rem;font-size:0.78rem;">'
+              + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">'
+              + '<span style="font-weight:500;letter-spacing:0.05em;">Token Age Warning</span>'
+              + '<span style="font-size:0.72rem;font-weight:500;color:var(--red);border:1px solid var(--red);padding:0.15rem 0.5rem;">VERY NEW — ' + _h + 'H</span>'
+              + '</div>'
+              + '<div style="color:#444;font-size:0.78rem;line-height:1.55;">Token or pool is less than 48 hours old. Clean on-chain mechanics do not guarantee safety for new tokens — LP lock status and creator intent cannot be verified at this stage. Score capped at 60 regardless of other signals.</div>'
+              + '</div>';
+          }
+          // Volume anomaly warning
+          const _vmr2 = liquidity?.volMcapRatio;
+          if (_vmr2 !== null && _vmr2 !== undefined && _vmr2 > 100 && !isAnser) {
+            const _vol = fmtUsd(liquidity.vol24h || 0);
+            let _vmrColor, _vmrLabel, _vmrNote;
+            if (_vmr2 > 500) {
+              _vmrColor = 'var(--red)'; _vmrLabel = 'EXTREME PUMP';
+              _vmrNote = 'Vol/MCAP ' + _vmr2 + '% — 24h volume (' + _vol + ') exceeds market cap ' + (_vmr2/100).toFixed(1) + 'x. Strong signal of coordinated pump or wash trading. Price action is likely unsustainable.';
+            } else {
+              _vmrColor = 'var(--yellow)'; _vmrLabel = 'VOL ANOMALY';
+              _vmrNote = 'Vol/MCAP ' + _vmr2 + '% — 24h volume (' + _vol + ') is abnormally high relative to market cap. May indicate coordinated activity. Verify before investing.';
+            }
+            warnings += '<div style="border:1px solid ' + _vmrColor + ';padding:0.75rem 1rem;margin:0 0 0.75rem;font-size:0.78rem;">'
+              + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">'
+              + '<span style="font-weight:500;letter-spacing:0.05em;">Volume Anomaly</span>'
+              + '<span style="font-size:0.72rem;font-weight:500;color:' + _vmrColor + ';border:1px solid ' + _vmrColor + ';padding:0.15rem 0.5rem;">' + _vmrLabel + '</span>'
+              + '</div>'
+              + '<div style="color:#444;font-size:0.78rem;line-height:1.55;">' + _vmrNote + '</div>'
+              + '</div>';
+          }
+          return warnings;
+        })() +
 
         '<p class="metrics-title">Metrics breakdown</p>' +
 

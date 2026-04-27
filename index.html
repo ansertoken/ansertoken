@@ -139,6 +139,27 @@
       line-height: 1;
     }
 
+    .hero .hook {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: var(--black);
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .hero .hook span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .hero .hook span::before {
+      content: "✓";
+      font-size: 0.65rem;
+      color: var(--black);
+    }
     .hero .subtitle {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 0.75rem;
@@ -510,11 +531,15 @@
   <div class="hero">
     <img src="goose.png" alt="ANSER — The Goose">
     <h1>$ANSER</h1>
-    <p class="subtitle">SOLANA · 2026</p>
+    <div class="hook">
+      <span>No mint</span>
+      <span>No unlocked dev bag</span>
+      <span>No rugable LP</span>
+    </div>
     <p class="tagline">"The goose doesn't promise anything. That's why you can trust it."</p>
     <p class="latin">Anseres Capitolium servaverunt.</p>
     <div class="buttons">
-      <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank" class="btn primary">Read Whitepaper</a>
+      <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank" class="btn primary">Verify us before you buy us</a>
       <a href="/score" class="btn primary">Token Scanner</a>
       <a href="https://x.com/theanserapp" target="_blank" class="btn">Follow on X</a>
       <a href="https://t.me/theanser" target="_blank" class="btn">Telegram</a>
@@ -622,7 +647,7 @@
   <!-- ROADMAP -->
   <section id="roadmap">
     <h2>V. Sequence of Verifiable Actions</h2>
-    <p style="font-size: 0.82rem; color: var(--gray); margin-bottom: 2rem;">We do not have a roadmap. Roadmaps are promises. We have a sequence of verifiable actions. <a href="/milestones" style="color:var(--black);border-bottom:1px solid var(--black)">Verify current status →</a></p>
+    <p style="font-size: 0.82rem; color: var(--gray); margin-bottom: 2rem;">A roadmap is a list of promises. A sequence is a list of actions we commit to be judged by. If we don't do them, don't buy $ANSER. <a href="/milestones" style="color:var(--black);border-bottom:1px solid var(--black)">Verify current status →</a></p>
 
     <div class="roadmap-item">
       <div class="roadmap-phase">PHASE 0</div>

@@ -777,6 +777,12 @@
 
 
 
+      <div class="criteria-item">
+        <div class="criteria-weight">−5</div>
+        <div class="criteria-name">Update Authority</div>
+        <div class="criteria-desc">Can the creator change the token name, logo, or URI after launch? Mutable metadata is a phishing vector — revoking it is a verifiable commitment. <em>On-chain fact. Applied as −5 pts penalty if mutable.</em></div>
+      </div>
+
       <div class="criteria-item criteria-item-full">
         <div class="criteria-weight">10</div>
         <div class="criteria-name">Creator Risk</div>
@@ -1269,9 +1275,6 @@
 
       else if (auth.transferFeeBps !== null && auth.transferFeeBps < 100) pts += 3;
 
-      // Mutable metadata: -5 pts if update authority not revoked
-      if (updAuth && !updAuth.isRevoked) pts = Math.max(0, pts - 5);
-
       if (conc) {
 
         if      (conc.pct < 20) pts += 20;
@@ -1487,6 +1490,9 @@
       const isAnser = address === ANSER_MINT;
 
       let score = isAnser ? 95 : calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
+
+      // Mutable metadata penalty: -5 pts if update authority not revoked
+      if (!isAnser && updAuth && !updAuth.isRevoked) score = Math.max(0, score - 5);
 
       // Cap score based on critical signals — one red flag limits total trust
 

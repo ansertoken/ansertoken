@@ -797,6 +797,9 @@
         <li style="padding:0.2rem 0;">🚨 <strong>Mint authority still active</strong> → Score capped at 60</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>Freeze authority still active</strong> → Score capped at 70</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Dangerous Token-2022 extensions detected</strong> → Score capped at 40</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume relative to market cap</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
     </div>
@@ -1849,6 +1852,15 @@
 
 
 
+      // Store scan data for share image
+      window._anserLastScan = {
+        timestamp: new Date(),
+        mcap: liquidity?.marketCap || null,
+        liqUsd: liquidity?.liquidityUsd || null,
+        volMcapRatio: liquidity?.volMcapRatio || null,
+        vol24h: liquidity?.vol24h || null,
+      };
+
       document.getElementById('results').innerHTML =
 
         '<div class="score-header">' +
@@ -2100,9 +2112,9 @@
 
       ctx.fillText(tokenName.slice(0, 22), 40, 70);
 
-      ctx.font = '10px monospace'; ctx.fillStyle = '#aaa';
+      ctx.font = '9px monospace'; ctx.fillStyle = '#aaa';
 
-      ctx.fillText(address.slice(0,22) + '...' + address.slice(-6), 40, 90);
+      ctx.fillText(address, 40, 90);
 
 
 
@@ -2130,7 +2142,18 @@
 
       // Badges — always at fixed Y 150, guaranteed no overlap
 
-      const badgeStartY = 150;
+      // Data line: MCAP · Liq · Vol/MCAP
+      const _scan = window._anserLastScan || {};
+      const _fmt = n => n >= 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n >= 1e3 ? '$'+(n/1e3).toFixed(1)+'K' : n ? '$'+Math.round(n) : null;
+      const _mcapStr = _scan.mcap   ? 'MCAP '+_fmt(_scan.mcap) : null;
+      const _liqStr  = _scan.liqUsd ? 'LIQ '+_fmt(_scan.liqUsd) : null;
+      const _vmrStr  = _scan.volMcapRatio ? 'VOL/MCAP '+_scan.volMcapRatio+'%' : null;
+      const _dataLine = [_mcapStr, _liqStr, _vmrStr].filter(Boolean).join('  ·  ');
+      if (_dataLine) {
+        ctx.font = '9px monospace'; ctx.fillStyle = '#777'; ctx.textAlign = 'left';
+        ctx.fillText(_dataLine, 40, 143);
+      }
+      const badgeStartY = _dataLine ? 162 : 150;
 
       const bW = Math.floor((W - 80 - 10 * (cols-1)) / cols);
 
@@ -2167,11 +2190,12 @@
       ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, H-30, W, 30);
 
       ctx.font = '700 10px monospace'; ctx.fillStyle = '#f5f3ee'; ctx.textAlign = 'left';
-
       ctx.fillText("$ANSER · The contract doesn\'t lie.", 40, H-10);
-
+      const _now = new Date();
+      const _ts = _now.toISOString().slice(0,10) + ' ' + _now.toISOString().slice(11,16) + ' UTC';
+      ctx.font = '9px monospace'; ctx.fillStyle = '#999'; ctx.textAlign = 'center';
+      ctx.fillText(_ts, W/2, H-10);
       ctx.font = '10px monospace'; ctx.fillStyle = '#666'; ctx.textAlign = 'right';
-
       ctx.fillText('theanser.app/score', W-40, H-10);
 
 

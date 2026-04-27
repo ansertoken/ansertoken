@@ -57,6 +57,8 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 | Freeze Authority revoked | VERIFIED | 10 pts |
 | Contract Age | OBSERVED | 10 pts |
 | Token Mechanics (Token-2022) | VERIFIED | 10 pts |
+| Honeypot Check | OBSERVED | Cap — 15 if likely trap, 50 if suspicious |
+| Update Authority | VERIFIED | −5 pts penalty if mutable |
 | Creator Risk | INDICATIVE | 10 pts |
 
 **VERIFIED** = on-chain binary fact, cannot be gamed.  

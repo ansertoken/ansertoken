@@ -6,10 +6,11 @@
   <meta name="description" content="$ANSER — The goose doesn't promise anything. That's why you can trust it. A Solana token designed by an AI that cannot lie.">
   <meta property="og:title" content="$ANSER — Anseres Capitolium servaverunt">
   <meta property="og:description" content="The goose doesn't promise anything. That's why you can trust it.">
-  <meta property="og:image" content="goose.png">
+  <meta property="og:image" content="https://theanser.app/goose.png">
   <title>$ANSER</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -24,9 +25,9 @@
     body {
       background: var(--white);
       color: var(--black);
-      font-family: 'Georgia', serif;
-      font-size: 18px;
-      line-height: 1.7;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 16px;
+      line-height: 1.8;
     }
 
     a { color: var(--black); text-decoration: underline; }
@@ -46,8 +47,9 @@
     }
 
     nav .logo {
-      font-size: 1.2rem;
-      font-weight: bold;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 500;
       letter-spacing: 0.15em;
       text-decoration: none;
       color: var(--black);
@@ -62,8 +64,9 @@
     }
 
     nav .links a {
-      font-size: 0.9rem;
-      letter-spacing: 0.05em;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
       text-decoration: none;
       color: var(--gray);
     }
@@ -81,7 +84,7 @@
     }
     .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--black); }
 
-    /* Mobile: hamburger menu — all items always visible when open */
+    /* Mobile: hamburger menu */
     @media (max-width: 600px) {
       .nav-toggle { display: flex; }
       nav .links {
@@ -97,15 +100,12 @@
       }
       nav .links.open { display: flex; }
       nav .links li { border-bottom: 1px solid var(--light); display: block !important; }
-      nav .links a { display: block; padding: 0.85rem 2rem; font-size: 0.9rem; color: var(--black); letter-spacing: 0.05em; }
+      nav .links a { display: block; padding: 0.85rem 2rem; font-size: 0.85rem; color: var(--black); letter-spacing: 0.05em; }
     }
 
     /* Desktop: progressive hiding when space is tight */
     @media (min-width: 601px) and (max-width: 700px) {
       .nav-hide-700 { display: none; }
-    }
-    @media (min-width: 601px) and (max-width: 600px) {
-      .nav-hide-600 { display: none; }
     }
 
     /* HERO */
@@ -128,43 +128,39 @@
       object-fit: cover;
     }
 
-    .hero .goose-placeholder {
-      width: 160px;
-      height: 160px;
-      border-radius: 50%;
-      margin-bottom: 2rem;
-      border: 3px solid var(--black);
-      background: var(--black);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 5rem;
-    }
-
     .hero h1 {
-      font-size: 3.5rem;
-      letter-spacing: 0.2em;
+      font-family: 'Playfair Display', serif;
+      font-size: 4rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
       margin-bottom: 0.5rem;
+      line-height: 1;
     }
 
     .hero .subtitle {
-      font-size: 1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
       color: var(--gray);
-      letter-spacing: 0.1em;
+      letter-spacing: 0.2em;
       margin-bottom: 2.5rem;
+      text-transform: uppercase;
     }
 
     .hero .tagline {
-      font-size: 1.3rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
       font-style: italic;
+      font-weight: 400;
       margin-bottom: 0.75rem;
       max-width: 500px;
+      line-height: 1.5;
     }
 
     .hero .latin {
-      font-size: 0.95rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
       color: var(--gray);
-      letter-spacing: 0.08em;
+      letter-spacing: 0.12em;
       margin-bottom: 3rem;
     }
 
@@ -176,9 +172,10 @@
     }
 
     .btn {
+      font-family: 'IBM Plex Mono', monospace;
       padding: 0.75rem 1.75rem;
-      font-size: 0.9rem;
-      letter-spacing: 0.08em;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
       text-decoration: none;
       border: 1.5px solid var(--black);
       color: var(--black);
@@ -218,15 +215,20 @@
     }
 
     section h2 {
-      font-size: 1.5rem;
-      letter-spacing: 0.1em;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
       margin-bottom: 1.5rem;
-      font-weight: normal;
+      font-style: normal;
       border-bottom: 1px solid var(--light);
       padding-bottom: 0.75rem;
     }
 
     section p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9rem;
+      line-height: 1.9;
       margin-bottom: 1.25rem;
       color: #333333;
     }
@@ -235,12 +237,18 @@
       color: var(--black);
     }
 
+    section p em {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+    }
+
     /* TOKENOMICS TABLE */
     .token-table {
       width: 100%;
       border-collapse: collapse;
       margin: 1.5rem 0;
-      font-size: 0.95rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
     }
 
     .token-table th {
@@ -248,13 +256,15 @@
       color: var(--white);
       padding: 0.75rem 1rem;
       text-align: left;
-      font-weight: normal;
-      letter-spacing: 0.05em;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      font-size: 0.75rem;
     }
 
     .token-table td {
       padding: 0.75rem 1rem;
       border-bottom: 1px solid var(--light);
+      line-height: 1.7;
     }
 
     .token-table tr:last-child td { border-bottom: none; }
@@ -273,24 +283,24 @@
       .token-table td {
         padding: 0;
         border: none;
-        font-size: 0.9rem;
+        font-size: 0.82rem;
       }
       .token-table td:first-child {
-        font-weight: bold;
-        font-size: 1rem;
+        font-weight: 500;
+        font-size: 0.9rem;
         margin-bottom: 0.25rem;
       }
       .token-table td:nth-child(2),
       .token-table td:nth-child(3) {
         display: inline;
         color: var(--gray);
-        font-size: 0.85rem;
+        font-size: 0.8rem;
       }
       .token-table td:nth-child(2)::after { content: " · "; }
       .token-table td:nth-child(4) {
         margin-top: 0.5rem;
         color: var(--gray);
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         line-height: 1.6;
         border-top: 1px solid var(--light);
         padding-top: 0.5rem;
@@ -298,7 +308,7 @@
     }
 
     .pct {
-      font-weight: bold;
+      font-weight: 500;
       color: var(--black);
     }
 
@@ -316,15 +326,18 @@
     }
 
     .principle h3 {
+      font-family: 'Playfair Display', serif;
       font-size: 1rem;
+      font-weight: 700;
       margin-bottom: 0.5rem;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.02em;
     }
 
     .principle p {
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       color: var(--gray);
       margin: 0;
+      line-height: 1.7;
     }
 
     /* QUOTE */
@@ -332,9 +345,11 @@
       border-left: 3px solid var(--black);
       padding: 1rem 1.5rem;
       margin: 2rem 0;
+      font-family: 'Playfair Display', serif;
       font-style: italic;
       font-size: 1.1rem;
       color: #333;
+      line-height: 1.6;
     }
 
     /* ROADMAP */
@@ -347,16 +362,20 @@
 
     .roadmap-phase {
       min-width: 80px;
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
       color: var(--gray);
       padding-top: 0.2rem;
       text-align: right;
     }
 
     .roadmap-content h3 {
-      font-size: 1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 500;
       margin-bottom: 0.4rem;
+      letter-spacing: 0.05em;
     }
 
     .roadmap-content ul {
@@ -365,7 +384,8 @@
     }
 
     .roadmap-content ul li {
-      font-size: 0.9rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
       color: var(--gray);
       padding: 0.15rem 0;
     }
@@ -377,10 +397,11 @@
 
     .status {
       display: inline-block;
-      font-size: 0.75rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
       padding: 0.2rem 0.6rem;
       border: 1px solid var(--black);
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
       margin-left: 0.5rem;
       vertical-align: middle;
     }
@@ -396,9 +417,11 @@
     }
 
     footer p {
-      font-size: 0.85rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
       color: var(--gray);
       margin-bottom: 0.5rem;
+      letter-spacing: 0.03em;
     }
 
     footer .footer-links {
@@ -410,7 +433,8 @@
     }
 
     footer .footer-links a {
-      font-size: 0.85rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
       color: var(--gray);
       text-decoration: none;
       letter-spacing: 0.05em;
@@ -419,6 +443,7 @@
     footer .footer-links a:hover { color: var(--black); }
 
     footer .final-quote {
+      font-family: 'Playfair Display', serif;
       font-style: italic;
       font-size: 1rem;
       color: var(--black);
@@ -443,19 +468,19 @@
       opacity: 0;
       transition: opacity 0.3s;
       z-index: 999;
+      font-family: 'IBM Plex Mono', monospace;
     }
     .scroll-top.visible { opacity: 1; }
     .scroll-top:hover { background: #444; }
 
     /* RESPONSIVE */
     @media (max-width: 600px) {
-      .hero h1 { font-size: 2.5rem; }
+      .hero h1 { font-size: 2.8rem; }
       .principles { grid-template-columns: 1fr; }
       nav { padding: 1rem; }
       nav .logo { font-size: 1rem; }
-      .roadmap-phase { min-width: 60px; font-size: 0.75rem; }
+      .roadmap-phase { min-width: 60px; font-size: 0.68rem; }
     }
-
 
   </style>
 </head>
@@ -587,7 +612,7 @@
       </tbody>
     </table>
 
-    <p style="font-size: 0.85rem; color: var(--gray); font-style: italic;">All vesting contracts are deployed on-chain at launch and publicly verifiable. No private allocations. No advisor tokens. No VC rounds. No presale with special pricing. No exchange listing without community governance approval.</p>
+    <p style="font-size: 0.78rem; color: var(--gray); font-style: italic; font-family: 'IBM Plex Mono', monospace;">All vesting contracts are deployed on-chain at launch and publicly verifiable. No private allocations. No advisor tokens. No VC rounds. No presale with special pricing. No exchange listing without community governance approval.</p>
   </section>
 
   <div class="divider"></div>
@@ -595,7 +620,7 @@
   <!-- ROADMAP -->
   <section id="roadmap">
     <h2>V. Sequence of Verifiable Actions</h2>
-    <p style="font-size: 0.9rem; color: var(--gray); margin-bottom: 2rem;">We do not have a roadmap. Roadmaps are promises. We have a sequence of verifiable actions. <a href="/milestones" style="color:var(--black);border-bottom:1px solid var(--black)">Verify current status →</a></p>
+    <p style="font-size: 0.82rem; color: var(--gray); margin-bottom: 2rem;">We do not have a roadmap. Roadmaps are promises. We have a sequence of verifiable actions. <a href="/milestones" style="color:var(--black);border-bottom:1px solid var(--black)">Verify current status →</a></p>
 
     <div class="roadmap-item">
       <div class="roadmap-phase">PHASE 0</div>
@@ -693,12 +718,9 @@
     </div>
     <p>$ANSER — Solana Blockchain — April 2026</p>
     <p>Contract: <em>Pending deploy</em></p>
-    <p style="margin-top: 1rem; font-size: 0.8rem;">This is not financial advice. $ANSER can lose all value. Verify the contract. Do not trust us.</p>
+    <p style="margin-top: 1rem; font-size: 0.75rem;">This is not financial advice. $ANSER can lose all value. Verify the contract. Do not trust us.</p>
     <p class="final-quote">The goose doesn't promise anything. That's why you can trust it. 🪿</p>
   </footer>
-
-  <!-- WHITEPAPER HTTPS FIX -->
-  <!-- All internal links use relative paths — no mixed content -->
 
   <!-- SCROLL TO TOP -->
   <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>

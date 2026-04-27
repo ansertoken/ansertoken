@@ -81,6 +81,7 @@
     }
     .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--black); }
 
+    /* Mobile: hamburger menu — all items always visible when open */
     @media (max-width: 600px) {
       .nav-toggle { display: flex; }
       nav .links {
@@ -95,18 +96,16 @@
         list-style: none;
       }
       nav .links.open { display: flex; }
-      nav .links li { border-bottom: 1px solid var(--light); }
+      nav .links li { border-bottom: 1px solid var(--light); display: block !important; }
       nav .links a { display: block; padding: 0.85rem 2rem; font-size: 0.9rem; color: var(--black); letter-spacing: 0.05em; }
     }
 
-    @media (max-width: 600px) {
-      .nav-hide-600 { display: none !important; }
+    /* Desktop: progressive hiding when space is tight */
+    @media (min-width: 601px) and (max-width: 700px) {
+      .nav-hide-700 { display: none; }
     }
-    @media (max-width: 480px) {
-      .nav-hide-480 { display: none !important; }
-    }
-    @media (max-width: 380px) {
-      .nav-hide-380 { display: none !important; }
+    @media (min-width: 601px) and (max-width: 600px) {
+      .nav-hide-600 { display: none; }
     }
 
     /* HERO */
@@ -454,8 +453,6 @@
       .principles { grid-template-columns: 1fr; }
       nav { padding: 1rem; }
       nav .logo { font-size: 1rem; }
-      nav .links { gap: 0.6rem; }
-      nav .links a { font-size: 0.78rem; letter-spacing: 0; }
       .roadmap-phase { min-width: 60px; font-size: 0.75rem; }
     }
 
@@ -472,9 +469,9 @@
     </a>
     <ul class="links" id="navLinks">
       <li><a href="#about" onclick="closeNav()">About</a></li>
-      <li class="nav-hide-380"><a href="#tokenomics" onclick="closeNav()">Tokenomics</a></li>
-      <li class="nav-hide-480"><a href="#roadmap" onclick="closeNav()">Sequence</a></li>
-      <li class="nav-hide-600"><a href="anser_whitepaper.pdf" target="_blank" onclick="closeNav()">Whitepaper</a></li>
+      <li><a href="#tokenomics" onclick="closeNav()">Tokenomics</a></li>
+      <li><a href="#roadmap" onclick="closeNav()">Sequence</a></li>
+      <li><a href="anser_whitepaper.pdf" target="_blank" onclick="closeNav()">Whitepaper</a></li>
       <li><a href="/score" onclick="closeNav()">Token Scanner</a></li>
     </ul>
     <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">

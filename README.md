@@ -63,7 +63,21 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against s
 **OBSERVED** = real data, but potentially gameable via wallet splitting etc.  
 **INDICATIVE** = useful signal, not conclusive.
 
-Certain red flags cap the total score regardless of other metrics (e.g. active mint authority caps at 60 regardless of everything else). The goose does not average away red flags.
+Certain red flags cap the total score regardless of other metrics. The goose does not average away red flags.
+
+**Score cap overrides:**
+
+| Signal | Condition | Cap |
+|---|---|---|
+| Holder Concentration | Top-20 ≥80% · liq <$500K | 49 — HIGH RISK |
+| Holder Concentration | Top-20 ≥60% · liq <$500K | 65 — PARTIAL RISK |
+| Holder Data Unavailable | High-activity token | 70 |
+| Mint Authority | Still active | 60 |
+| Freeze Authority | Still active | 70 |
+| Token-2022 Extensions | Dangerous extension detected | 40 |
+| Token / Pool Age | Less than 48 hours old | 60 — HIGH RISK |
+| Vol / MCAP Ratio | 24h volume >200% of market cap | 65 — PARTIAL RISK |
+| Vol / MCAP Ratio | 24h volume >500% of market cap | 49 — HIGH RISK |
 
 ---
 

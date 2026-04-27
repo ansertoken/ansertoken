@@ -57,6 +57,7 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against s
 | Freeze Authority revoked | VERIFIED | 10 pts |
 | Contract Age | OBSERVED | 10 pts |
 | Token Mechanics (Token-2022) | VERIFIED | 10 pts |
+| Update Authority | VERIFIED | −5 pts (penalty if mutable) |
 | Creator Risk | INDICATIVE | 10 pts |
 
 **VERIFIED** = on-chain binary fact, cannot be gamed.  
@@ -78,6 +79,8 @@ Certain red flags cap the total score regardless of other metrics. The goose doe
 | Token / Pool Age | Less than 48 hours old | 60 — HIGH RISK |
 | Vol / MCAP Ratio | 24h volume >200% of market cap | 65 — PARTIAL RISK |
 | Vol / MCAP Ratio | 24h volume >500% of market cap | 49 — HIGH RISK |
+| AMM pools | Raydium/Orca/Meteora wallets | Filtered from holder % |
+| Update Authority | Metadata mutable | −5 pts penalty |
 
 ---
 

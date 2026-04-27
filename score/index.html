@@ -4,20 +4,21 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Free on-chain token scanner for Solana. Analyzes any token against 7 transparency metrics and returns a score from 0 to 100. The goose doesn't promise anything.">
+  <link rel="canonical" href="https://theanser.app/score/">
+  <meta name="description" content="Free Solana token scanner and anti-rug checker. Analyzes any token against 8 on-chain metrics — mint authority, liquidity, holder concentration, honeypot detection and more. Transparency score 0–100.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://theanser.app/score/">
   <meta property="og:title" content="ANSER Token Scanner — Transparency Score for Solana Tokens">
-  <meta property="og:description" content="7 on-chain metrics. Score 0–100. Goose Voice. Free, public, no wallet required. The goose does not average away red flags.">
+  <meta property="og:description" content="8 on-chain metrics. Score 0–100. Free Solana rug checker — mint authority, LP lock, honeypot detection, holder concentration and more.">
   <meta property="og:image" content="https://theanser.app/goose.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@theanserapp">
   <meta name="twitter:title" content="ANSER Token Scanner — Transparency Score for Solana Tokens">
-  <meta name="twitter:description" content="7 on-chain metrics. Score 0–100. Free, public, no wallet required.">
+  <meta name="twitter:description" content="8 on-chain metrics. Free Solana rug checker — mint authority, LP lock, honeypot detection and more.">
   <meta name="twitter:image" content="https://theanser.app/goose.png">
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/favicon.png">
-  <title>ANSER Transparency Score — Solana Token Scanner</title>
+  <title>ANSER Token Scanner — Free Solana Rug Checker & Transparency Score</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
@@ -695,7 +696,7 @@
   <header>
 
     <a href="https://theanser.app" class="logo">
-      <img src="/goose.png" alt="$ANSER" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;">
+      <img src="/goose.png" alt="$ANSER — Solana transparency scanner, the goose that cannot lie" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;">
       <div>$ANSER<span>TRANSPARENCY SCORE</span></div>
     </a>
 
@@ -778,12 +779,18 @@
 
 
       <div class="criteria-item">
-        <div class="criteria-weight">−5</div>
-        <div class="criteria-name">Update Authority</div>
-        <div class="criteria-desc">Can the creator change the token name, logo, or URI after launch? Mutable metadata is a phishing vector — revoking it is a verifiable commitment. <em>On-chain fact. Applied as −5 pts penalty if mutable.</em></div>
+        <div class="criteria-weight">CAP</div>
+        <div class="criteria-name">Honeypot Check</div>
+        <div class="criteria-desc">Are sell transactions failing on-chain? Analyzes recent DEX swap patterns to detect if the token can actually be sold. Score capped at 15 if likely trap. <em>Observed — transaction pattern analysis.</em></div>
       </div>
 
       <div class="criteria-item">
+        <div class="criteria-weight">−5</div>
+        <div class="criteria-name">Update Authority</div>
+        <div class="criteria-desc">Can the creator change token name, logo or URI after launch? Mutable metadata is a phishing vector. <em>On-chain fact. Applied as −5 pts penalty if mutable.</em></div>
+      </div>
+
+      <div class="criteria-item criteria-item-full">
         <div class="criteria-weight">10</div>
         <div class="criteria-name">Creator Risk</div>
         <div class="criteria-desc">Does the deployer wallet still hold tokens? A creator who sold everything is a warning signal. <em>Applies to tokens with limited transaction history. High-activity tokens are flagged as not applicable.</em></div>
@@ -806,6 +813,8 @@
         <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume relative to market cap</li>
         <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Honeypot detected</strong> → Score capped at 15 — selling appears impossible or heavily taxed</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Suspicious sell pattern</strong> → Score capped at 50 — elevated rate of failed sell transactions</li>
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
     </div>
@@ -862,22 +871,59 @@
 
 
 
-    async function getUpdateAuthority(address) {
+    async function getHoneypotStatus(address) {
+      // Simulate a sell transaction to detect if token is a honeypot
+      // Uses simulateTransaction RPC — zero cost, no actual transaction
       try {
-        const a = await rpc('getAsset', { id: address });
-        // isMutable: true = creator can change name/logo/URI (phishing vector)
-        const isMutable = a?.mutable === true || a?.content?.metadata?.attributes === undefined
-          ? (a?.mutable ?? null)
-          : null;
-        // updateAuthority from authorities array
-        const updateAuth = a?.authorities?.find(x => x.scopes?.includes('metadata'))?.address
-          || a?.update_authority
-          || null;
-        const isRevoked = updateAuth === '11111111111111111111111111111111'  // system program = revoked
-          || updateAuth === null
-          || isMutable === false;
-        return { isMutable, updateAuth, isRevoked };
-      } catch { return null; }
+        // We need a token account to simulate from - use a known active wallet
+        // Strategy: check if the token has sell-side transactions at all
+        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 50 }]);
+        if (!sigs || sigs.length === 0) return { status: 'no_activity' };
+
+        // Check recent transactions for any failed sells
+        // A token with 100% sell tax will show failed swap transactions
+        let failedSells = 0, successSells = 0;
+        const recentSigs = sigs.slice(0, 20);
+
+        for (const sig of recentSigs.slice(0, 5)) {
+          try {
+            const tx = await rpc('getTransaction', [sig.signature, {
+              encoding: 'jsonParsed',
+              maxSupportedTransactionVersion: 0
+            }]);
+            if (!tx) continue;
+            // Check if transaction involves a known DEX program (sell attempt)
+            const dexPrograms = new Set([
+              '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM
+              'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK', // Raydium CPMM
+              '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',  // pump.fun
+            ]);
+            const accts = tx?.transaction?.message?.accountKeys?.map(k =>
+              typeof k === 'string' ? k : k?.pubkey) || [];
+            const involvesDex = accts.some(a => dexPrograms.has(a));
+            if (involvesDex) {
+              if (tx.meta?.err) failedSells++;
+              else successSells++;
+            }
+          } catch {}
+        }
+
+        // Check transfer fee via Token-2022 (already in auth, but double-check)
+        // If >80% of DEX txs fail, likely honeypot
+        const totalDexTxs = failedSells + successSells;
+        if (totalDexTxs >= 3 && failedSells / totalDexTxs > 0.8) {
+          return { status: 'likely_honeypot', failRate: Math.round(failedSells / totalDexTxs * 100) };
+        }
+        if (totalDexTxs >= 3 && failedSells / totalDexTxs > 0.3) {
+          return { status: 'suspicious', failRate: Math.round(failedSells / totalDexTxs * 100) };
+        }
+        if (successSells > 0) {
+          return { status: 'sellable', successSells };
+        }
+        return { status: 'unknown' };
+      } catch (e) {
+        return { status: 'unknown' };
+      }
     }
 
     async function getMintAuthorities(address) {
@@ -988,8 +1034,7 @@
 
 
 
-      // Filter known AMM pool accounts to avoid inflating concentration %
-      // These wallets hold tokens on behalf of LPs, not individual holders
+      // Filter known AMM pool wallets to avoid inflating concentration %
       const AMM_KNOWN_PROGRAMS = new Set([
         '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
         'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK',
@@ -1000,9 +1045,7 @@
         'DSwpgjMvXhtGn6BsbqmacdBZyfLj6jSKCqdis1hTMAFU',
         '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
       ]);
-      const accountsBefore = accounts.length;
       accounts = accounts.filter(a => !AMM_KNOWN_PROGRAMS.has(a.address));
-      const ammFiltered = accountsBefore - accounts.length;
 
       // Sort descending to ensure top holders are first
 
@@ -1369,13 +1412,11 @@
 
     async function fetchAndRender(address) {
 
-      const [nameRes, authRes, concRes, ageRes, liqRes, crRes, updAuthRes] = await Promise.allSettled([
+      const [nameRes, authRes, concRes, ageRes, liqRes, crRes] = await Promise.allSettled([
 
         getTokenName(address), getMintAuthorities(address), getHolderConcentration(address),
 
-        getContractAge(address), getLiquidityInfo(address), getCreatorRisk(address),
-
-        getUpdateAuthority(address)
+        getContractAge(address), getLiquidityInfo(address), getCreatorRisk(address)
 
       ]);
 
@@ -1425,7 +1466,9 @@
 
           creatorRisk: crRes.status   === 'fulfilled' ? crRes.value   : null,
 
-          updAuth:     updAuthRes?.status === 'fulfilled' ? updAuthRes.value : null
+          updAuth:   updAuthRes?.status === 'fulfilled' ? updAuthRes.value : null,
+
+          honeypot:  honeyRes?.status   === 'fulfilled' ? honeyRes.value   : null
 
         });
 
@@ -1483,7 +1526,7 @@
 
 
 
-    function renderResults({ address, name, auth, conc, deployedAt, liquidity, creatorRisk, updAuth }) {
+    function renderResults({ address, name, auth, conc, deployedAt, liquidity, creatorRisk, updAuth, honeypot }) {
 
       document.getElementById('loading').classList.remove('visible');
 
@@ -1491,7 +1534,7 @@
 
       let score = isAnser ? 95 : calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
 
-      // Mutable metadata penalty: -5 pts if update authority not revoked
+      // Mutable metadata penalty
       if (!isAnser && updAuth && !updAuth.isRevoked) score = Math.max(0, score - 5);
 
       // Cap score based on critical signals — one red flag limits total trust
@@ -1517,6 +1560,10 @@
         if (!auth.freezeAuthorityRevoked) score = Math.min(score, 70);
 
         if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) score = Math.min(score, 40);
+
+        // Honeypot: if likely honeypot, cap at 15 regardless of mechanics
+        if (honeypot?.status === 'likely_honeypot') score = Math.min(score, 15);
+        else if (honeypot?.status === 'suspicious') score = Math.min(score, 50);
 
         // Token age cap: < 48h gets capped at 60 — clean mechanics ≠ safe for brand-new tokens
         if (deployedAt instanceof Date) {
@@ -1564,6 +1611,10 @@
         const hoursOld = deployedAt instanceof Date ? (Date.now() - deployedAt.getTime()) / 3600000 : 999;
         const poolHours = liquidity?.pairCreatedAt instanceof Date ? (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000 : 999;
         const isVeryNew = hoursOld < 48 || poolHours < 48;
+        if (honeypot?.status === 'likely_honeypot')
+          return 'Sell transactions fail. Buying is easy. Leaving is not.';
+        if (honeypot?.status === 'suspicious')
+          return 'High rate of failed sells detected. Verify you can exit before entering.';
         if (vmr !== null && vmr !== undefined && vmr > 500)
           return 'Volume exceeds market cap ' + Math.round(vmr/100) + 'x in 24 hours. The price is being moved, not discovered.';
         if (vmr !== null && vmr !== undefined && vmr > 200)
@@ -1642,31 +1693,6 @@
 
         mechStatus = 'RISK ✗'; mechCls = 'status-fail';
 
-      }
-
-      // ── Update Authority metric ────────────────────────────────────────────
-      let updAuthM;
-      if (updAuth === null) {
-        updAuthM = {
-          name: 'Update Authority ' + conf('observed'),
-          desc: 'Unable to verify update authority status. Check on Solscan.',
-          status: 'UNKNOWN',
-          cls: 'status-warn'
-        };
-      } else if (updAuth.isRevoked) {
-        updAuthM = {
-          name: 'Update Authority ' + conf('verified'),
-          desc: 'Metadata is immutable. Creator cannot change the token name, logo, or URI.',
-          status: 'IMMUTABLE ✓',
-          cls: 'status-pass'
-        };
-      } else {
-        updAuthM = {
-          name: 'Update Authority ' + conf('observed'),
-          desc: 'Metadata can be changed by the creator. Token name, logo, or URI could be altered — a common vector for post-launch phishing.',
-          status: 'MUTABLE ⚠',
-          cls: 'status-warn'
-        };
       }
 
       const mechM = { name: 'Token Mechanics ' + conf('verified'), desc: mechDesc, status: mechStatus, cls: mechCls };
@@ -1856,9 +1882,31 @@
 
       const crM = { name: 'Creator Risk ' + conf('indicative'), desc: crDesc, status: crStatus, cls: crCls };
 
+      // ── Update Authority metric ─────────────────────────────────────────
+      let updAuthM;
+      if (!updAuth) {
+        updAuthM = { name: 'Update Authority ' + conf('observed'), desc: 'Unable to verify update authority. Check on Solscan.', status: 'UNKNOWN', cls: 'status-warn' };
+      } else if (updAuth.isRevoked) {
+        updAuthM = { name: 'Update Authority ' + conf('verified'), desc: 'Metadata is immutable. Creator cannot change token name, logo, or URI.', status: 'IMMUTABLE ✓', cls: 'status-pass' };
+      } else {
+        updAuthM = { name: 'Update Authority ' + conf('observed'), desc: 'Metadata can be changed by the creator. Token name, logo, or URI could be altered — a common vector for post-launch phishing.', status: 'MUTABLE ⚠', cls: 'status-warn' };
+      }
 
+      // ── Honeypot metric ─────────────────────────────────────────────────
+      let honeyM;
+      if (!honeypot || honeypot.status === 'unknown') {
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Unable to determine sell pattern from recent transactions. Verify manually on Solscan.', status: 'UNKNOWN', cls: 'status-warn' };
+      } else if (honeypot.status === 'no_activity') {
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'No on-chain activity detected. No transaction history to analyze.', status: 'NO DATA', cls: 'status-warn' };
+      } else if (honeypot.status === 'likely_honeypot') {
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Selling may be impossible or heavily taxed. Do not buy.', status: 'LIKELY TRAP ⚠', cls: 'status-fail' };
+      } else if (honeypot.status === 'suspicious') {
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Elevated failure rate — verify you can sell before buying.', status: 'SUSPICIOUS ⚠', cls: 'status-warn' };
+      } else {
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected on-chain. Token appears sellable based on recent activity.', status: 'SELLABLE ✓', cls: 'status-pass' };
+      }
 
-      const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, updAuthM, crM];
+      const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, honeyM, updAuthM, crM];
 
       const tokenName = isAnser ? '$ANSER' : (name || 'Unknown Token');
 

@@ -5,16 +5,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="canonical" href="https://theanser.app/score/">
-  <meta name="description" content="Free Solana token scanner and anti-rug checker. Analyzes any token against 8 on-chain metrics — mint authority, liquidity, holder concentration, honeypot detection and more. Transparency score 0–100.">
+  <meta name="description" content="Free Solana token scanner and anti-rug checker. Detects honeypots, checks mint authority, LP lock, holder concentration and more. Transparency score 0–100.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://theanser.app/score/">
   <meta property="og:title" content="ANSER Token Scanner — Transparency Score for Solana Tokens">
-  <meta property="og:description" content="8 on-chain metrics. Score 0–100. Free Solana rug checker — mint authority, LP lock, honeypot detection, holder concentration and more.">
+  <meta property="og:description" content="8 on-chain metrics. Free Solana rug checker — honeypot detection, mint authority, LP lock and more.">
   <meta property="og:image" content="https://theanser.app/goose.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@theanserapp">
   <meta name="twitter:title" content="ANSER Token Scanner — Transparency Score for Solana Tokens">
-  <meta name="twitter:description" content="8 on-chain metrics. Free Solana rug checker — mint authority, LP lock, honeypot detection and more.">
+  <meta name="twitter:description" content="8 on-chain metrics. Free Solana rug checker — honeypot detection, mint authority, LP lock and more.">
   <meta name="twitter:image" content="https://theanser.app/goose.png">
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/favicon.png">
@@ -696,7 +696,7 @@
   <header>
 
     <a href="https://theanser.app" class="logo">
-      <img src="/goose.png" alt="$ANSER — Solana transparency scanner, the goose that cannot lie" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;">
+      <img src="/goose.png" alt="$ANSER — Solana transparency scanner" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;">
       <div>$ANSER<span>TRANSPARENCY SCORE</span></div>
     </a>
 
@@ -779,15 +779,15 @@
 
 
       <div class="criteria-item">
-        <div class="criteria-weight">CAP</div>
+        <div class="criteria-weight">⚑</div>
         <div class="criteria-name">Honeypot Check</div>
-        <div class="criteria-desc">Are sell transactions failing on-chain? Analyzes recent DEX swap patterns to detect if the token can actually be sold. Score capped at 15 if likely trap. <em>Observed — transaction pattern analysis.</em></div>
+        <div class="criteria-desc">Are sell transactions failing on-chain? Analyzes recent DEX swap patterns to detect if the token can be sold. Score capped at 15 if likely trap. <em>Observed — transaction pattern analysis.</em></div>
       </div>
 
       <div class="criteria-item">
         <div class="criteria-weight">−5</div>
         <div class="criteria-name">Update Authority</div>
-        <div class="criteria-desc">Can the creator change token name, logo or URI after launch? Mutable metadata is a phishing vector. <em>On-chain fact. Applied as −5 pts penalty if mutable.</em></div>
+        <div class="criteria-desc">Can the creator change token name, logo or URI after launch? Mutable metadata is a phishing vector. <em>On-chain fact. −5 pts penalty if mutable.</em></div>
       </div>
 
       <div class="criteria-item criteria-item-full">
@@ -811,10 +811,13 @@
         <li style="padding:0.2rem 0;">⚠️ <strong>Freeze authority still active</strong> → Score capped at 70</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Dangerous Token-2022 extensions detected</strong> → Score capped at 40</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely pump or wash trading</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Honeypot detected</strong> → Score capped at 15 — selling appears impossible</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Suspicious sell pattern</strong> → Score capped at 50 — elevated failed sell rate</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume relative to market cap</li>
         <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
-        <li style="padding:0.2rem 0;">🚨 <strong>Honeypot detected</strong> → Score capped at 15 — selling appears impossible or heavily taxed</li>
-        <li style="padding:0.2rem 0;">⚠️ <strong>Suspicious sell pattern</strong> → Score capped at 50 — elevated rate of failed sell transactions</li>
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
     </div>
@@ -871,59 +874,47 @@
 
 
 
-    async function getHoneypotStatus(address) {
-      // Simulate a sell transaction to detect if token is a honeypot
-      // Uses simulateTransaction RPC — zero cost, no actual transaction
+    async function getUpdateAuthority(address) {
       try {
-        // We need a token account to simulate from - use a known active wallet
-        // Strategy: check if the token has sell-side transactions at all
-        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 50 }]);
+        const a = await rpc('getAsset', { id: address });
+        const updateAuth = a?.authorities?.find(x => x.scopes?.includes('metadata'))?.address
+          || a?.update_authority || null;
+        const isRevoked = !updateAuth
+          || updateAuth === '11111111111111111111111111111111'
+          || a?.mutable === false;
+        return { isRevoked, updateAuth };
+      } catch { return null; }
+    }
+
+    async function getHoneypotStatus(address) {
+      try {
+        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 20 }]);
         if (!sigs || sigs.length === 0) return { status: 'no_activity' };
-
-        // Check recent transactions for any failed sells
-        // A token with 100% sell tax will show failed swap transactions
+        const dexPrograms = new Set([
+          '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
+          'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK',
+          '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
+        ]);
         let failedSells = 0, successSells = 0;
-        const recentSigs = sigs.slice(0, 20);
-
-        for (const sig of recentSigs.slice(0, 5)) {
+        for (const sig of sigs.slice(0, 5)) {
           try {
             const tx = await rpc('getTransaction', [sig.signature, {
-              encoding: 'jsonParsed',
-              maxSupportedTransactionVersion: 0
+              encoding: 'jsonParsed', maxSupportedTransactionVersion: 0
             }]);
             if (!tx) continue;
-            // Check if transaction involves a known DEX program (sell attempt)
-            const dexPrograms = new Set([
-              '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM
-              'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK', // Raydium CPMM
-              '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',  // pump.fun
-            ]);
-            const accts = tx?.transaction?.message?.accountKeys?.map(k =>
-              typeof k === 'string' ? k : k?.pubkey) || [];
-            const involvesDex = accts.some(a => dexPrograms.has(a));
-            if (involvesDex) {
-              if (tx.meta?.err) failedSells++;
-              else successSells++;
+            const accts = (tx?.transaction?.message?.accountKeys || []).map(k =>
+              typeof k === 'string' ? k : k?.pubkey);
+            if (accts.some(a => dexPrograms.has(a))) {
+              tx.meta?.err ? failedSells++ : successSells++;
             }
           } catch {}
         }
-
-        // Check transfer fee via Token-2022 (already in auth, but double-check)
-        // If >80% of DEX txs fail, likely honeypot
-        const totalDexTxs = failedSells + successSells;
-        if (totalDexTxs >= 3 && failedSells / totalDexTxs > 0.8) {
-          return { status: 'likely_honeypot', failRate: Math.round(failedSells / totalDexTxs * 100) };
-        }
-        if (totalDexTxs >= 3 && failedSells / totalDexTxs > 0.3) {
-          return { status: 'suspicious', failRate: Math.round(failedSells / totalDexTxs * 100) };
-        }
-        if (successSells > 0) {
-          return { status: 'sellable', successSells };
-        }
+        const total = failedSells + successSells;
+        if (total >= 3 && failedSells / total > 0.8) return { status: 'likely_honeypot', failRate: Math.round(failedSells/total*100) };
+        if (total >= 3 && failedSells / total > 0.3) return { status: 'suspicious',      failRate: Math.round(failedSells/total*100) };
+        if (successSells > 0) return { status: 'sellable' };
         return { status: 'unknown' };
-      } catch (e) {
-        return { status: 'unknown' };
-      }
+      } catch { return { status: 'unknown' }; }
     }
 
     async function getMintAuthorities(address) {
@@ -1412,11 +1403,13 @@
 
     async function fetchAndRender(address) {
 
-      const [nameRes, authRes, concRes, ageRes, liqRes, crRes] = await Promise.allSettled([
+      const [nameRes, authRes, concRes, ageRes, liqRes, crRes, updAuthRes, honeyRes] = await Promise.allSettled([
 
         getTokenName(address), getMintAuthorities(address), getHolderConcentration(address),
 
-        getContractAge(address), getLiquidityInfo(address), getCreatorRisk(address)
+        getContractAge(address), getLiquidityInfo(address), getCreatorRisk(address),
+
+        getUpdateAuthority(address), getHoneypotStatus(address)
 
       ]);
 
@@ -1466,9 +1459,9 @@
 
           creatorRisk: crRes.status   === 'fulfilled' ? crRes.value   : null,
 
-          updAuth:   updAuthRes?.status === 'fulfilled' ? updAuthRes.value : null,
+          updAuth:  updAuthRes.status === 'fulfilled' ? updAuthRes.value : null,
 
-          honeypot:  honeyRes?.status   === 'fulfilled' ? honeyRes.value   : null
+          honeypot: honeyRes.status   === 'fulfilled' ? honeyRes.value   : null
 
         });
 
@@ -1561,9 +1554,9 @@
 
         if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) score = Math.min(score, 40);
 
-        // Honeypot: if likely honeypot, cap at 15 regardless of mechanics
+        // Honeypot caps
         if (honeypot?.status === 'likely_honeypot') score = Math.min(score, 15);
-        else if (honeypot?.status === 'suspicious') score = Math.min(score, 50);
+        else if (honeypot?.status === 'suspicious')  score = Math.min(score, 50);
 
         // Token age cap: < 48h gets capped at 60 — clean mechanics ≠ safe for brand-new tokens
         if (deployedAt instanceof Date) {
@@ -1612,7 +1605,7 @@
         const poolHours = liquidity?.pairCreatedAt instanceof Date ? (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000 : 999;
         const isVeryNew = hoursOld < 48 || poolHours < 48;
         if (honeypot?.status === 'likely_honeypot')
-          return 'Sell transactions fail. Buying is easy. Leaving is not.';
+          return 'Buying is easy. Leaving is not.';
         if (honeypot?.status === 'suspicious')
           return 'High rate of failed sells detected. Verify you can exit before entering.';
         if (vmr !== null && vmr !== undefined && vmr > 500)
@@ -1889,7 +1882,7 @@
       } else if (updAuth.isRevoked) {
         updAuthM = { name: 'Update Authority ' + conf('verified'), desc: 'Metadata is immutable. Creator cannot change token name, logo, or URI.', status: 'IMMUTABLE ✓', cls: 'status-pass' };
       } else {
-        updAuthM = { name: 'Update Authority ' + conf('observed'), desc: 'Metadata can be changed by the creator. Token name, logo, or URI could be altered — a common vector for post-launch phishing.', status: 'MUTABLE ⚠', cls: 'status-warn' };
+        updAuthM = { name: 'Update Authority ' + conf('observed'), desc: 'Metadata can be changed by the creator — a common post-launch phishing vector.', status: 'MUTABLE ⚠', cls: 'status-warn' };
       }
 
       // ── Honeypot metric ─────────────────────────────────────────────────
@@ -1897,13 +1890,13 @@
       if (!honeypot || honeypot.status === 'unknown') {
         honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Unable to determine sell pattern from recent transactions. Verify manually on Solscan.', status: 'UNKNOWN', cls: 'status-warn' };
       } else if (honeypot.status === 'no_activity') {
-        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'No on-chain activity detected. No transaction history to analyze.', status: 'NO DATA', cls: 'status-warn' };
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'No on-chain activity to analyze.', status: 'NO DATA', cls: 'status-warn' };
       } else if (honeypot.status === 'likely_honeypot') {
         honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Selling may be impossible or heavily taxed. Do not buy.', status: 'LIKELY TRAP ⚠', cls: 'status-fail' };
       } else if (honeypot.status === 'suspicious') {
-        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Elevated failure rate — verify you can sell before buying.', status: 'SUSPICIOUS ⚠', cls: 'status-warn' };
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Verify you can sell before buying.', status: 'SUSPICIOUS ⚠', cls: 'status-warn' };
       } else {
-        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected on-chain. Token appears sellable based on recent activity.', status: 'SELLABLE ✓', cls: 'status-pass' };
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected. Token appears sellable.', status: 'SELLABLE ✓', cls: 'status-pass' };
       }
 
       const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, honeyM, updAuthM, crM];

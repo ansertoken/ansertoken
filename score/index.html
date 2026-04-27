@@ -811,6 +811,8 @@
         <li style="padding:0.2rem 0;">⚠️ <strong>Freeze authority still active</strong> → Score capped at 70</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Dangerous Token-2022 extensions detected</strong> → Score capped at 40</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume</li>
         <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely pump or wash trading</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Honeypot detected</strong> → Score capped at 15 — selling appears impossible</li>
@@ -1156,6 +1158,16 @@
           const pairCreatedAt = main?.pairCreatedAt ? new Date(main.pairCreatedAt) : null;
           const volMcapRatio = capToUse > 0 ? Math.round((vol24h / capToUse) * 100) : null;
 
+          // LP lock detection from DexScreener
+          // pair.liquidity.locked = boolean (some pairs), pair.info.liquidity.locked = pct locked
+          let lpLocked = null; // null = unknown, true = locked, false = confirmed unlocked
+          for (const p of pairs) {
+            const boolLock = p.liquidity?.locked;
+            const pctLock  = p.info?.liquidity?.locked;
+            if (typeof boolLock === 'boolean') { lpLocked = boolLock; break; }
+            if (typeof pctLock  === 'number')  { lpLocked = pctLock >= 90; break; }
+          }
+
           return {
 
             found: true,
@@ -1178,7 +1190,9 @@
 
             pairCreatedAt,
 
-            volMcapRatio
+            volMcapRatio,
+
+            lpLocked
 
           };
 
@@ -1211,7 +1225,9 @@
 
           pairCreatedAt: pairCreatedAt_b,
 
-          volMcapRatio: null
+          volMcapRatio: null,
+
+          lpLocked: null
 
         };
 
@@ -1575,6 +1591,9 @@
           else if (_vmr > 200) score = Math.min(score, 65);
         }
 
+        // LP lock: confirmed unlocked = -5pts penalty (rug vector)
+        if (liquidity?.lpLocked === false) score = Math.max(0, score - 5);
+
       }
 
       const voice = isAnser
@@ -1612,6 +1631,8 @@
           return 'Volume exceeds market cap ' + Math.round(vmr/100) + 'x in 24 hours. The price is being moved, not discovered.';
         if (vmr !== null && vmr !== undefined && vmr > 200)
           return 'Abnormal volume. Something is coordinating the price action. Verify before acting.';
+        if (liquidity?.lpLocked === false && !isVeryNew)
+          return 'Liquidity is not locked. One transaction from the creator erases the pool.';
         if (isVeryNew)
           return 'Contract is hours old. On-chain mechanics can be clean and still be a trap. Time reveals intent.';
         if (auth?.dangerousExtensions?.length > 0)
@@ -1801,7 +1822,12 @@
 
           + ' (' + dex.toUpperCase() + ').' + ratioLine + thresholdNote
 
-          + ' Lock status requires manual verification.' + link;
+          + (() => {
+              const lk = liquidity.lpLocked;
+              if (lk === true)  return ' <span style="color:var(--green);font-weight:500">LP LOCKED ✓</span> — Liquidity is locked. Rug via LP removal not possible.';
+              if (lk === false) return ' <span style="color:var(--red);font-weight:500">LP UNLOCKED ✗</span> — Liquidity is not locked. Creator can remove LP at any time.';
+              return ' <span style="color:var(--gray);font-weight:500">LP LOCK: NOT VERIFIED</span> — Lock status not reported by DexScreener. Verify manually.';
+            })() + link;
 
         if (liquidity.marketCap && liquidity.marketCap < 10000000 && liquidity.liqRatio !== null) {
           if      (liquidity.liqRatio >= 20) { liqStatus = 'SUFFICIENT ✓'; liqCls = 'status-pass'; }
@@ -1972,6 +1998,7 @@
         liqUsd: liquidity?.liquidityUsd || null,
         volMcapRatio: liquidity?.volMcapRatio || null,
         vol24h: liquidity?.vol24h || null,
+        lpLocked: liquidity?.lpLocked ?? null,
       };
 
       document.getElementById('results').innerHTML =
@@ -2035,6 +2062,15 @@
               + '</div>';
           }
           // Volume anomaly warning
+          // LP lock warning block
+          if (liquidity?.lpLocked === false) {
+            warningBlocks += '<div style="border:1px solid var(--red);padding:0.75rem 1rem;margin-bottom:0.75rem;background:#fff5f5;">'
+              + '<div style="font-size:0.7rem;letter-spacing:0.15em;color:var(--red);text-transform:uppercase;margin-bottom:0.3rem;font-weight:500;">LP Unlocked</div>'
+              + '<div style="font-size:0.7rem;letter-spacing:0.15em;color:var(--red);text-transform:uppercase;font-weight:700;margin-bottom:0.4rem;">UNLOCKED</div>'
+              + '<div style="color:#444;font-size:0.78rem;line-height:1.55;">Liquidity pool is not locked. The creator or deployer can remove all liquidity at any time, collapsing the price instantly. Verify intent before investing.</div>'
+              + '</div>';
+          }
+
           const _vmr2 = liquidity?.volMcapRatio;
           if (_vmr2 !== null && _vmr2 !== undefined && _vmr2 > 100 && !isAnser) {
             const _vol = fmtUsd(liquidity.vol24h || 0);

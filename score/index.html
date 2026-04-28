@@ -1347,90 +1347,72 @@
 
 
 
-    function calcScore(auth, conc, deployedAt, liquidity, creatorRisk) {
-
+function calcScore(auth, conc, deployedAt, liquidity, creatorRisk) {
+      // === ALGORITMO UNIFICADO $ANSER (VERSIÓN WEB) ===
       let pts = 0;
 
-      pts += auth.mintAuthorityRevoked   ? 25 : 0;
+      // 1. Autoridades (35 pts)
+      if (auth && auth.mintAuthorityRevoked) pts += 25;
+      if (auth && auth.freezeAuthorityRevoked) pts += 10;
 
-      pts += auth.freezeAuthorityRevoked ? 10 : 0;
+      // 2. Mecánicas Token (10 pts)
+      if (auth && (!auth.isToken2022 || (auth.dangerousExtensions && auth.dangerousExtensions.length === 0))) pts += 10;
 
-      if (!auth.isToken2022)                            pts += 10;
+      // 3. Concentración Holders (20 pts)
+      const top20 = (conc && conc.pct !== undefined) ? conc.pct : null;
+      if (top20 === null) pts += 10;
+      else if (top20 < 30) pts += 20;
+      else if (top20 < 40) pts += 15;
+      else if (top20 < 60) pts += 8;
 
-      else if (auth.dangerousExtensions.length === 0)   pts += 8;
+      // 4. Ratio Liquidez/MCAP (15 pts)
+      const mcap = (liquidity && liquidity.marketCap) ? liquidity.marketCap : null;
+      const liq = (liquidity && liquidity.liquidityUsd) ? liquidity.liquidityUsd : 0;
+      const ratio = (liq && mcap) ? (liq / mcap) * 100 : null;
+      
+      if (ratio !== null) {
+        if (ratio >= 20) pts += 15;
+        else if (ratio >= 10) pts += 12;
+        else if (ratio >= 3) pts += 6;
+      } else if (liq > 200000) pts += 12;
+      else if (liq > 30000) pts += 6;
 
-      else if (auth.transferFeeBps !== null && auth.transferFeeBps < 100) pts += 3;
-
-      if (conc) {
-
-        if      (conc.pct < 20) pts += 20;
-
-        else if (conc.pct < 40) pts += 14;
-
-        else if (conc.pct < 60) pts += 7;
-
-        else if (conc.pct < 80) pts += 3;
-
-      }
-
-      if (liquidity?.found) {
-
-        const isSmallCap = liquidity.marketCap && liquidity.marketCap < 10000000; // < $10M
-
-        if (isSmallCap && liquidity.liqRatio !== null) {
-
-          // Small cap: LP/MCAP ratio is the exit-risk signal that matters
-
-          if      (liquidity.liqRatio >= 20) pts += 15;
-
-          else if (liquidity.liqRatio >= 10) pts += 12;
-
-          else if (liquidity.liqRatio >= 3)  pts += 6;
-
-          else                                pts += 1;
-
-        } else {
-
-          // Large cap or unknown mcap: absolute liquidity is sufficient signal
-
-          if      (liquidity.liquidityUsd > 1000000) pts += 15;
-
-          else if (liquidity.liquidityUsd > 200000)  pts += 12;
-
-          else if (liquidity.liquidityUsd > 50000)   pts += 8;
-
-          else if (liquidity.liquidityUsd > 5000)    pts += 4;
-
-          else                                        pts += 1;
-
-        }
-
-      }
-
+      // 5. Antigüedad (10 pts)
       if (deployedAt instanceof Date) {
+        const hours = (Date.now() - deployedAt.getTime()) / 3600000;
+        if (hours > 168) pts += 10;
+        else if (hours > 48) pts += 7;
+        else if (hours > 24) pts += 3;
+      }
 
-        const d = (Date.now() - deployedAt.getTime()) / 86400000;
+      // 6. Riesgo Creador (Base)
+      pts += 5;
 
-        if      (d > 180) pts += 10;
+      // --- PENALIZACIONES ---
+      const isLpLocked = (liquidity && liquidity.lpLocked !== undefined) ? liquidity.lpLocked : true;
+      if (!isLpLocked) pts -= 5;
 
-        else if (d > 30)  pts += 7;
+      // --- LIMITES CRÍTICOS (SCORE CAPS) ---
+      if (auth && !auth.mintAuthorityRevoked) pts = Math.min(pts, 60);
+      if (auth && !auth.freezeAuthorityRevoked) pts = Math.min(pts, 70);
+      if (auth && auth.dangerousExtensions && auth.dangerousExtensions.length > 0) pts = Math.min(pts, 40);
 
-        else if (d > 7)   pts += 5;
+      // Concentración vs Liquidez
+      if (top20 !== null && top20 >= 80) pts = Math.min(pts, liq < 500000 ? 49 : 65);
+      else if (top20 !== null && top20 >= 60) pts = Math.min(pts, liq < 500000 ? 65 : 75);
 
-        else if (d > 1)   pts += 2;
+      // Antigüedad (si es muy nuevo)
+      const isVeryNew = (deployedAt instanceof Date && ((Date.now() - deployedAt.getTime()) / 3600000) < 48);
+      if (isVeryNew) pts = Math.min(pts, 60);
 
-        else               pts += 1;
+      // Volumen vs MCAP
+      const vol = (liquidity && liquidity.vol24h) ? liquidity.vol24h : null;
+      const vmr = (vol && mcap) ? (vol / mcap) * 100 : null;
+      if (vmr !== null && vmr > 500) pts = Math.min(pts, 49);
+      else if (vmr !== null && vmr > 200) pts = Math.min(pts, 65);
 
-      } else if (deployedAt?.tooActive) { pts += 10; }
-
-      if      (creatorRisk?.unknown)    pts += 5;
-
-      else if (creatorRisk?.stillHolds) pts += 10;
-
-      else                               pts += 2;
-
-      return Math.min(100, pts);
-
+      // Resultado final
+      return Math.max(0, Math.min(100, Math.round(pts)));
     }
 
 

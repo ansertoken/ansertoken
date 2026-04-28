@@ -9,16 +9,29 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://theanser.app/score/">
   <meta property="og:title" content="ANSER Token Scanner — Transparency Score for Solana Tokens">
-  <meta property="og:description" content="8 on-chain metrics. Free Solana rug checker — honeypot detection, mint authority, LP lock and more.">
+  <meta property="og:description" content="9 on-chain metrics. Free Solana rug checker — honeypot, mint authority, LP lock, update authority and more.">
   <meta property="og:image" content="https://theanser.app/goose.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@theanserapp">
   <meta name="twitter:title" content="ANSER Token Scanner — Transparency Score for Solana Tokens">
-  <meta name="twitter:description" content="8 on-chain metrics. Free Solana rug checker — honeypot detection, mint authority, LP lock and more.">
+  <meta name="twitter:description" content="9 on-chain metrics. Free Solana rug checker — honeypot, mint authority, LP lock, update authority and more.">
   <meta name="twitter:image" content="https://theanser.app/goose.png">
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/favicon.png">
   <title>ANSER Token Scanner — Free Solana Rug Checker & Transparency Score</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ANSER Token Scanner",
+    "description": "Free Solana token scanner. Analyzes 9 on-chain metrics and returns a transparency score from 0 to 100. Detects honeypots, mint authority, LP lock, holder concentration and more.",
+    "url": "https://theanser.app/score/",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "$ANSER", "url": "https://theanser.app" }
+  }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
@@ -739,6 +752,29 @@
 
   <div class="how-it-works" id="howItWorks">
     <p class="section-title">How the score works</p>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--light);border:1px solid var(--light);margin-bottom:2rem;">
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#1a7a1a;line-height:1;margin-bottom:0.4rem;">80–100</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#1a7a1a;font-weight:500;margin-bottom:0.3rem;">PRISTINE / SOUND</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Strong structure. Market risk remains — the contract is not the threat.</div>
+        </div>
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#8b6914;line-height:1;margin-bottom:0.4rem;">60–79</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8b6914;font-weight:500;margin-bottom:0.3rem;">PARTIAL RISK</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Some transparency measures in place. Risks remain. Read the breakdown.</div>
+        </div>
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#8b0000;line-height:1;margin-bottom:0.4rem;">40–59</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8b0000;font-weight:500;margin-bottom:0.3rem;">HIGH RISK</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Significant transparency failures. Do not act without independent verification.</div>
+        </div>
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#8b0000;line-height:1;margin-bottom:0.4rem;">0–39</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8b0000;font-weight:500;margin-bottom:0.3rem;">CRITICAL</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Extreme risk detected. Likely trap, honeypot, or confirmed rug vector.</div>
+        </div>
+      </div>
     <div class="criteria-grid">
       <div class="criteria-item">
         <div class="criteria-weight">25</div>
@@ -1904,11 +1940,11 @@
       // ── Update Authority metric ─────────────────────────────────────────
       let updAuthM;
       if (!updAuth) {
-        updAuthM = { name: 'Update Authority ' + conf('observed'), desc: 'Unable to verify update authority. Check on Solscan.', status: 'UNKNOWN', cls: 'status-warn' };
+        updAuthM = { name: 'Update Authority ' + conf('verified'), desc: 'Unable to verify update authority. Check on Solscan.', status: 'UNKNOWN', cls: 'status-warn' };
       } else if (updAuth.isRevoked) {
         updAuthM = { name: 'Update Authority ' + conf('verified'), desc: 'Metadata is immutable. Creator cannot change token name, logo, or URI.', status: 'IMMUTABLE ✓', cls: 'status-pass' };
       } else {
-        updAuthM = { name: 'Update Authority ' + conf('observed'), desc: 'Metadata can be changed by the creator — a common post-launch phishing vector.', status: 'MUTABLE ⚠', cls: 'status-warn' };
+        updAuthM = { name: 'Update Authority ' + conf('verified'), desc: 'Metadata can be changed by the creator — a common post-launch phishing vector.', status: 'MUTABLE ⚠', cls: 'status-warn' };
       }
 
       // ── Honeypot metric ─────────────────────────────────────────────────
@@ -1945,17 +1981,8 @@
 
       // Score subtitle
 
-      const verifiedCount  = [auth.mintAuthorityRevoked, auth.freezeAuthorityRevoked,
-
-                               !auth.isToken2022 || auth.dangerousExtensions.length === 0]
-
-                              .filter(Boolean).length;
-
-      const observedCount  = [true, liquidity?.found, deployedAt].filter(Boolean).length; // concentration always attempted
-
-      const scoreSubtitle  = verifiedCount + ' verified signal' + (verifiedCount !== 1 ? 's' : '')
-
-                           + ' · ' + observedCount + ' observed';
+      // 9 metrics: 4 VERIFIED · 4 OBSERVED · 1 INDICATIVE
+      const scoreSubtitle  = '4 verified · 4 observed · 1 indicative';
 
 
 

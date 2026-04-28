@@ -1365,17 +1365,22 @@ function calcScore(auth, conc, deployedAt, liquidity, creatorRisk) {
       else if (top20 < 40) pts += 15;
       else if (top20 < 60) pts += 8;
 
-      // 4. Ratio Liquidez/MCAP (15 pts)
+  // 4. Ratio Liquidez/MCAP (15 pts) - CORRECCIÓN PARA GIGANTES
       const mcap = (liquidity && liquidity.marketCap) ? liquidity.marketCap : null;
       const liq = (liquidity && liquidity.liquidityUsd) ? liquidity.liquidityUsd : 0;
       const ratio = (liq && mcap) ? (liq / mcap) * 100 : null;
       
-      if (ratio !== null) {
+      if (liq > 1000000) {
+        pts += 15; // Gigantes (>$1M liquidez): Puntuación máxima garantizada
+      } else if (ratio !== null) {
         if (ratio >= 20) pts += 15;
         else if (ratio >= 10) pts += 12;
         else if (ratio >= 3) pts += 6;
-      } else if (liq > 200000) pts += 12;
-      else if (liq > 30000) pts += 6;
+      } else if (liq > 200000) {
+        pts += 12;
+      } else if (liq > 30000) {
+        pts += 6;
+      }
 
       // 5. Antigüedad (10 pts)
       if (deployedAt instanceof Date) {

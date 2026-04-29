@@ -1053,12 +1053,9 @@
 
       try {
 
-        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000));
         const das = await Promise.race([
-          rpc('getTokenAccounts', {
-            mint: address, limit: 20,
-            sortBy: { sortBy: 'amount', sortDirection: 'desc' }
-          }),
+          rpc('getTokenAccounts', { mint: address, limit: 1000 }),
 
           timeoutPromise
 
@@ -1118,9 +1115,13 @@
 
 
 
-      const top20sum = accounts.reduce((s, h) => s + h.uiAmount, 0);
+      // Take only top 20 — required because we now fetch up to 1000 accounts.
+      // Previously this was implicit (limit:20 from API), now must be explicit.
+      const top20 = accounts.slice(0, 20);
 
-      const top1amt  = accounts[0]?.uiAmount || 0;
+      const top20sum = top20.reduce((s, h) => s + h.uiAmount, 0);
+
+      const top1amt  = top20[0]?.uiAmount || 0;
 
       const top20pct = supply > 0 ? Math.round((top20sum / supply) * 100) : 100;
 

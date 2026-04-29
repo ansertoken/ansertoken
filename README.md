@@ -58,7 +58,7 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 | Contract Age | OBSERVED | 10 pts |
 | Token Mechanics (Token-2022) | VERIFIED | 10 pts |
 | Honeypot Check | OBSERVED | Cap — 15 if likely trap, 50 if suspicious |
-| Update Authority | VERIFIED | −5 pts penalty if mutable |
+| Update Authority | VERIFIED | Cap at 85 if mutable |
 | Creator Risk | INDICATIVE | 10 pts |
 
 **VERIFIED** = on-chain binary fact, cannot be gamed.  
@@ -71,17 +71,25 @@ Certain red flags cap the total score regardless of other metrics. The goose doe
 
 | Signal | Condition | Cap |
 |---|---|---|
+| Holder Concentration | Top-20 ≥95% · liq <$500K | 35 — CRITICAL |
 | Holder Concentration | Top-20 ≥80% · liq <$500K | 49 — HIGH RISK |
 | Holder Concentration | Top-20 ≥60% · liq <$500K | 65 — PARTIAL RISK |
+| Holder Concentration | Top-20 ≥80% · liq ≥$500K | 65 — softer cap |
+| Holder Concentration | Top-20 ≥60% · liq ≥$500K | 75 — softer cap |
 | Holder Data Unavailable | High-activity token | 70 |
 | Mint Authority | Still active | 60 |
 | Freeze Authority | Still active | 70 |
+| Update Authority | Mutable metadata | 85 |
 | Token-2022 Extensions | Dangerous extension detected | 40 |
 | Honeypot Check | Likely trap — high failed sell rate | 15 — CRITICAL |
 | Honeypot Check | Suspicious sell pattern | 50 — HIGH RISK |
 | Token / Pool Age | Less than 48 hours old | 60 — HIGH RISK |
 | Vol / MCAP Ratio | 24h volume >200% of market cap | 65 — PARTIAL RISK |
 | Vol / MCAP Ratio | 24h volume >500% of market cap | 49 — HIGH RISK |
+| Vol / MCAP Ratio | 24h volume >1000% of market cap | 35 — CRITICAL |
+| LP Confirmed Unlocked | DexScreener confirms LP not locked | −5 pts penalty |
+| Liquidity Data Unavailable | DexScreener fetch failed | 60 |
+| Compounding Red Flags | 3+ caps fired simultaneously | −10 pts penalty |
 
 ---
 

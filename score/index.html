@@ -870,8 +870,8 @@
       <a href="https://t.me/theanser" target="_blank">Telegram</a>
       <a href="https://t.me/TheAnser_bot" target="_blank">Telegram Bot</a>
       <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank">Whitepaper</a>
-      <a href="/milestones/">Milestones</a>
-      <a href="/hall/">Hall of Shame</a>
+      <a href="/milestones">Milestones</a>
+      <a href="/hall">Hall of Shame</a>
     </div>
   </footer>
 
@@ -1347,77 +1347,90 @@
 
 
 
-function calcScore(auth, conc, deployedAt, liquidity, creatorRisk) {
-      // === ALGORITMO UNIFICADO $ANSER (VERSIÓN WEB) ===
+    function calcScore(auth, conc, deployedAt, liquidity, creatorRisk) {
+
       let pts = 0;
 
-      // 1. Autoridades (35 pts)
-      if (auth && auth.mintAuthorityRevoked) pts += 25;
-      if (auth && auth.freezeAuthorityRevoked) pts += 10;
+      pts += auth.mintAuthorityRevoked   ? 25 : 0;
 
-      // 2. Mecánicas Token (10 pts)
-      if (auth && (!auth.isToken2022 || (auth.dangerousExtensions && auth.dangerousExtensions.length === 0))) pts += 10;
+      pts += auth.freezeAuthorityRevoked ? 10 : 0;
 
-      // 3. Concentración Holders (20 pts)
-      const top20 = (conc && conc.pct !== undefined) ? conc.pct : null;
-      if (top20 === null) pts += 10;
-      else if (top20 < 30) pts += 20;
-      else if (top20 < 40) pts += 15;
-      else if (top20 < 60) pts += 8;
+      if (!auth.isToken2022)                            pts += 10;
 
-  // 4. Ratio Liquidez/MCAP (15 pts) - CORRECCIÓN PARA GIGANTES
-      const mcap = (liquidity && liquidity.marketCap) ? liquidity.marketCap : null;
-      const liq = (liquidity && liquidity.liquidityUsd) ? liquidity.liquidityUsd : 0;
-      const ratio = (liq && mcap) ? (liq / mcap) * 100 : null;
-      
-      if (liq > 1000000) {
-        pts += 15; // Gigantes (>$1M liquidez): Puntuación máxima garantizada
-      } else if (ratio !== null) {
-        if (ratio >= 20) pts += 15;
-        else if (ratio >= 10) pts += 12;
-        else if (ratio >= 3) pts += 6;
-      } else if (liq > 200000) {
-        pts += 12;
-      } else if (liq > 30000) {
-        pts += 6;
+      else if (auth.dangerousExtensions.length === 0)   pts += 8;
+
+      else if (auth.transferFeeBps !== null && auth.transferFeeBps < 100) pts += 3;
+
+      if (conc) {
+
+        if      (conc.pct < 20) pts += 20;
+
+        else if (conc.pct < 40) pts += 14;
+
+        else if (conc.pct < 60) pts += 7;
+
+        else if (conc.pct < 80) pts += 3;
+
       }
 
-      // 5. Antigüedad (10 pts)
+      if (liquidity?.found) {
+
+        const isSmallCap = liquidity.marketCap && liquidity.marketCap < 10000000; // < $10M
+
+        if (isSmallCap && liquidity.liqRatio !== null) {
+
+          // Small cap: LP/MCAP ratio is the exit-risk signal that matters
+
+          if      (liquidity.liqRatio >= 20) pts += 15;
+
+          else if (liquidity.liqRatio >= 10) pts += 12;
+
+          else if (liquidity.liqRatio >= 3)  pts += 6;
+
+          else                                pts += 1;
+
+        } else {
+
+          // Large cap or unknown mcap: absolute liquidity is sufficient signal
+
+          if      (liquidity.liquidityUsd > 1000000) pts += 15;
+
+          else if (liquidity.liquidityUsd > 200000)  pts += 12;
+
+          else if (liquidity.liquidityUsd > 50000)   pts += 8;
+
+          else if (liquidity.liquidityUsd > 5000)    pts += 4;
+
+          else                                        pts += 1;
+
+        }
+
+      }
+
       if (deployedAt instanceof Date) {
-        const hours = (Date.now() - deployedAt.getTime()) / 3600000;
-        if (hours > 168) pts += 10;
-        else if (hours > 48) pts += 7;
-        else if (hours > 24) pts += 3;
-      }
 
-      // 6. Riesgo Creador (Base)
-      pts += 5;
+        const d = (Date.now() - deployedAt.getTime()) / 86400000;
 
-      // --- PENALIZACIONES ---
-      const isLpLocked = (liquidity && liquidity.lpLocked !== undefined) ? liquidity.lpLocked : true;
-      if (!isLpLocked) pts -= 5;
+        if      (d > 180) pts += 10;
 
-      // --- LIMITES CRÍTICOS (SCORE CAPS) ---
-      if (auth && !auth.mintAuthorityRevoked) pts = Math.min(pts, 60);
-      if (auth && !auth.freezeAuthorityRevoked) pts = Math.min(pts, 70);
-      if (auth && auth.dangerousExtensions && auth.dangerousExtensions.length > 0) pts = Math.min(pts, 40);
+        else if (d > 30)  pts += 7;
 
-      // Concentración vs Liquidez
-      if (top20 !== null && top20 >= 80) pts = Math.min(pts, liq < 500000 ? 49 : 65);
-      else if (top20 !== null && top20 >= 60) pts = Math.min(pts, liq < 500000 ? 65 : 75);
+        else if (d > 7)   pts += 5;
 
-      // Antigüedad (si es muy nuevo)
-      const isVeryNew = (deployedAt instanceof Date && ((Date.now() - deployedAt.getTime()) / 3600000) < 48);
-      if (isVeryNew) pts = Math.min(pts, 60);
+        else if (d > 1)   pts += 2;
 
-      // Volumen vs MCAP
-      const vol = (liquidity && liquidity.vol24h) ? liquidity.vol24h : null;
-      const vmr = (vol && mcap) ? (vol / mcap) * 100 : null;
-      if (vmr !== null && vmr > 500) pts = Math.min(pts, 49);
-      else if (vmr !== null && vmr > 200) pts = Math.min(pts, 65);
+        else               pts += 1;
 
-      // Resultado final
-      return Math.max(0, Math.min(100, Math.round(pts)));
+      } else if (deployedAt?.tooActive) { pts += 10; }
+
+      if      (creatorRisk?.unknown)    pts += 5;
+
+      else if (creatorRisk?.stillHolds) pts += 10;
+
+      else                               pts += 2;
+
+      return Math.min(100, pts);
+
     }
 
 
@@ -1847,9 +1860,9 @@ function calcScore(auth, conc, deployedAt, liquidity, creatorRisk) {
 
           + (() => {
               const lk = liquidity.lpLocked;
-              if (lk === true)  return ' <span style="color:var(--green);font-weight:500">LP LOCKED ✓</span> — Liquidity is locked. Rug via LP removal not possible.';
-              if (lk === false) return ' <span style="color:var(--red);font-weight:500">LP UNLOCKED ✗</span> — Liquidity is not locked. Creator can remove LP at any time.';
-              return ' <span style="color:var(--gray);font-weight:500">LP LOCK: NOT VERIFIED</span> — Lock status not reported by DexScreener. Verify manually.';
+              if (lk === true)  return ' <span style="color:var(--green);font-weight:500">LP LOCKED ✓ [OBSERVED]</span> — DexScreener reports liquidity locked. This signal is observed (not on-chain verified) — DexScreener is not ground truth. Verify lock contract directly for full assurance.';
+              if (lk === false) return ' <span style="color:var(--red);font-weight:500">LP UNLOCKED ✗ [OBSERVED]</span> — DexScreener reports liquidity NOT locked. Creator can remove LP at any time. Score penalty applied (−5).';
+              return ' <span style="color:var(--gray);font-weight:500">LP LOCK: NOT REPORTED</span> — DexScreener does not report lock status for this token. No penalty applied. Verify manually on Unicrypt / Streamflow / Mudra. Absence of report does NOT mean unlocked.';
             })() + link;
 
         if (liquidity.marketCap && liquidity.marketCap < 10000000 && liquidity.liqRatio !== null) {

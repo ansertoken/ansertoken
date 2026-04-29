@@ -641,25 +641,6 @@
     .footer-links a:hover { border-color: var(--gray); }
 
 
-    /* Score tiers grid — 5 cols desktop, 2 cols tablet, 1 col mobile */
-    .score-tiers-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 1px;
-      background: var(--light);
-      border: 1px solid var(--light);
-      margin-bottom: 2rem;
-    }
-    @media (max-width: 900px) {
-      .score-tiers-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 480px) {
-      .score-tiers-grid { grid-template-columns: 1fr; }
-    }
-
-    /* Global overflow guard — prevent any element from forcing horizontal scroll on mobile */
-    html, body { overflow-x: hidden; max-width: 100%; }
-
 
     @media (max-width: 600px) {
 
@@ -772,19 +753,14 @@
   <div class="how-it-works" id="howItWorks">
     <p class="section-title">How the score works</p>
 
-      <div class="score-tiers-grid">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--light);border:1px solid var(--light);margin-bottom:2rem;">
         <div style="background:var(--white);padding:1rem 1.25rem;">
-          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#1a7a1a;line-height:1;margin-bottom:0.4rem;">90–100</div>
-          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#1a7a1a;font-weight:500;margin-bottom:0.3rem;">PRISTINE</div>
-          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Exceptional transparency. All signals positive.</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#1a7a1a;line-height:1;margin-bottom:0.4rem;">80–100</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#1a7a1a;font-weight:500;margin-bottom:0.3rem;">PRISTINE / SOUND</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Strong structure. Market risk remains — the contract is not the threat.</div>
         </div>
         <div style="background:var(--white);padding:1rem 1.25rem;">
-          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#1a7a1a;line-height:1;margin-bottom:0.4rem;">75–89</div>
-          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#1a7a1a;font-weight:500;margin-bottom:0.3rem;">STRUCTURALLY SOUND</div>
-          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Strong fundamentals. Minor risks noted.</div>
-        </div>
-        <div style="background:var(--white);padding:1rem 1.25rem;">
-          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#8b6914;line-height:1;margin-bottom:0.4rem;">60–74</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#8b6914;line-height:1;margin-bottom:0.4rem;">60–79</div>
           <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8b6914;font-weight:500;margin-bottom:0.3rem;">PARTIAL RISK</div>
           <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Some transparency measures in place. Risks remain. Read the breakdown.</div>
         </div>
@@ -872,10 +848,14 @@
         <li style="padding:0.2rem 0;">🚨 <strong>Dangerous Token-2022 extensions detected</strong> → Score capped at 40</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
-        <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume relative to market cap</li>
-        <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely pump or wash trading</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Honeypot detected</strong> → Score capped at 15 — selling appears impossible</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>Suspicious sell pattern</strong> → Score capped at 50 — elevated failed sell rate</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume relative to market cap</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
     </div>
@@ -926,8 +906,10 @@
 
       try {
         const a = await rpc('getAsset', { id: address });
-        return a?.content?.metadata?.name || a?.content?.metadata?.symbol || a?.token_info?.symbol || null;
-      } catch { return null; }
+        const n = a?.content?.metadata?.name || null;
+        const s = a?.content?.metadata?.symbol || a?.token_info?.symbol || null;
+        return { name: n, symbol: s };
+      } catch { return { name: null, symbol: null }; }
     }
 
 
@@ -946,26 +928,15 @@
 
     async function getHoneypotStatus(address) {
       try {
-        // Larger sample for statistical confidence — 5 txs is noise on active tokens
-        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 50 }]);
+        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 20 }]);
         if (!sigs || sigs.length === 0) return { status: 'no_activity' };
-
-        // Major Solana AMM/DEX program IDs — expanded coverage
         const dexPrograms = new Set([
-          '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium V4 AMM
-          'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK', // Raydium CLMM
-          'CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C', // Raydium CPMM
-          '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',  // Pump.fun bonding
-          'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA',  // Pumpswap AMM
-          'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc',  // Orca Whirlpools
-          '9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP', // Orca v2
-          'PhoeNiXZ8ByJGLkxNfZRnkUfjvmuYqLR89jjFHGqdXY',  // Phoenix
-          'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo',  // Meteora DLMM
-          'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB', // Meteora pools
+          '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
+          'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK',
+          '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
         ]);
-
         let failedSells = 0, successSells = 0;
-        for (const sig of sigs.slice(0, 20)) {
+        for (const sig of sigs.slice(0, 5)) {
           try {
             const tx = await rpc('getTransaction', [sig.signature, {
               encoding: 'jsonParsed', maxSupportedTransactionVersion: 0
@@ -979,25 +950,10 @@
           } catch {}
         }
         const total = failedSells + successSells;
-
-        // Need at least 5 DEX interactions for any verdict
-        if (total < 5) {
-          return successSells > 0 ? { status: 'sellable' } : { status: 'unknown' };
-        }
-
-        // ── HONEYPOT VERDICT ────────────────────────────────────────────
-        // A real honeypot blocks sells at the contract level. ONE successful
-        // swap proves the token IS sellable. Failed txs in active pools are
-        // usually slippage, MEV failures, or expired deadlines — NOT honeypot.
-        //
-        // Only flag if ZERO successful swaps observed across our sample.
-        if (successSells === 0 && failedSells >= 5) {
-          return { status: 'likely_honeypot', failRate: 100 };
-        }
-        if (successSells < 2 && total >= 5 && failedSells / total > 0.85) {
-          return { status: 'suspicious', failRate: Math.round(failedSells / total * 100) };
-        }
-        return { status: 'sellable', failRate: Math.round(failedSells / total * 100) };
+        if (total >= 3 && failedSells / total > 0.8) return { status: 'likely_honeypot', failRate: Math.round(failedSells/total*100) };
+        if (total >= 3 && failedSells / total > 0.3) return { status: 'suspicious',      failRate: Math.round(failedSells/total*100) };
+        if (successSells > 0) return { status: 'sellable' };
+        return { status: 'unknown' };
       } catch { return { status: 'unknown' }; }
     }
 
@@ -1042,11 +998,20 @@
 
     async function getHolderConcentration(address) {
 
-      // Cache per address in session to ensure consistency
-
+      // Cache per address in session — 60s TTL because token distribution
+      // changes rapidly in the first minutes after deploy. Stale data on a
+      // brand-new token is misleading; force a re-fetch after 60s.
       const cacheKey = 'anser_conc_' + address;
+      const CACHE_TTL_MS = 60 * 1000;
       const cached = sessionStorage.getItem(cacheKey);
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed?._ts && (Date.now() - parsed._ts) < CACHE_TTL_MS) {
+            return parsed;
+          }
+        } catch {}
+      }
 
 
       const supplyRes = await rpc('getTokenSupply', [address]);
@@ -1140,7 +1105,7 @@
 
       const result = { pct: top20pct, top1pct, count: accounts.length };
 
-      try { sessionStorage.setItem(cacheKey, JSON.stringify(result)); } catch(e) {}
+      try { sessionStorage.setItem(cacheKey, JSON.stringify({ ...result, _ts: Date.now() })); } catch(e) {}
 
       return result;
 
@@ -1545,7 +1510,9 @@
 
           address,
 
-          name:        nameRes.status === 'fulfilled' ? nameRes.value : null,
+          name:        nameRes.status === 'fulfilled' ? (nameRes.value?.name || null) : null,
+
+          symbol:      nameRes.status === 'fulfilled' ? (nameRes.value?.symbol || null) : null,
 
           auth:        authRes.value,
 
@@ -1617,7 +1584,7 @@
 
 
 
-    function renderResults({ address, name, auth, conc, deployedAt, liquidity, creatorRisk, updAuth, honeypot }) {
+    function renderResults({ address, name, symbol, auth, conc, deployedAt, liquidity, creatorRisk, updAuth, honeypot }) {
 
       document.getElementById('loading').classList.remove('visible');
 
@@ -1632,49 +1599,72 @@
 
       if (!isAnser) {
 
+        // Track which caps fire so we can apply a compounding penalty when
+        // multiple critical signals stack (e.g. tiny new token with whale
+        // concentration AND wash trading — each cap alone says "high risk",
+        // but three at once means CRITICAL, not just high).
+        let capsFired = 0;
+
         const holderPct = conc?.pct || 0;
 
         const isLargeCap = liquidity?.liquidityUsd > 500000;
-        if      (holderPct >= 80 && !isLargeCap) score = Math.min(score, 49);
-        else if (holderPct >= 60 && !isLargeCap) score = Math.min(score, 65);
-        else if (holderPct >= 80 &&  isLargeCap) score = Math.min(score, 65);
-        else if (holderPct >= 60 &&  isLargeCap) score = Math.min(score, 75);
+        // NEW: ≥95% top-20 small-cap = creator effectively controls supply → CRITICAL
+        if      (holderPct >= 95 && !isLargeCap) { score = Math.min(score, 35); capsFired++; }
+        else if (holderPct >= 80 && !isLargeCap) { score = Math.min(score, 49); capsFired++; }
+        else if (holderPct >= 60 && !isLargeCap) { score = Math.min(score, 65); capsFired++; }
+        else if (holderPct >= 80 &&  isLargeCap) { score = Math.min(score, 65); capsFired++; }
+        else if (holderPct >= 60 &&  isLargeCap) { score = Math.min(score, 75); capsFired++; }
 
         // When holder data unavailable for large-cap tokens, cap at 70
-
         // — we cannot verify the most important concentration risk
-
         else if (!conc && liquidity && liquidity.liquidityUsd > 100000) score = Math.min(score, 70);
 
-        if (!auth.mintAuthorityRevoked)   score = Math.min(score, 60);
+        if (!auth.mintAuthorityRevoked)   { score = Math.min(score, 60); capsFired++; }
 
-        if (!auth.freezeAuthorityRevoked) score = Math.min(score, 70);
+        if (!auth.freezeAuthorityRevoked) { score = Math.min(score, 70); capsFired++; }
 
-        if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) score = Math.min(score, 40);
+        if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) { score = Math.min(score, 40); capsFired++; }
+
+        // Mutable metadata: vector for post-launch phishing (changing token
+        // name/logo/URI to drain holders). −5 pts is too soft for this risk —
+        // a mutable token cannot reach STRUCTURALLY SOUND regardless.
+        if (auth.updateAuthRevoked === false) score = Math.min(score, 85);
 
         // Honeypot caps
-        if (honeypot?.status === 'likely_honeypot') score = Math.min(score, 15);
-        else if (honeypot?.status === 'suspicious')  score = Math.min(score, 50);
+        if (honeypot?.status === 'likely_honeypot') { score = Math.min(score, 15); capsFired++; }
+        else if (honeypot?.status === 'suspicious')  { score = Math.min(score, 50); capsFired++; }
 
         // Token age cap: < 48h gets capped at 60 — clean mechanics ≠ safe for brand-new tokens
+        let ageCapped = false;
         if (deployedAt instanceof Date) {
           const hoursOld = (Date.now() - deployedAt.getTime()) / 3600000;
-          if (hoursOld < 48) score = Math.min(score, 60);
+          if (hoursOld < 48) { score = Math.min(score, 60); ageCapped = true; }
         }
         if (liquidity?.pairCreatedAt instanceof Date) {
           const poolHours = (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000;
-          if (poolHours < 48) score = Math.min(score, 60);
+          if (poolHours < 48) { score = Math.min(score, 60); ageCapped = true; }
         }
+        if (ageCapped) capsFired++;
 
-        // VOL/MCAP ratio: abnormal volume relative to mcap = likely pump/wash trading
+        // VOL/MCAP ratio: abnormal volume = likely pump/wash trading
+        // NEW: >1000% (10x mcap) = blatant manipulation → CRITICAL
         const _vmr = liquidity?.volMcapRatio;
         if (_vmr !== null && _vmr !== undefined) {
-          if      (_vmr > 500) score = Math.min(score, 49);
-          else if (_vmr > 200) score = Math.min(score, 65);
+          if      (_vmr > 1000) { score = Math.min(score, 35); capsFired++; }
+          else if (_vmr > 500)  { score = Math.min(score, 49); capsFired++; }
+          else if (_vmr > 200)  { score = Math.min(score, 65); capsFired++; }
         }
 
         // LP lock: confirmed unlocked = -5pts penalty (rug vector)
         if (liquidity?.lpLocked === false) score = Math.max(0, score - 5);
+
+        // Compounding red-flag penalty: 3+ caps firing simultaneously means
+        // multiple independent critical signals — beyond reasonable doubt.
+        if (capsFired >= 3) score = Math.max(0, score - 10);
+
+        // Liquidity data unavailable: cannot verify Vol/MCAP, LP lock, or
+        // realistic large-cap context — cap at 60 to prevent inflated scores.
+        if (!liquidity || liquidity.liquidityUsd === 0) score = Math.min(score, 60);
 
       }
 
@@ -2009,7 +1999,11 @@
 
       const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, honeyM, updAuthM, crM];
 
-      const tokenName = isAnser ? '$ANSER' : (name || 'Unknown Token');
+      const tokenName    = isAnser ? '$ANSER' : (name || 'Unknown Token');
+      const tokenSymbol  = isAnser ? 'ANSER'  : (symbol || null);
+      const tokenDisplay = isAnser
+        ? '$ANSER'
+        : (tokenSymbol ? tokenName + ' ($' + tokenSymbol + ')' : tokenName);
 
 
 
@@ -2080,7 +2074,7 @@
 
           '<div class="token-info">' +
 
-            '<h2>' + tokenName + '</h2>' +
+            '<h2>' + tokenDisplay + '</h2>' +
 
             '<p class="token-address">' + address +
 
@@ -2246,7 +2240,7 @@
 
 
 
-      const shareText = '🪿 ' + tokenName + ' scored ' + scoreNum + '/100 on the ANSER Transparency Score\n\n'
+      const shareText = '🪿 ' + tokenDisplay + ' scored ' + scoreNum + '/100 on the ANSER Transparency Score\n\n'
 
         + verdictTxt + '\n\n' + metricLines + '\n\n'
 
@@ -2331,16 +2325,16 @@
 
 
       // Token name top left
-
       ctx.textAlign = 'left';
-
       ctx.font = '700 42px Georgia,serif'; ctx.fillStyle = '#0a0a0a';
-
       ctx.fillText(tokenName.slice(0, 22), 40, 70);
-
+      // Ticker below name (small caps, gray) — empty string when no symbol
+      if (tokenSymbol) {
+        ctx.font = '11px monospace'; ctx.fillStyle = '#666';
+        ctx.fillText('$' + tokenSymbol, 40, 86);
+      }
       ctx.font = '9px monospace'; ctx.fillStyle = '#aaa';
-
-      ctx.fillText(address, 40, 90);
+      ctx.fillText(address, 40, 100);
 
 
 
@@ -2438,7 +2432,7 @@
 
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
 
-            await navigator.share({ title: tokenName + ' — ANSER Score: ' + scoreNum + '/100', text: shareText, files: [file] });
+            await navigator.share({ title: tokenDisplay + ' — ANSER Score: ' + scoreNum + '/100', text: shareText, files: [file] });
 
             return;
 
@@ -2452,7 +2446,7 @@
 
           if (navigator.share) {
 
-            await navigator.share({ title: tokenName + ' — ANSER Score: ' + scoreNum + '/100', text: shareText });
+            await navigator.share({ title: tokenDisplay + ' — ANSER Score: ' + scoreNum + '/100', text: shareText });
 
             return;
 

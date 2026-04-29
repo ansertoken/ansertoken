@@ -1044,45 +1044,78 @@
       const decimals  = supplyRes?.value?.decimals || 0;
 
 
-      // Try DAS first (handles large tokens), fallback to standard RPC
+      // PRIMARY: getTokenLargestAccounts — RPC method that returns the actual
+      // top 20 holders of a token. Reliable, fast, and what Solscan uses
+      // under the hood. This MUST be primary because the DAS fallback below
+      // does not sort by amount (Helius removed `sortBy`), so for tokens with
+      // millions of holders (BONK, USDC) DAS returns an arbitrary subset and
+      // the resulting "top 20" is meaningless dust accounts → 0% false reading.
 
       let accounts = [];
 
 
-      // DAS with timeout — most reliable for large tokens
+      // PRIMARY: getTokenLargestAccounts (returns actual top 20)
 
       try {
 
-        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000));
-        const das = await Promise.race([
-          rpc('getTokenAccounts', { mint: address, limit: 1000 }),
-
+        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+        const res = await Promise.race([
+          rpc('getTokenLargestAccounts', [address]),
           timeoutPromise
-
         ]);
 
-        accounts = (das?.token_accounts || []).map(a => ({
+        accounts = (res?.value || []).map(a => ({
+
           address: a.address,
-          uiAmount: parseFloat(a.amount || 0) / Math.pow(10, decimals)
+
+          uiAmount: parseFloat(a.uiAmount || 0)
 
         }));
 
       } catch {}
 
 
-      // Fallback: standard RPC (works for smaller tokens)
+      // Fallback 1: retry getTokenLargestAccounts after a short wait
 
       if (!accounts.length) {
 
         try {
 
-          const res = await rpc('getTokenLargestAccounts', [address]);
+          await new Promise(r => setTimeout(r, 600));
 
-          accounts = (res?.value || []).map(a => ({
+          const res2 = await rpc('getTokenLargestAccounts', [address]);
+
+          accounts = (res2?.value || []).map(a => ({
 
             address: a.address,
 
             uiAmount: parseFloat(a.uiAmount || 0)
+
+          }));
+
+        } catch {}
+
+      }
+
+
+      // Fallback 2: DAS getTokenAccounts (last resort — inaccurate for huge
+      // tokens because Helius removed `sortBy` and we can't sort the full set)
+
+      if (!accounts.length) {
+
+        try {
+
+          const timeoutPromise2 = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
+          const das = await Promise.race([
+            rpc('getTokenAccounts', { mint: address, limit: 1000 }),
+
+            timeoutPromise2
+
+          ]);
+
+          accounts = (das?.token_accounts || []).map(a => ({
+            address: a.address,
+            uiAmount: parseFloat(a.amount || 0) / Math.pow(10, decimals)
 
           }));
 
@@ -2138,18 +2171,41 @@
         // Dynamic warning blocks
         (function() {
           let warnings = '';
-          // Very new token warning
+          // Very new token / pool warning
+          // We differentiate three cases to avoid the contradictory display
+          // where Contract Age says "Extensive history" but the warning says
+          // "VERY NEW — 10H" (case: old contract, fresh pool — e.g. $EVA).
+          //   - Contract young (< 48h)              → "Token Age Warning"
+          //   - Contract mature but pool < 48h      → "Pool Age Warning"
+          //   - Both young                          → "Token Age Warning"
           const _ageH = deployedAt instanceof Date ? (Date.now() - deployedAt.getTime()) / 3600000 : null;
           const _poolH = liquidity?.pairCreatedAt instanceof Date ? (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000 : null;
-          const _isNew = (_ageH !== null && _ageH < 48) || (_poolH !== null && _poolH < 48);
+          const _contractYoung = _ageH !== null && _ageH < 48;
+          const _poolYoung     = _poolH !== null && _poolH < 48;
+          const _contractMature = (deployedAt && deployedAt.tooActive === true)
+                                  || (_ageH !== null && _ageH >= 48);
+          const _isNew = _contractYoung || _poolYoung;
           if (_isNew && !isAnser) {
-            const _h = Math.round(_ageH || _poolH || 0);
+            let _label, _badge, _h, _desc;
+            if (_poolYoung && !_contractYoung && _contractMature) {
+              // Old contract, fresh pool — distinct risk profile (re-launch / stealth pool / migration)
+              _h = Math.round(_poolH);
+              _label = 'Pool Age Warning';
+              _badge = 'NEW POOL — ' + _h + 'H';
+              _desc = 'Liquidity pool is less than 48 hours old, even though the contract has extensive on-chain history. This pattern can indicate a re-launch, migration, or a fresh pool used for entry. LP lock and price stability cannot yet be verified. Score capped at 60.';
+            } else {
+              // Contract itself is young (with or without new pool)
+              _h = Math.round(_ageH !== null ? _ageH : (_poolH || 0));
+              _label = 'Token Age Warning';
+              _badge = 'VERY NEW — ' + _h + 'H';
+              _desc = 'Token or pool is less than 48 hours old. Clean on-chain mechanics do not guarantee safety for new tokens — LP lock status and creator intent cannot be verified at this stage. Score capped at 60 regardless of other signals.';
+            }
             warnings += '<div style="border:1px solid var(--red);padding:0.75rem 1rem;margin:0 0 0.75rem;font-size:0.78rem;">'
               + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">'
-              + '<span style="font-weight:500;letter-spacing:0.05em;">Token Age Warning</span>'
-              + '<span style="font-size:0.72rem;font-weight:500;color:var(--red);border:1px solid var(--red);padding:0.15rem 0.5rem;">VERY NEW — ' + _h + 'H</span>'
+              + '<span style="font-weight:500;letter-spacing:0.05em;">' + _label + '</span>'
+              + '<span style="font-size:0.72rem;font-weight:500;color:var(--red);border:1px solid var(--red);padding:0.15rem 0.5rem;">' + _badge + '</span>'
               + '</div>'
-              + '<div style="color:#444;font-size:0.78rem;line-height:1.55;">Token or pool is less than 48 hours old. Clean on-chain mechanics do not guarantee safety for new tokens — LP lock status and creator intent cannot be verified at this stage. Score capped at 60 regardless of other signals.</div>'
+              + '<div style="color:#444;font-size:0.78rem;line-height:1.55;">' + _desc + '</div>'
               + '</div>';
           }
           // Volume anomaly warning

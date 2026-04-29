@@ -879,7 +879,7 @@
         <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
         <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;1000%</strong> → Score capped at 35 (CRITICAL) — blatant manipulation, 10× mcap volume</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
-        <li style="padding:0.2rem 0;">⚠️ <strong>Liquidity data unavailable</strong> (DexScreener fetch failed) → Score capped at 60 — context unverifiable</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Liquidity data unavailable</strong> (DexScreener fetch failed) → Score capped at 50 — context unverifiable, manipulation cannot be ruled out</li>
         <li style="padding:0.2rem 0;">🚨 <strong>3+ critical signals firing simultaneously</strong> → −10 pts compounding penalty — beyond reasonable doubt</li>
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
@@ -1685,8 +1685,9 @@
         if (capsFired >= 3) score = Math.max(0, score - 10);
 
         // Liquidity data unavailable: cannot verify Vol/MCAP, LP lock, or
-        // realistic large-cap context — cap at 60 to prevent inflated scores.
-        if (!liquidity || liquidity.liquidityUsd === 0) score = Math.min(score, 60);
+        // wash trading context. Cap at 50 (HIGH RISK) — manipulation signals
+        // cannot be ruled out without market data.
+        if (!liquidity || liquidity.liquidityUsd === 0) score = Math.min(score, 50);
 
       }
 

@@ -1156,6 +1156,13 @@
 
       const top1amt  = top20[0]?.uiAmount || 0;
 
+      // Sanity check: if top-20 sums to <0.5% of supply, we received an
+      // arbitrary subset (DAS without sortBy on a huge token). Discard as
+      // bogus instead of returning the misleading "0% healthy" output.
+      if (supply > 0 && (top20sum / supply) < 0.005) {
+        return null;
+      }
+
       const top20pct = supply > 0 ? Math.round((top20sum / supply) * 100) : 100;
 
       const top1pct  = supply > 0 ? Math.round((top1amt  / supply) * 100) : 100;

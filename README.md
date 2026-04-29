@@ -88,7 +88,7 @@ Certain red flags cap the total score regardless of other metrics. The goose doe
 | Vol / MCAP Ratio | 24h volume >500% of market cap | 49 — HIGH RISK |
 | Vol / MCAP Ratio | 24h volume >1000% of market cap | 35 — CRITICAL |
 | LP Confirmed Unlocked | DexScreener confirms LP not locked | −5 pts penalty |
-| Liquidity Data Unavailable | DexScreener fetch failed | 60 |
+| Liquidity Data Unavailable | DexScreener fetch failed | 50 |
 | Compounding Red Flags | 3+ caps fired simultaneously | −10 pts penalty |
 
 ---

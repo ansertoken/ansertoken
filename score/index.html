@@ -1129,27 +1129,50 @@
 
 
 
-      // Filter known AMM pool wallets to avoid inflating concentration %
-      const AMM_KNOWN_PROGRAMS = new Set([
-        '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
-        'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK',
-        'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo',
-        'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EkQGfFyR',
-        'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc',
-        '9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP',
-        'DSwpgjMvXhtGn6BsbqmacdBZyfLj6jSKCqdis1hTMAFU',
-        '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
-      ]);
-      accounts = accounts.filter(a => !AMM_KNOWN_PROGRAMS.has(a.address));
-
-      // Sort descending to ensure top holders are first
+      // Sort descending so top holders are first
 
       accounts.sort((a, b) => b.uiAmount - a.uiAmount);
 
 
 
+      // Filter AMM pools by their on-chain owner program. We look up the
+      // top 30 token-account `owner` fields and discard any owned by a
+      // known AMM (Raydium/Orca/Meteora/PumpFun/...). CEX wallets are NOT
+      // filtered — the UX shows "Verify wallet labels on Solscan" for that.
+      // The previous filter compared token-account ADDRESSES against
+      // PROGRAM IDs, which never matched anything.
+      const AMM_PROGRAM_OWNERS = new Set([
+        '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM v4
+        'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK', // Raydium CLMM
+        'CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C', // Raydium CPMM
+        'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc', // Orca Whirlpools
+        '9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP', // Orca Token Swap v2
+        'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo', // Meteora DLMM
+        'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EkQGfFyR', // Meteora Pools
+        '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', // PumpFun
+        'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA',  // PumpAMM (PumpSwap)
+        'DSwpgjMvXhtGn6BsbqmacdBZyfLj6jSKCqdis1hTMAFU', // FluxBeam
+      ]);
+
+      const ammOwned = new Set();
+      try {
+        const lookupAddrs = accounts.slice(0, 30).map(a => a.address);
+        if (lookupAddrs.length) {
+          const ownerRes = await rpc('getMultipleAccounts', [lookupAddrs, { encoding: 'jsonParsed' }]);
+          (ownerRes?.value || []).forEach((acct, i) => {
+            const ownerProgram = acct?.data?.parsed?.info?.owner;
+            if (ownerProgram && AMM_PROGRAM_OWNERS.has(ownerProgram)) {
+              ammOwned.add(lookupAddrs[i]);
+            }
+          });
+        }
+      } catch (e) { /* non-fatal: proceed without filtering */ }
+
+      accounts = accounts.filter(a => !ammOwned.has(a.address));
+
+
+
       // Take only top 20 — required because we now fetch up to 1000 accounts.
-      // Previously this was implicit (limit:20 from API), now must be explicit.
       const top20 = accounts.slice(0, 20);
 
       const top20sum = top20.reduce((s, h) => s + h.uiAmount, 0);

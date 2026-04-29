@@ -641,6 +641,25 @@
     .footer-links a:hover { border-color: var(--gray); }
 
 
+    /* Score tiers grid — 5 cols desktop, 2 cols tablet, 1 col mobile */
+    .score-tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: var(--light);
+      border: 1px solid var(--light);
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 900px) {
+      .score-tiers-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .score-tiers-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Global overflow guard — prevent any element from forcing horizontal scroll on mobile */
+    html, body { overflow-x: hidden; max-width: 100%; }
+
 
     @media (max-width: 600px) {
 
@@ -753,7 +772,7 @@
   <div class="how-it-works" id="howItWorks">
     <p class="section-title">How the score works</p>
 
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--light);border:1px solid var(--light);margin-bottom:2rem;">
+      <div class="score-tiers-grid">
         <div style="background:var(--white);padding:1rem 1.25rem;">
           <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#1a7a1a;line-height:1;margin-bottom:0.4rem;">90–100</div>
           <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#1a7a1a;font-weight:500;margin-bottom:0.3rem;">PRISTINE</div>
@@ -853,14 +872,10 @@
         <li style="padding:0.2rem 0;">🚨 <strong>Dangerous Token-2022 extensions detected</strong> → Score capped at 40</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
-        <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
-        <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume</li>
-        <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely pump or wash trading</li>
-        <li style="padding:0.2rem 0;">🚨 <strong>Honeypot detected</strong> → Score capped at 15 — selling appears impossible</li>
-        <li style="padding:0.2rem 0;">⚠️ <strong>Suspicious sell pattern</strong> → Score capped at 50 — elevated failed sell rate</li>
-        <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume relative to market cap</li>
         <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Honeypot detected</strong> → Score capped at 15 — selling appears impossible</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Suspicious sell pattern</strong> → Score capped at 50 — elevated failed sell rate</li>
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
     </div>

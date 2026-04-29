@@ -5,6 +5,7 @@
 ---
 
 > *The goose doesn't promise anything. That's why you can trust it.*  
+> *The chain doesn't lie. Interpretation might. We show you both.*  
 > *Anseres Capitolium servaverunt.*
 
 ---
@@ -30,6 +31,20 @@ Everything here is visible by design. The project's founding principle is that t
 | `favicon.png` | Favicon |
 | `sitemap.xml` | Sitemap |
 | `robots.txt` | robots.txt |
+
+---
+
+## Why $ANSER should exist
+
+The scanner is a gift. The token is a question. Three reasons it deserves an answer:
+
+**Skin in the game.** $ANSER must pass its own scanner. The deploy is publicly self-audited from the first second. If the token ever fails the criteria of its own tool, the contradiction is public and the project dies by its own rules. No founder rescue. No edits. No exceptions.
+
+**Coordination layer.** The treasury (20% Ecosystem/DAO) is governed by holders. What gets funded, audited, granted, or added to the Hall of Shame is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.
+
+**Memetic filter.** If the market values radical honesty, the price is its thermometer. If it doesn't, we'll have learned something useful about the market. Either outcome is signal. Neither is a promise.
+
+The scanner exists whether or not anyone holds the token. The token exists to ask whether transparency has economic gravity. That is the entire question.
 
 ---
 
@@ -64,6 +79,10 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 **VERIFIED** = on-chain binary fact, cannot be gamed.  
 **OBSERVED** = real data, but potentially gameable via wallet splitting etc.  
 **INDICATIVE** = useful signal, not conclusive.
+
+The scanner reports both layers — the chain and our reading of it — so you always know which is which.
+
+**Scoring version: v1.0** — this set of metrics, weights, and caps is frozen as the v1.0 baseline. Any change to weights or thresholds will be released as v1.1, v1.2, etc., and noted here. Fixes to bugs in the implementation (without changing the scoring logic) are not version bumps.
 
 Certain red flags cap the total score regardless of other metrics. The goose does not average away red flags.
 
@@ -119,11 +138,14 @@ The project was built product-first: the scanner, the bot, the transparency infr
 - Liquidity: Raydium CPMM — locked minimum 1 year via Unicrypt
 - Anti-snipe: 30-minute launch delay + 1% fee tier
 
+**Self-audit at deploy:** the first act after launch is publishing $ANSER's own transparency score on the home page, run on the live scanner, with full breakdown and links to every vesting and lock contract. If $ANSER doesn't pass its own scanner, we don't ship.
+
 When deployed, this README will be updated with:
 - Contract address
 - Streamflow vesting links
 - Unicrypt LP lock link
 - DAO reserve wallet address
+- Live $ANSER score from the scanner
 
 ---
 

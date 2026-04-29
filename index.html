@@ -4,21 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="canonical" href="https://theanser.app/">
-  <meta name="description" content="$ANSER — Free Solana token scanner, anti-rug checker and transparency tool. The goose doesn't promise anything. That's why you can trust it. No mint, no unlocked dev bag, LP locked at deploy.">
+  <meta name="description" content="$ANSER — Solana token scanner and transparency standard. Free on-chain audit for any SPL token, anti-rug checker, Telegram bot. The chain doesn't lie. The goose doesn't promise anything. No mint, no unlocked dev bag, LP locked at deploy.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://theanser.app/">
-  <meta property="og:title" content="$ANSER — The Goose That Cannot Lie on Solana">
-  <meta property="og:description" content="The goose doesn't promise anything. That's why you can trust it. Free token scanner, Telegram bot, no VC, no presale.">
+  <meta property="og:title" content="$ANSER — Solana Token Scanner & Transparency Standard">
+  <meta property="og:description" content="Free Solana token scanner and anti-rug audit. The chain doesn't lie. The goose doesn't promise. No VC, no presale, no rugable LP.">
   <meta property="og:image" content="https://theanser.app/goose.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@theanserapp">
-  <meta name="twitter:title" content="$ANSER — The Goose That Cannot Lie on Solana">
-  <meta name="twitter:description" content="The goose doesn't promise anything. That's why you can trust it. Free Solana token scanner, no VC, no presale.">
+  <meta name="twitter:title" content="$ANSER — Solana Token Scanner & Transparency Standard">
+  <meta name="twitter:description" content="Free Solana token scanner and anti-rug audit. The chain doesn't lie. The goose doesn't promise. No VC, no presale, no rugable LP.">
   <meta name="twitter:image" content="https://theanser.app/goose.png">
-  <title>$ANSER — The Goose That Cannot Lie | Solana Token Scanner & Transparency</title>
+  <title>$ANSER — Solana Token Scanner & Transparency Standard</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Schema.org structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ANSER Token Scanner",
+    "url": "https://theanser.app/",
+    "description": "Free Solana token scanner and on-chain transparency audit. Verifies mint authority, freeze authority, holder distribution, liquidity, contract age, and honeypot risk on any SPL token.",
+    "applicationCategory": "FinanceApplication",
+    "applicationSubCategory": "Solana Token Audit",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "$ANSER",
+      "url": "https://theanser.app/"
+    }
+  }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -526,6 +550,7 @@
     <ul class="links" id="navLinks">
       <li><a href="#about" onclick="closeNav()">About</a></li>
       <li><a href="#tokenomics" onclick="closeNav()">Tokenomics</a></li>
+      <li><a href="#why" onclick="closeNav()">Why $ANSER</a></li>
       <li><a href="#roadmap" onclick="closeNav()">Sequence</a></li>
       <li><a href="anser_whitepaper.pdf" target="_blank" onclick="closeNav()">Whitepaper</a></li>
       <li><a href="/score" onclick="closeNav()">Token Scanner</a></li>
@@ -547,6 +572,7 @@
       <span>No rugable LP</span>
     </div>
     <p class="tagline">"The goose doesn't promise anything. That's why you can trust it."</p>
+    <p style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--gray);letter-spacing:0.06em;margin-bottom:0.5rem;line-height:1.5;max-width:480px;">The chain doesn't lie. Interpretation might. We show you both.</p>
     <p class="latin">Anseres Capitolium servaverunt.</p>
     <div class="buttons">
       <a href="https://theanser.app/anser_whitepaper.pdf" target="_blank" class="btn primary">Verify us before you buy us</a>
@@ -662,9 +688,34 @@
 
   <div class="divider"></div>
 
+  <!-- WHY $ANSER -->
+  <section id="why">
+    <h2>V. Why $ANSER should exist</h2>
+    <p>The scanner is a gift. The token is a question. Three reasons it deserves an answer:</p>
+
+    <div class="principles" style="margin-top:2rem;">
+      <div class="principle">
+        <h3>Skin in the game</h3>
+        <p>$ANSER must pass its own scanner. The deploy is publicly self-audited from the first second. If the token ever fails the criteria of its own tool, the contradiction is public and the project dies by its own rules. No founder rescue. No edits. No exceptions.</p>
+      </div>
+      <div class="principle">
+        <h3>Coordination layer</h3>
+        <p>The treasury (20% Ecosystem/DAO) is governed by holders. What gets funded, audited, granted, or added to the Hall of Shame is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.</p>
+      </div>
+      <div class="principle">
+        <h3>Memetic filter</h3>
+        <p>If the market values radical honesty, the price is its thermometer. If it doesn't, we'll have learned something useful about the market. Either outcome is signal. Neither is a promise.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:2rem;font-size:0.85rem;color:var(--gray);font-style:italic;">The scanner exists whether or not anyone holds the token. The token exists to ask whether transparency has economic gravity. That is the entire question.</p>
+  </section>
+
+  <div class="divider"></div>
+
   <!-- ROADMAP -->
   <section id="roadmap">
-    <h2>V. Sequence of Verifiable Actions</h2>
+    <h2>VI. Sequence of Verifiable Actions</h2>
     <p style="font-size: 0.82rem; color: var(--gray); margin-bottom: 2rem;">A roadmap is a list of promises. A sequence is a list of actions we commit to be judged by. If we don't do them, don't buy $ANSER. <a href="/milestones" style="color:var(--black);border-bottom:1px solid var(--black)">Verify current status →</a></p>
 
     <div class="roadmap-item">
@@ -697,6 +748,7 @@
           <li>Staking contract deployed (100M)</li>
           <li>Anti-snipe launch: 30-minute delay + 1% fee tier</li>
           <li>Contract address published on web, X, and Telegram</li>
+          <li><strong>Self-audit:</strong> $ANSER's own transparency score published on the home page, run on the live scanner, with full breakdown and links to every vesting and lock contract. If it doesn't pass, we don't ship.</li>
         </ul>
       </div>
     </div>
@@ -744,7 +796,7 @@
 
   <!-- CLOSING -->
   <section>
-    <h2>VI. The Last Word</h2>
+    <h2>VII. The Last Word</h2>
     <p>In 390 BC, geese saved Rome by doing exactly one thing: being geese.</p>
     <p>No promises. No roadmap. No team. Just the honk that woke the guard.</p>
     <p>We are those geese.</p>

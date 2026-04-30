@@ -2328,13 +2328,21 @@
 
       const accent     = score >= 80 ? '#1a7a1a' : score >= 50 ? '#8b6914' : '#8b0000';
 
-      // Token display already includes ($SYMBOL) when available — reuse the
-      // h2 text as-is for the share string and canvas, and split out the bare
-      // name + ticker for the canvas layout.
+      // h2 text format is "Name ($SYMBOL)". Reuse as-is for canvas (visual)
+      // but build a separate, X-friendly variant for the share text:
+      // "Name — $SYMBOL". This matters because X only parses a cashtag as a
+      // clickable link when it is preceded by whitespace or start-of-line.
+      // The "(" before "$STJUDE" breaks the parser → no clickable link, no
+      // appearance in the cashtag's search feed → zero organic discovery.
+      // Using "—" with spaces guarantees the ticker stays indexable.
       const tokenDisplay = tokenName;
       const tickerMatch  = tokenName.match(/\(\$([^)]+)\)\s*$/);
       const tokenSymbol  = tickerMatch ? tickerMatch[1] : null;
       const tokenNameBare = tickerMatch ? tokenName.slice(0, tickerMatch.index).trim() : tokenName;
+      // X-friendly version: "Name — $SYMBOL" (cashtag preceded by space)
+      const tokenShareLabel = tokenSymbol
+        ? tokenNameBare + ' — $' + tokenSymbol
+        : tokenName;
 
 
 
@@ -2358,7 +2366,7 @@
 
 
 
-      const shareText = '🪿 ' + tokenDisplay + ' scored ' + scoreNum + '/100 on the ANSER Transparency Score\n\n'
+      const shareText = '🪿 ' + tokenShareLabel + ' scored ' + scoreNum + '/100 on the ANSER Transparency Score\n\n'
 
         + verdictTxt + '\n\n' + metricLines + '\n\n'
 

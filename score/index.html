@@ -1141,6 +1141,9 @@
       // filtered — the UX shows "Verify wallet labels on Solscan" for that.
       // The previous filter compared token-account ADDRESSES against
       // PROGRAM IDs, which never matched anything.
+      // AMM pools AND on-chain vesting/lock programs. Token accounts owned by
+      // these programs are protocol-controlled escrows, not speculative holders,
+      // and must be excluded from the top-20 concentration calculation.
       const AMM_PROGRAM_OWNERS = new Set([
         '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM v4
         'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK', // Raydium CLMM
@@ -1151,6 +1154,12 @@
         'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EkQGfFyR', // Meteora Pools
         '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', // PumpFun
         'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA',  // PumpAMM (PumpSwap)
+        // ── On-chain vesting / lock programs ──────────────────────────────
+        // Streamflow Finance: escrow PDAs owned by this program hold tokens
+        // locked in vesting schedules. Excluding them prevents legitimate
+        // locked allocations (DAO, creators, staking) from inflating the
+        // concentration score unfairly.
+        'strmRqUCoQUgGUan5YhzUZa6KqdzwX5L6FpUxfmKg5m', // Streamflow Timelock v1
         'DSwpgjMvXhtGn6BsbqmacdBZyfLj6jSKCqdis1hTMAFU', // FluxBeam
       ]);
 
@@ -1886,14 +1895,14 @@
 
         if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
 
-        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells. Note: locked vesting contracts and exchange custody wallets may inflate this figure. Verify individual wallets on Solscan.'; }
+        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells. Note: AMM pools and Streamflow vesting escrows are already filtered from this figure. Verify individual wallets on Solscan.'; }
 
         else if (p < 60) {
           if (liquidity?.liquidityUsd > 500000) {
             concStatus = p + '% ⚠'; concCls = 'status-warn';
             concDesc = 'Top 20 wallets hold ' + p + '% of supply. For established tokens this often reflects exchange cold wallets — not coordinated dump risk. Verify wallet labels on Solscan.';
           } else { concStatus = 'HIGH RISK'; concCls = 'status-fail';
-            concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price. Verify if any top wallets are locked vesting contracts before drawing conclusions.'; }
+            concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price. Note: known AMM pools and Streamflow vesting contracts are already filtered. Remaining concentration reflects real holder wallets — verify individual addresses on Solscan before investing.'; }
         }
         else {
           if (liquidity?.liquidityUsd > 500000) {

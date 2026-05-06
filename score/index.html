@@ -1945,9 +1945,9 @@
 
         const p = conc.pct;
 
-        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
+        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership. Note: top-20 analysis does not detect bundling — verify early block transfers on Solscan to rule out coordinated wallet splits at launch.'; }
 
-        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells. Note: AMM pools, Streamflow vesting escrows, and Unicrypt LP locks are already filtered from this figure. Remaining addresses are real holder wallets.'; }
+        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells. Note: AMM pools, Streamflow vesting escrows, and Unicrypt LP locks are already filtered. Remaining addresses are real holder wallets. Bundling (multiple wallets funded in the same launch block) is not detectable here — verify early block transfers on Solscan if this is a new token.'; }
 
         else if (p < 60) {
           if (liquidity?.liquidityUsd > 500000) {
@@ -2134,7 +2134,7 @@
       // ── Honeypot metric ─────────────────────────────────────────────────
       let honeyM;
       if (!honeypot || honeypot.status === 'unknown') {
-        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Unable to determine sell pattern from recent transactions. Verify manually on Solscan.', status: 'UNKNOWN', cls: 'status-warn' };
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Unable to determine sell pattern from recent transactions. Low-confidence heuristic — verify manually on Solscan or a dedicated honeypot checker.', status: 'UNKNOWN', cls: 'status-warn' };
       } else if (honeypot.status === 'no_activity') {
         honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'No on-chain activity to analyze.', status: 'NO DATA', cls: 'status-warn' };
       } else if (honeypot.status === 'likely_honeypot') {
@@ -2142,7 +2142,7 @@
       } else if (honeypot.status === 'suspicious') {
         honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Verify you can sell before buying.', status: 'SUSPICIOUS ⚠', cls: 'status-warn' };
       } else {
-        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected. Token appears sellable.', status: 'SELLABLE ✓', cls: 'status-pass' };
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected — token appears sellable. Low-confidence heuristic: does not detect dynamic taxes, blacklists, or delayed honeypots. Verify independently for new tokens.', status: 'SELLABLE ✓', cls: 'status-pass' };
       }
 
       const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, honeyM, updAuthM, crM];

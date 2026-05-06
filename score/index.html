@@ -1155,11 +1155,16 @@
         '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', // PumpFun
         'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA',  // PumpAMM (PumpSwap)
         // ── On-chain vesting / lock programs ──────────────────────────────
-        // Streamflow Finance: escrow PDAs owned by this program hold tokens
-        // locked in vesting schedules. Excluding them prevents legitimate
-        // locked allocations (DAO, creators, staking) from inflating the
-        // concentration score unfairly.
+        // Streamflow: escrow PDAs owned by this program hold vesting tokens.
+        // Excluding them prevents DAO/creator/staking allocations from
+        // inflating the concentration score unfairly.
         'strmRqUCoQUgGUan5YhzUZa6KqdzwX5L6FpUxfmKg5m', // Streamflow Timelock v1
+        // Unicrypt LP lockers: when LP tokens are locked on Unicrypt, they are
+        // held in accounts owned by these programs. Filter them from holders.
+        'UNCXdvMRxvz91g3HqFmpZ5NgmL77UH4QRM4NfeL4mQB',  // Unicrypt CP Swap locker
+        'GsSCS3vPWrtJ5Y9aEVVT65fmrex5P5RGHXdZvsdbWgfo',  // Unicrypt AMM v4 locker
+        'UNCX77nZrA3TdAxMEggqG18xxpgiNGT6iqyynPwpoxN',   // Unicrypt AMM v4 Smart locker
+        'UNCXrB8cZXnmtYM1aSo1Wx3pQaeSZYuF2jCTesXvECs',   // Unicrypt CLMM locker
         'DSwpgjMvXhtGn6BsbqmacdBZyfLj6jSKCqdis1hTMAFU', // FluxBeam
       ]);
 
@@ -1230,6 +1235,48 @@
     }
 
 
+
+    // ── Minimal base58 encoder for on-chain pubkey parsing ────────────────────
+    function toBase58(bytes) {
+      const ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+      let n = BigInt(0);
+      for (const b of bytes) n = n * 256n + BigInt(b);
+      let r = '';
+      while (n > 0n) { r = ALPHA[Number(n % 58n)] + r; n = n / 58n; }
+      for (const b of bytes) { if (b === 0) r = '1' + r; else break; }
+      return r;
+    }
+
+    // ── Unicrypt on-chain LP lock check ────────────────────────────────────────
+    // For Raydium CPMM pools: reads the LP mint from pool state (offset 136),
+    // then checks if Unicrypt's CP Swap storage account holds LP tokens.
+    // Returns true if locked on-chain, null if undetermined (non-fatal).
+    async function checkUnicryptLpLock(pairAddress) {
+      try {
+        // Fetch CPMM pool account (base64)
+        const poolInfo = await rpc('getAccountInfo', [pairAddress, { encoding: 'base64' }]);
+        const raw = poolInfo?.value?.data;
+        if (!raw || !Array.isArray(raw) || raw[1] !== 'base64') return null;
+        const buf = Uint8Array.from(atob(raw[0]), c => c.charCodeAt(0));
+        // Raydium CPMM PoolState: discriminator(8) + amm_config(32) + pool_creator(32)
+        // + token_0_vault(32) + token_1_vault(32) + lp_mint(32) = offset 136
+        if (buf.length < 168) return null;
+        const lpMint = toBase58(buf.slice(136, 168));
+        if (!lpMint || lpMint.length < 32) return null;
+        // Check Unicrypt CP Swap storage account for LP tokens of this mint
+        const UNICRYPT_CPMM_STORAGE = 'FEmGEWdxCBSJ1QFKeX5B6k7VTDPwNU3ZLdfgJkvGYrH5';
+        const lockRes = await rpc('getTokenAccountsByOwner', [
+          UNICRYPT_CPMM_STORAGE,
+          { mint: lpMint },
+          { encoding: 'jsonParsed' }
+        ]);
+        const accounts = lockRes?.value || [];
+        const locked = accounts.some(a =>
+          (a.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0) > 0
+        );
+        return locked ? true : null;
+      } catch { return null; } // non-fatal — fall back to DexScreener result
+    }
 
     async function getLiquidityInfo(address) {
 
@@ -1303,14 +1350,19 @@
           const pairCreatedAt = main?.pairCreatedAt ? new Date(main.pairCreatedAt) : null;
           const volMcapRatio = capToUse > 0 ? Math.round((vol24h / capToUse) * 100) : null;
 
-          // LP lock detection from DexScreener
-          // pair.liquidity.locked = boolean (some pairs), pair.info.liquidity.locked = pct locked
+          // LP lock detection: DexScreener first, then Unicrypt on-chain fallback
           let lpLocked = null; // null = unknown, true = locked, false = confirmed unlocked
           for (const p of pairs) {
             const boolLock = p.liquidity?.locked;
             const pctLock  = p.info?.liquidity?.locked;
             if (typeof boolLock === 'boolean') { lpLocked = boolLock; break; }
             if (typeof pctLock  === 'number')  { lpLocked = pctLock >= 90; break; }
+          }
+          // If DexScreener didn't report lock status, try Unicrypt on-chain verification.
+          // Works for Raydium CPMM pools (the pool type $ANSER uses).
+          if (lpLocked === null && main?.pairAddress) {
+            const onchain = await checkUnicryptLpLock(main.pairAddress);
+            if (onchain === true) lpLocked = true;
           }
 
           return {
@@ -1895,14 +1947,14 @@
 
         if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
 
-        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells. Note: AMM pools and Streamflow vesting escrows are already filtered from this figure. Verify individual wallets on Solscan.'; }
+        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells. Note: AMM pools, Streamflow vesting escrows, and Unicrypt LP locks are already filtered from this figure. Remaining addresses are real holder wallets.'; }
 
         else if (p < 60) {
           if (liquidity?.liquidityUsd > 500000) {
             concStatus = p + '% ⚠'; concCls = 'status-warn';
             concDesc = 'Top 20 wallets hold ' + p + '% of supply. For established tokens this often reflects exchange cold wallets — not coordinated dump risk. Verify wallet labels on Solscan.';
           } else { concStatus = 'HIGH RISK'; concCls = 'status-fail';
-            concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price. Note: known AMM pools and Streamflow vesting contracts are already filtered. Remaining concentration reflects real holder wallets — verify individual addresses on Solscan before investing.'; }
+            concDesc = 'WARNING: Top 20 wallets control ' + p + '% of supply. High dump risk — a coordinated sell could collapse the price. Note: AMM pools, Streamflow vesting escrows, and Unicrypt LP locks are already filtered. Remaining addresses are real holder wallets — verify each on Solscan.'; }
         }
         else {
           if (liquidity?.liquidityUsd > 500000) {

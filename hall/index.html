@@ -231,7 +231,14 @@
     //   flags: ["Mint Active", "87% top-20", "Liquidity trap"],
     //   dexscreenerUrl: "https://dexscreener.com/solana/...",
     // },
-  ];
+    {
+      name: "Trump House", symbol: "TRUMPHOUSE", address: "9c8zAzjJSGhoE7JBM2SNygeB2og7B6Tr4zviLzdapump",
+      score: 25, voice: "Volume exceeds market cap 14x in 24h. The price is being moved, not discovered.",
+      verdict: "CRITICAL", auditDate: "2026-05-07", rugDate: null,
+      flags: ["78% top-20 concentration", "Vol/MCAP 1424%", "Pool < 48h"],
+      dexscreenerUrl: "https://dexscreener.com/solana/9c8zAzjJSGhoE7JBM2SNygeB2og7B6Tr4zviLzdapump",
+    },
+    ];
 
   function renderEntries() {
     const container = document.getElementById('entriesContainer');

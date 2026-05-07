@@ -93,12 +93,12 @@
     /* ENTRIES */
     .entries { max-width: 900px; margin: 0 auto; padding: 2rem; display: none; }
     .entries.has-entries { display: block; }
-    .entry { border: 1px solid var(--light); margin-bottom: 1.5rem; padding: 1.5rem; position: relative; transition: border-color 0.2s; }
+    .entry { border: 1px solid var(--light); margin-bottom: 1.5rem; padding: 1.5rem; transition: border-color 0.2s; }
     .entry:hover { border-color: var(--red); }
     .entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
     .entry-name { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
-    .entry-score { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; color: var(--red); line-height: 1; text-align: right; }
-    .entry-score-label { font-size: 0.6rem; color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase; }
+    .entry-score { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; color: var(--red); line-height: 1; text-align: right; display: flex; align-items: baseline; gap: 0.3rem; }
+    .entry-score-label { font-size: 0.6rem; color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
     .entry-voice { font-style: italic; font-size: 0.9rem; color: var(--black); border-left: 2px solid var(--red); padding-left: 1rem; margin-bottom: 1rem; }
     .entry-meta { display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem; }
     .meta-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--gray); text-transform: uppercase; margin-bottom: 0.2rem; }
@@ -108,7 +108,7 @@
     .entry-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
     .entry-link { font-size: 0.7rem; color: var(--gray); text-decoration: none; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray); }
     .entry-link:hover { color: var(--black); border-color: var(--black); }
-    .warned-badge { position: absolute; top: 1rem; right: 1rem; font-size: 0.6rem; letter-spacing: 0.15em; padding: 0.3rem 0.75rem; background: var(--red); color: var(--white); text-transform: uppercase; }
+    .warned-badge { display: inline-block; font-size: 0.6rem; letter-spacing: 0.15em; padding: 0.2rem 0.6rem; background: var(--red); color: var(--white); text-transform: uppercase; margin-bottom: 0.75rem; }
 
     /* HOW IT WORKS */
     .how-section { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; border-top: 1px solid var(--light); }
@@ -257,11 +257,11 @@
       const rd = e.rugDate ? new Date(e.rugDate).toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : 'Pending';
       const days = e.rugDate ? Math.floor((new Date(e.rugDate) - new Date(e.auditDate)) / 86400000) : '—';
       return `<div class="entry">
-        <span class="warned-badge">⚠ The goose warned you</span>
+        <div><span class="warned-badge">⚠ The goose warned you</span></div>
         <div class="entry-header">
           <div><div class="entry-name">${e.name} ($${e.symbol})</div>
             <div style="font-size:0.7rem;color:var(--gray);margin-top:0.25rem">${e.address.slice(0,8)}...${e.address.slice(-6)}</div></div>
-          <div class="entry-score">${e.score}<div class="entry-score-label">/ 100 at audit</div></div>
+          <div class="entry-score">${e.score}<span class="entry-score-label">/ 100</span></div>
         </div>
         <div class="entry-voice">"${e.voice}"</div>
         <div class="entry-meta">

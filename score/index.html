@@ -845,7 +845,6 @@
   <div class="how-it-works" id="howItWorks">
     <p class="section-title">How the score works</p>
 
-    <div id="scoring-methodology-template" style="display:none;">
       <div class="score-tiers-grid">
         <div style="background:var(--white);padding:1rem 1.25rem;">
           <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#1a7a1a;line-height:1;margin-bottom:0.4rem;">90–100</div>
@@ -958,7 +957,6 @@
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
     </div>
-    </div><!-- end scoring-methodology-template -->
   </div>
 
 
@@ -2792,6 +2790,124 @@
   });
 </script>
 
+
+
+<!-- Hidden scoring methodology template for results section -->
+<div id="scoring-methodology-template" style="display:none;">
+      <div class="score-tiers-grid">
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#1a7a1a;line-height:1;margin-bottom:0.4rem;">90–100</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#1a7a1a;font-weight:500;margin-bottom:0.3rem;">PRISTINE</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Exceptional transparency. All signals positive.</div>
+        </div>
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#1a7a1a;line-height:1;margin-bottom:0.4rem;">75–89</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#1a7a1a;font-weight:500;margin-bottom:0.3rem;">STRUCTURALLY SOUND</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Strong fundamentals. Minor risks noted.</div>
+        </div>
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#8b6914;line-height:1;margin-bottom:0.4rem;">60–74</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8b6914;font-weight:500;margin-bottom:0.3rem;">PARTIAL RISK</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Some transparency measures in place. Risks remain. Read the breakdown.</div>
+        </div>
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#8b0000;line-height:1;margin-bottom:0.4rem;">40–59</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8b0000;font-weight:500;margin-bottom:0.3rem;">HIGH RISK</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Significant transparency failures. Do not act without independent verification.</div>
+        </div>
+        <div style="background:var(--white);padding:1rem 1.25rem;">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:#8b0000;line-height:1;margin-bottom:0.4rem;">0–39</div>
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:#8b0000;font-weight:500;margin-bottom:0.3rem;">CRITICAL</div>
+          <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Extreme risk detected. Likely trap, honeypot, or confirmed rug vector.</div>
+        </div>
+      </div>
+    <div class="criteria-grid">
+      <div class="criteria-item">
+        <div class="criteria-weight">25</div>
+        <div class="criteria-name">Mint Authority</div>
+        <div class="criteria-desc">Is the ability to create new tokens permanently revoked? Fixed supply is non-negotiable. <em>On-chain binary fact.</em></div>
+      </div>
+
+      <div class="criteria-item">
+        <div class="criteria-weight">20</div>
+        <div class="criteria-name">Holder Distribution</div>
+        <div class="criteria-desc">What % of supply do the top 20 wallets hold? High concentration is a red flag — though wallet splitting can game this metric.</div>
+      </div>
+
+      <div class="criteria-item">
+        <div class="criteria-weight">15</div>
+        <div class="criteria-name">Liquidity</div>
+        <div class="criteria-desc">How does liquidity compare to market cap? A token with 1% LP/MCAP ratio is a liquidity trap — the price collapses the moment someone sells. We score the ratio, not just the raw number.</div>
+      </div>
+
+      <div class="criteria-item">
+        <div class="criteria-weight">10</div>
+        <div class="criteria-name">Freeze Authority</div>
+        <div class="criteria-desc">Can the creator freeze your token accounts? This should be revoked. <em>On-chain binary fact.</em></div>
+      </div>
+
+      <div class="criteria-item">
+        <div class="criteria-weight">10</div>
+        <div class="criteria-name">Contract Age</div>
+        <div class="criteria-desc">How old is the contract? New contracts with no history carry higher risk. Age alone is not safety.</div>
+      </div>
+
+      <div class="criteria-item">
+        <div class="criteria-weight">10</div>
+        <div class="criteria-name">Token Mechanics</div>
+        <div class="criteria-desc">Does the token use Token-2022 extensions like hidden transfer fees, permanent delegate, or transfer hooks? <em>On-chain binary fact.</em></div>
+      </div>
+
+
+
+      <div class="criteria-item">
+        <div class="criteria-weight">⚑</div>
+        <div class="criteria-name">Honeypot Check</div>
+        <div class="criteria-desc">Are sell transactions failing on-chain? Analyzes recent DEX swap patterns to detect if the token can be sold. Score capped at 15 if likely trap. <em>Observed — transaction pattern analysis.</em></div>
+      </div>
+
+      <div class="criteria-item">
+        <div class="criteria-weight">−5</div>
+        <div class="criteria-name">Update Authority</div>
+        <div class="criteria-desc">Can the creator change token name, logo or URI after launch? Mutable metadata is a phishing vector. <em>On-chain fact. −5 pts penalty if mutable.</em></div>
+      </div>
+
+      <div class="criteria-item criteria-item-full">
+        <div class="criteria-weight">10</div>
+        <div class="criteria-name">Creator Risk</div>
+        <div class="criteria-desc">Does the deployer wallet still hold tokens? A creator who sold everything is a warning signal. <em>Applies to tokens with limited transaction history. High-activity tokens are flagged as not applicable.</em></div>
+      </div>
+    </div>
+
+
+
+    <div style="margin-top:1.5rem;padding:1.25rem 1.5rem;border-left:3px solid var(--red);background:var(--light);font-size:0.8rem;line-height:1.8;">
+      <p style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);margin-bottom:0.5rem;">Score Caps — Critical Signal Override</p>
+      <p>Certain signals are severe enough to limit the total score regardless of other metrics. A token cannot be considered trustworthy if one fundamental risk is extreme.</p>
+
+      <ul style="list-style:none;padding:0;margin-top:0.75rem;">
+        <li style="padding:0.2rem 0;">🚨 <strong>Top-20 wallets control ≥95% of supply</strong> → Score capped at 35 (CRITICAL) — creator effectively controls supply</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Top-20 wallets control ≥80% of supply</strong> → Score capped at 49 (HIGH RISK)</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Top-20 wallets control ≥60% of supply</strong> → Score capped at 65 (PARTIAL RISK)</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Holder distribution unavailable</strong> (high-activity tokens) → Score capped at 70 — concentration risk unverifiable</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Mint authority still active</strong> → Score capped at 60</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Freeze authority still active</strong> → Score capped at 70</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Mutable metadata</strong> (creator can change name / logo / URI) → Score capped at 85 — phishing vector</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Dangerous Token-2022 extensions detected</strong> → Score capped at 40</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Honeypot detected</strong> → Score capped at 15 — selling appears impossible</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Suspicious sell pattern</strong> → Score capped at 50 — elevated failed sell rate</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Token or pool less than 48 hours old</strong> → Score capped at 60 — LP lock and creator intent unverifiable</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>24h Vol/MCAP ratio &gt;200%</strong> → Score capped at 65 — abnormal volume relative to market cap</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;1000%</strong> → Score capped at 35 (CRITICAL) — blatant manipulation, 10× mcap volume</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Liquidity data unavailable</strong> (DexScreener fetch failed) → Score capped at 50 — context unverifiable, manipulation cannot be ruled out</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>3+ critical signals firing simultaneously</strong> → −10 pts compounding penalty — beyond reasonable doubt</li>
+      </ul>
+      <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
+    </div>
+    </div>
+</div>
 </body>
 
 </html>

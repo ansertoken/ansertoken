@@ -455,6 +455,79 @@
 
     /* FOOTER NOTE */
 
+    .scoring-context {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--light);
+    }
+    .sc-title {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--gray);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .sc-verdicts {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: var(--light);
+      border: 1px solid var(--light);
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 700px) { .sc-verdicts { grid-template-columns: 1fr 1fr; } }
+    .sc-verdict {
+      background: var(--white);
+      padding: 1rem 0.75rem;
+    }
+    .sc-range {
+      display: block;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .sc-label {
+      display: block;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .sc-desc { font-size: 0.7rem; color: var(--gray); line-height: 1.5; }
+    .sc-pristine .sc-range, .sc-pristine .sc-label { color: #1a7a1a; }
+    .sc-sound .sc-range, .sc-sound .sc-label { color: #3a6b1a; }
+    .sc-partial .sc-range, .sc-partial .sc-label { color: #7a5a00; }
+    .sc-high .sc-range, .sc-high .sc-label { color: #8b4000; }
+    .sc-critical .sc-range, .sc-critical .sc-label { color: var(--red); }
+    .sc-caps-title {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+    .sc-caps-intro {
+      font-size: 0.8rem;
+      color: var(--gray);
+      margin-bottom: 0.75rem;
+      line-height: 1.6;
+    }
+    .sc-caps-list {
+      list-style: none;
+      padding: 0;
+    }
+    .sc-caps-list li {
+      font-size: 0.8rem;
+      line-height: 1.6;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid var(--light);
+      color: var(--black);
+    }
+    .sc-caps-list li:last-child { border-bottom: none; }
+
     .results-footer {
 
       margin-top: 2rem;
@@ -1945,9 +2018,9 @@
 
         const p = conc.pct;
 
-        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership. Note: top-20 analysis does not detect bundling — verify early block transfers on Solscan to rule out coordinated wallet splits at launch.'; }
+        if      (p < 20) { concStatus = p + '% ✓';  concCls = 'status-pass'; concDesc = 'Top 20 wallets hold ' + p + '% of supply' + (conc.top1pct ? '. Largest wallet: ' + conc.top1pct + '%' : '') + '. Healthy, distributed ownership.'; }
 
-        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells. Note: AMM pools, Streamflow vesting escrows, and Unicrypt LP locks are already filtered. Remaining addresses are real holder wallets. Bundling (multiple wallets funded in the same launch block) is not detectable here — verify early block transfers on Solscan if this is a new token.'; }
+        else if (p < 40) { concStatus = p + '% ⚠';  concCls = 'status-warn'; concDesc = 'Top 20 wallets hold ' + p + '% of supply. Moderate concentration — monitor for coordinated sells. Note: AMM pools, Streamflow vesting escrows, and Unicrypt LP locks are already filtered from this figure. Remaining addresses are real holder wallets.'; }
 
         else if (p < 60) {
           if (liquidity?.liquidityUsd > 500000) {
@@ -2134,7 +2207,7 @@
       // ── Honeypot metric ─────────────────────────────────────────────────
       let honeyM;
       if (!honeypot || honeypot.status === 'unknown') {
-        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Unable to determine sell pattern from recent transactions. Low-confidence heuristic — verify manually on Solscan or a dedicated honeypot checker.', status: 'UNKNOWN', cls: 'status-warn' };
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Unable to determine sell pattern from recent transactions. Verify manually on Solscan.', status: 'UNKNOWN', cls: 'status-warn' };
       } else if (honeypot.status === 'no_activity') {
         honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'No on-chain activity to analyze.', status: 'NO DATA', cls: 'status-warn' };
       } else if (honeypot.status === 'likely_honeypot') {
@@ -2142,7 +2215,7 @@
       } else if (honeypot.status === 'suspicious') {
         honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Verify you can sell before buying.', status: 'SUSPICIOUS ⚠', cls: 'status-warn' };
       } else {
-        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected — token appears sellable. Low-confidence heuristic: does not detect dynamic taxes, blacklists, or delayed honeypots. Verify independently for new tokens.', status: 'SELLABLE ✓', cls: 'status-pass' };
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected. Token appears sellable.', status: 'SELLABLE ✓', cls: 'status-pass' };
       }
 
       const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, honeyM, updAuthM, crM];
@@ -2363,6 +2436,39 @@
 
           '<a href="https://theanser.app" style="color:var(--gray)">theanser.app</a></p>' +
 
+        '</div>' +
+
+        '<div class="scoring-context">' +
+        '<p class="sc-title">HOW THE SCORE WORKS</p>' +
+
+        '<div class="sc-verdicts">' +
+        '<div class="sc-verdict sc-pristine"><span class="sc-range">90–100</span><span class="sc-label">PRISTINE</span><span class="sc-desc">Exceptional transparency. All signals positive.</span></div>' +
+        '<div class="sc-verdict sc-sound"><span class="sc-range">75–89</span><span class="sc-label">STRUCTURALLY SOUND</span><span class="sc-desc">Strong fundamentals. Minor risks noted.</span></div>' +
+        '<div class="sc-verdict sc-partial"><span class="sc-range">60–74</span><span class="sc-label">PARTIAL RISK</span><span class="sc-desc">Some transparency measures in place. Risks remain. Read the breakdown.</span></div>' +
+        '<div class="sc-verdict sc-high"><span class="sc-range">40–59</span><span class="sc-label">HIGH RISK</span><span class="sc-desc">Significant transparency failures. Do not act without independent verification.</span></div>' +
+        '<div class="sc-verdict sc-critical"><span class="sc-range">0–39</span><span class="sc-label">CRITICAL</span><span class="sc-desc">Extreme risk. Likely trap, honeypot, or confirmed rug vector.</span></div>' +
+        '</div>' +
+
+        '<p class="sc-caps-title">SCORE CAPS — CRITICAL SIGNAL OVERRIDES</p>' +
+        '<p class="sc-caps-intro">Certain signals are severe enough to limit the total score regardless of other metrics.</p>' +
+        '<ul class="sc-caps-list">' +
+        '<li>🔴 Top-20 wallets ≥95% of supply → Score capped at 35 (CRITICAL)</li>' +
+        '<li>🔴 Top-20 wallets ≥80% of supply → Score capped at 49 (HIGH RISK)</li>' +
+        '<li>⚠️ Top-20 wallets ≥60% of supply → Score capped at 65 (PARTIAL RISK)</li>' +
+        '<li>⚠️ Holder data unavailable → Score capped at 70</li>' +
+        '<li>🔴 Mint authority still active → Score capped at 60</li>' +
+        '<li>⚠️ Freeze authority still active → Score capped at 70</li>' +
+        '<li>⚠️ Mutable metadata → Score capped at 85 — phishing vector</li>' +
+        '<li>🔴 Dangerous Token-2022 extensions → Score capped at 40</li>' +
+        '<li>🔴 Honeypot detected → Score capped at 15</li>' +
+        '<li>⚠️ Suspicious sell pattern → Score capped at 50</li>' +
+        '<li>🔴 Pool less than 48h old → Score capped at 60</li>' +
+        '<li>⚠️ Vol/MCAP &gt;200% → Score capped at 65</li>' +
+        '<li>🔴 Vol/MCAP &gt;500% → Score capped at 49</li>' +
+        '<li>🔴 Vol/MCAP &gt;1000% → Score capped at 35 (CRITICAL)</li>' +
+        '<li>⚠️ LP confirmed unlocked → −5 pts penalty</li>' +
+        '<li>🔴 3 or more caps fired simultaneously → −10 pts penalty</li>' +
+        '</ul>' +
         '</div>';
 
 

@@ -42,12 +42,35 @@
     }
 
     /* HEADER */
-    header {
-      border-bottom: 2px solid var(--black);
-      padding: 1.5rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+
+    nav {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.2rem 2rem; border-bottom: 2px solid var(--black);
+      position: sticky; top: 0; background: var(--white); z-index: 200;
+    }
+    nav .logo {
+      font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 900;
+      letter-spacing: 0.02em; text-decoration: none; color: var(--black);
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    nav .logo img { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #111; object-fit: cover; }
+    nav .logo span { font-size: 0.75rem; font-family: 'IBM Plex Mono', monospace; font-weight: 400; color: var(--gray); display: block; letter-spacing: 0.1em; }
+    nav .links { display: flex; gap: 1.5rem; list-style: none; }
+    nav .links a { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; letter-spacing: 0.06em; text-decoration: none; color: var(--gray); }
+    nav .links a:hover { color: var(--black); }
+    nav .links a.active { color: var(--black); font-weight: 500; }
+    .nav-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+    .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--black); }
+    @media (max-width: 650px) {
+      .nav-toggle { display: flex; }
+      nav .links {
+        display: none; position: absolute; top: 100%; left: 0; right: 0;
+        background: var(--white); flex-direction: column; gap: 0;
+        border-bottom: 2px solid var(--black); z-index: 100; list-style: none;
+      }
+      nav .links.open { display: flex; }
+      nav .links li { border-bottom: 1px solid var(--light); }
+      nav .links a { display: block; padding: 0.85rem 2rem; font-size: 0.85rem; color: var(--black); }
     }
     .logo {
       font-family: 'Playfair Display', serif;
@@ -224,13 +247,22 @@
 </head>
 <body>
 
-<header>
-  <a href="https://theanser.app" class="logo">
-    <img src="/goose.png" alt="$ANSER — Solana transparency scanner, the goose that cannot lie">
-    <div>$ANSER<span>MILESTONE VERIFICATION</span></div>
-  </a>
-  <a href="https://theanser.app" class="back-link">← theanser.app</a>
-</header>
+<nav>
+    <a href="https://theanser.app" class="logo">
+      <img src="/goose.png" alt="$ANSER">
+      <div>$ANSER<span>SOLANA SCANNER</span></div>
+    </a>
+    <ul class="links" id="navLinks">
+      <li><a href="https://theanser.app" onclick="closeNav()">Home</a></li>
+      <li><a href="/score" onclick="closeNav()">Token Scanner</a></li>
+      <li><a href="/hall" onclick="closeNav()">Hall of Shame</a></li>
+      <li><a href="/milestones" class="active" onclick="closeNav()">Milestones</a></li>
+      <li><a href="/anser_whitepaper.pdf" target="_blank">Whitepaper</a></li>
+    </ul>
+    <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
 
 <div class="hero">
   <p class="hero-label">On-chain · Verifiable · Immutable</p>

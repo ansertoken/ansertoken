@@ -38,7 +38,7 @@ Everything here is visible by design. The project's founding principle is that t
 
 The scanner is a gift. The token is a question. Three reasons it deserves an answer:
 
-**Skin in the game.** $ANSER must pass its own scanner. The deploy is publicly self-audited from the first second. If the token ever fails the criteria of its own tool, the contradiction is public and the project dies by its own rules. No founder rescue. No edits. No exceptions.
+**Skin in the game.** $ANSER is audited by its own scanner from day one. Structural criteria — mint revoked, freeze revoked, LP locked — are verifiable on-chain before you buy. Time-based signals (age, distribution) improve by design as the token matures. The contradiction is always public. No founder rescue. No exceptions.
 
 **Coordination layer.** The treasury (20% Ecosystem/DAO) is governed by holders. What gets funded, audited, granted, or added to the Hall of Shame is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.
 

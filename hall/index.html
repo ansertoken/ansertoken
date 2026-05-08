@@ -95,10 +95,13 @@
     .entries.has-entries { display: block; }
     .entry { border: 1px solid var(--light); margin-bottom: 1.5rem; padding: 1.5rem; transition: border-color 0.2s; }
     .entry:hover { border-color: var(--red); }
+    .entry.verdict-critical { border-color: var(--red); border-width: 1.5px; }
+    .entry.verdict-high { border-color: #cc6600; border-width: 1.5px; }
+    .entry.verdict-rugged { border-color: var(--red); background: #fdf5f5; }
     .entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
     .entry-name { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
-    .entry-score { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; color: var(--red); line-height: 1; text-align: right; display: flex; align-items: baseline; gap: 0.3rem; }
-    .entry-score-label { font-size: 0.6rem; color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
+    .entry-score { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 900; color: var(--red); line-height: 1; text-align: right; display: flex; align-items: baseline; gap: 0.25rem; }
+    .entry-score-label { font-size: 0.55rem; color: #bbb; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; font-weight: 400; }
     .entry-voice { font-style: italic; font-size: 0.9rem; color: var(--black); border-left: 2px solid var(--red); padding-left: 1rem; margin-bottom: 1rem; }
     .entry-meta { display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem; }
     .meta-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--gray); text-transform: uppercase; margin-bottom: 0.2rem; }
@@ -267,10 +270,14 @@
     document.getElementById('avgScore').textContent = avg;
 
     container.innerHTML = entries.map(e => {
-      const ad = new Date(e.auditDate).toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' });
+      const _adRaw = e.auditTimestamp || e.auditDate;
+      const _adObj = new Date(_adRaw);
+      const ad = _adObj.toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) +
+        (e.auditTimestamp ? ' · ' + _adObj.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', timeZone:'UTC' }) + ' UTC' : '');
       const rd = e.rugDate ? new Date(e.rugDate).toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : 'Pending';
       const days = e.rugDate ? Math.floor((new Date(e.rugDate) - new Date(e.auditDate)) / 86400000) : '—';
-      return `<div class="entry">
+      const _vClass = e.verdict === "CRITICAL" ? "verdict-critical" : e.verdict === "HIGH RISK" ? "verdict-high" : (e.rugDate ? "verdict-rugged" : "");
+      return `<div class="entry ${_vClass}">
         <div><span class="warned-badge">⚠ The goose warned you</span></div>
         <div class="entry-header">
           <div><div class="entry-name">${e.name} ($${e.symbol})</div>

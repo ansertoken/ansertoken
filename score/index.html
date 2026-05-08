@@ -62,52 +62,34 @@
 
     /* HEADER */
 
-    header {
-
-      border-bottom: 2px solid var(--black);
-      padding: 1.5rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
+    nav {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.2rem 2rem; border-bottom: 2px solid var(--black);
+      position: sticky; top: 0; background: var(--white); z-index: 200;
     }
-
-    .logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.4rem;
-      font-weight: 900;
-      letter-spacing: 0.02em;
-      text-decoration: none;
-      color: var(--black);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
+    nav .logo {
+      font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 900;
+      letter-spacing: 0.02em; text-decoration: none; color: var(--black);
+      display: inline-flex; align-items: center; gap: 0.5rem;
     }
-
-    .logo img { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #111; object-fit: cover; }
-
-    .logo span {
-      font-size: 0.75rem;
-      font-family: 'IBM Plex Mono', monospace;
-      font-weight: 400;
-      color: var(--gray);
-      display: block;
-      letter-spacing: 0.1em;
-    }
-
-
-
-
-
-
-    .back-link {
-
-      font-size: 0.75rem;
-      color: var(--gray);
-      text-decoration: none;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--gray);
-
+    nav .logo img { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #111; object-fit: cover; }
+    nav .logo span { font-size: 0.75rem; font-family: 'IBM Plex Mono', monospace; font-weight: 400; color: var(--gray); display: block; letter-spacing: 0.1em; }
+    nav .links { display: flex; gap: 1.5rem; list-style: none; }
+    nav .links a { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; letter-spacing: 0.06em; text-decoration: none; color: var(--gray); }
+    nav .links a:hover { color: var(--black); }
+    nav .links a.active { color: var(--black); font-weight: 500; }
+    .nav-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+    .nav-toggle span { display: block; width: 22px; height: 2px; background: var(--black); }
+    @media (max-width: 650px) {
+      .nav-toggle { display: flex; }
+      nav .links {
+        display: none; position: absolute; top: 100%; left: 0; right: 0;
+        background: var(--white); flex-direction: column; gap: 0;
+        border-bottom: 2px solid var(--black); z-index: 100; list-style: none;
+      }
+      nav .links.open { display: flex; }
+      nav .links li { border-bottom: 1px solid var(--light); }
+      nav .links a { display: block; padding: 0.85rem 2rem; font-size: 0.85rem; color: var(--black); }
     }
 
 
@@ -725,16 +707,22 @@
 
 
 
-  <header>
-
+  <nav>
     <a href="https://theanser.app" class="logo">
-      <img src="/goose.png" alt="$ANSER — Solana transparency scanner" style="width:26px;height:26px;border-radius:50%;border:1.5px solid #111;object-fit:cover;">
+      <img src="/goose.png" alt="$ANSER">
       <div>$ANSER<span>TRANSPARENCY SCORE</span></div>
     </a>
-
-    <a href="https://theanser.app" class="back-link">← theanser.app</a>
-
-  </header>
+    <ul class="links" id="navLinks">
+      <li><a href="https://theanser.app" onclick="closeNav()">Home</a></li>
+      <li><a href="/score" class="active" onclick="closeNav()">Token Scanner</a></li>
+      <li><a href="/hall" onclick="closeNav()">Hall of Shame</a></li>
+      <li><a href="/milestones" onclick="closeNav()">Milestones</a></li>
+      <li><a href="/anser_whitepaper.pdf" target="_blank">Whitepaper</a></li>
+    </ul>
+    <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
 
 
 
@@ -2255,7 +2243,7 @@
         '</div>' +
         (voice ? '<div style="font-size:0.82rem;font-style:italic;color:#555;padding:0.4rem 1.5rem 1rem;letter-spacing:0.02em;border-left:2px solid #bbb;">' + voice + '</div>' : '') +
 
-        '<div style="font-size:0.68rem;color:var(--gray);text-align:center;padding:0.5rem 0 0.3rem;letter-spacing:0.01em;">The scanner is free. Always. If it saved you something, the goose accepts SOL.<a href="https://solscan.io/account/Eq7QcLnSUTQNfXP7W5rGgsqbM1Qk2ejRX4v1QKv1Ugrj" target="_blank" rel="noopener" style="display:block;font-family:IBM Plex Mono,monospace;color:inherit;text-decoration:none;border-bottom:1px solid var(--gray);margin-top:0.25rem;">Eq7QcLnSUTQNfXP7W5rGgsqbM1Qk2ejRX4v1QKv1Ugrj</a></div>' +
+        '<div style="font-size:0.68rem;color:var(--gray);text-align:center;padding:1.2rem 0 0.3rem;margin-top:0.5rem;border-top:1px solid var(--light);letter-spacing:0.01em;">The scanner is free. Always. If it saved you something, the goose accepts SOL.<a href="https://solscan.io/account/Eq7QcLnSUTQNfXP7W5rGgsqbM1Qk2ejRX4v1QKv1Ugrj" target="_blank" rel="noopener" style="display:block;font-family:IBM Plex Mono,monospace;color:inherit;text-decoration:none;border-bottom:1px solid var(--gray);margin-top:0.25rem;">Eq7QcLnSUTQNfXP7W5rGgsqbM1Qk2ejRX4v1QKv1Ugrj</a></div>' +
 
         (!conc ? '<div style="font-size:0.7rem;color:var(--gray);margin-bottom:1rem;padding:0.5rem 0;border-bottom:1px solid var(--light)">⚠ Score reduced — holder distribution unavailable for this token.</div>' : '') +
 

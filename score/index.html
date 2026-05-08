@@ -872,6 +872,7 @@
           <div style="font-size:0.7rem;color:var(--gray);line-height:1.5;">Extreme risk detected. Likely trap, honeypot, or confirmed rug vector.</div>
         </div>
       </div>
+    <div id="scoring-methodology-template" style="display:none;">
     <div class="criteria-grid">
       <div class="criteria-item">
         <div class="criteria-weight">25</div>
@@ -957,6 +958,7 @@
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
     </div>
+    </div><!-- end scoring-methodology-template -->
   </div>
 
 
@@ -2438,38 +2440,18 @@
 
         '</div>' +
 
-        '<div class="scoring-context">' +
-        '<p class="sc-title">HOW THE SCORE WORKS</p>' +
-
-        '<div class="sc-verdicts">' +
-        '<div class="sc-verdict sc-pristine"><span class="sc-range">90–100</span><span class="sc-label">PRISTINE</span><span class="sc-desc">Exceptional transparency. All signals positive.</span></div>' +
-        '<div class="sc-verdict sc-sound"><span class="sc-range">75–89</span><span class="sc-label">STRUCTURALLY SOUND</span><span class="sc-desc">Strong fundamentals. Minor risks noted.</span></div>' +
-        '<div class="sc-verdict sc-partial"><span class="sc-range">60–74</span><span class="sc-label">PARTIAL RISK</span><span class="sc-desc">Some transparency measures in place. Risks remain. Read the breakdown.</span></div>' +
-        '<div class="sc-verdict sc-high"><span class="sc-range">40–59</span><span class="sc-label">HIGH RISK</span><span class="sc-desc">Significant transparency failures. Do not act without independent verification.</span></div>' +
-        '<div class="sc-verdict sc-critical"><span class="sc-range">0–39</span><span class="sc-label">CRITICAL</span><span class="sc-desc">Extreme risk. Likely trap, honeypot, or confirmed rug vector.</span></div>' +
-        '</div>' +
-
-        '<p class="sc-caps-title">SCORE CAPS — CRITICAL SIGNAL OVERRIDES</p>' +
-        '<p class="sc-caps-intro">Certain signals are severe enough to limit the total score regardless of other metrics.</p>' +
-        '<ul class="sc-caps-list">' +
-        '<li>🔴 Top-20 wallets ≥95% of supply → Score capped at 35 (CRITICAL)</li>' +
-        '<li>🔴 Top-20 wallets ≥80% of supply → Score capped at 49 (HIGH RISK)</li>' +
-        '<li>⚠️ Top-20 wallets ≥60% of supply → Score capped at 65 (PARTIAL RISK)</li>' +
-        '<li>⚠️ Holder data unavailable → Score capped at 70</li>' +
-        '<li>🔴 Mint authority still active → Score capped at 60</li>' +
-        '<li>⚠️ Freeze authority still active → Score capped at 70</li>' +
-        '<li>⚠️ Mutable metadata → Score capped at 85 — phishing vector</li>' +
-        '<li>🔴 Dangerous Token-2022 extensions → Score capped at 40</li>' +
-        '<li>🔴 Honeypot detected → Score capped at 15</li>' +
-        '<li>⚠️ Suspicious sell pattern → Score capped at 50</li>' +
-        '<li>🔴 Pool less than 48h old → Score capped at 60</li>' +
-        '<li>⚠️ Vol/MCAP &gt;200% → Score capped at 65</li>' +
-        '<li>🔴 Vol/MCAP &gt;500% → Score capped at 49</li>' +
-        '<li>🔴 Vol/MCAP &gt;1000% → Score capped at 35 (CRITICAL)</li>' +
-        '<li>⚠️ LP confirmed unlocked → −5 pts penalty</li>' +
-        '<li>🔴 3 or more caps fired simultaneously → −10 pts penalty</li>' +
-        '</ul>' +
-        '</div>';
+        '<div class="scoring-context" id="scoring-context-inline"></div>';
+      // Populate scoring context from the static template
+      setTimeout(() => {
+        const tpl = document.getElementById('scoring-methodology-template');
+        const ctx = document.getElementById('scoring-context-inline');
+        if (tpl && ctx) {
+          ctx.innerHTML = '<p class="sc-title" style="font-size:0.65rem;letter-spacing:0.2em;color:var(--gray);text-transform:uppercase;margin-bottom:1rem;">HOW THE SCORE WORKS</p>' + tpl.innerHTML;
+          ctx.style.marginTop = '2.5rem';
+          ctx.style.paddingTop = '2rem';
+          ctx.style.borderTop = '1px solid var(--light)';
+        }
+      }, 0);
 
 
 

@@ -563,5 +563,10 @@
   </div>
 </footer>
 
+<script>
+    function toggleNav() { document.getElementById('navLinks').classList.toggle('open'); }
+    function closeNav()  { document.getElementById('navLinks').classList.remove('open'); }
+    document.addEventListener('click', function(e) { if (!e.target.closest('nav')) closeNav(); });
+</script>
 </body>
 </html>

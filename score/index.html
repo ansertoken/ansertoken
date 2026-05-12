@@ -797,7 +797,7 @@
       <div class="criteria-item">
         <div class="criteria-weight">20</div>
         <div class="criteria-name">Holder Distribution</div>
-        <div class="criteria-desc">What % of supply do the top 20 wallets hold? High concentration is a red flag — though wallet splitting can game this metric.</div>
+        <div class="criteria-desc">What % of supply do the top 20 wallets hold? High concentration is a red flag — though wallet splitting can game this metric. <em>AMM liquidity pools (Raydium, Orca, Meteora) and known vesting contracts are filtered from this calculation — the figure reflects real holder wallets only.</em></div>
       </div>
 
       <div class="criteria-item">
@@ -835,7 +835,7 @@
       <div class="criteria-item">
         <div class="criteria-weight">−5</div>
         <div class="criteria-name">Update Authority</div>
-        <div class="criteria-desc">Can the creator change token name, logo or URI after launch? Mutable metadata is a phishing vector. <em>On-chain fact. −5 pts penalty if mutable.</em></div>
+        <div class="criteria-desc">Can the creator change token name, logo or URI after launch? Mutable metadata is a phishing vector. <em>On-chain fact. Score capped at 85 if mutable.</em></div>
       </div>
 
       <div class="criteria-item criteria-item-full">
@@ -852,9 +852,12 @@
       <p>Certain signals are severe enough to limit the total score regardless of other metrics. A token cannot be considered trustworthy if one fundamental risk is extreme.</p>
 
       <ul style="list-style:none;padding:0;margin-top:0.75rem;">
-        <li style="padding:0.2rem 0;">🚨 <strong>Top-20 wallets control ≥95% of supply</strong> → Score capped at 35 (CRITICAL) — creator effectively controls supply</li>
-        <li style="padding:0.2rem 0;">🚨 <strong>Top-20 wallets control ≥80% of supply</strong> → Score capped at 49 (HIGH RISK)</li>
-        <li style="padding:0.2rem 0;">⚠️ <strong>Top-20 wallets control ≥60% of supply</strong> → Score capped at 65 (PARTIAL RISK)</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Top-20 wallets control ≥95% of supply</strong> (liq &lt;$500K) → Score capped at 35 (CRITICAL) — creator effectively controls supply</li>
+        <li style="padding:0.2rem 0;">🚨 <strong>Top-20 wallets control ≥80% of supply</strong> (liq &lt;$500K) → Score capped at 49 (HIGH RISK)</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Top-20 wallets control ≥60% of supply</strong> (liq &lt;$500K) → Score capped at 65 (PARTIAL RISK)</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Top-20 wallets control ≥80% of supply</strong> (liq ≥$500K) → Score capped at 65 — high concentration but likely exchange cold wallets</li>
+        <li style="padding:0.2rem 0;">⚠️ <strong>Top-20 wallets control ≥60% of supply</strong> (liq ≥$500K) → Score capped at 75 — institutional custody likely, not coordinated dump risk</li>
+        <li style="padding:0.2rem 0;font-style:italic;color:var(--gray);font-size:0.75rem;">Tokens with liquidity ≥$500K often have significant exchange custody (Binance, Coinbase cold wallets). High concentration in these cases may not represent coordinated dump risk. The scanner notes this context explicitly.</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>Holder distribution unavailable</strong> (high-activity tokens) → Score capped at 70 — concentration risk unverifiable</li>
         <li style="padding:0.2rem 0;">🚨 <strong>Mint authority still active</strong> → Score capped at 60</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>Freeze authority still active</strong> → Score capped at 70</li>

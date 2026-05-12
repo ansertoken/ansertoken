@@ -116,7 +116,7 @@ Certain red flags cap the total score regardless of other metrics. The goose doe
 
 **@TheAnser_bot** — [t.me/TheAnser_bot](https://t.me/TheAnser_bot)
 
-Runs on **Render** (free tier), kept alive via **UptimeRobot** pings every 5 min.  
+Runs on **Render**, kept alive via **UptimeRobot** pings every 5 min.  
 Source: private repo `ansertoken/anser-bot`.  
 Stack: Node.js · node-telegram-bot-api · Helius RPC · DexScreener API.
 

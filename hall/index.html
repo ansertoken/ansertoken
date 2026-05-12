@@ -233,13 +233,13 @@ nav {
   <div class="how-grid">
     <div class="how-item">
       <div class="how-num">01</div>
-      <div class="how-name">Flagged first</div>
-      <div class="how-desc">A token scores below 60 — HIGH RISK or CRITICAL — on the ANSER scanner. The Goose Voice delivers its verdict. The entry is created immediately, before any collapse.</div>
+      <div class="how-name">Entry criteria</div>
+      <div class="how-desc">A token must meet all three: score ≤49 (HIGH RISK or CRITICAL), liquidity ≥$5,000 (real exposure possible), and at least one hard flag — mint active, honeypot detected, dangerous Token-2022 extension, Vol/MCAP &gt;500%, or top-20 concentration ≥80%. The entry is created before any collapse.</div>
     </div>
     <div class="how-item">
       <div class="how-num">02</div>
       <div class="how-name">Outcome tracked</div>
-      <div class="how-desc">The token's liquidity and price are monitored automatically. When a collapse is confirmed on-chain, the rug date and days-to-collapse are recorded. Pending = still being watched.</div>
+      <div class="how-desc">The token's liquidity is monitored automatically. When a collapse is confirmed on-chain — liquidity below $500 or under 5% of the initial level — the rug date and days-to-collapse are recorded. Pending = still being watched.</div>
     </div>
     <div class="how-item">
       <div class="how-num">03</div>
@@ -247,6 +247,7 @@ nav {
       <div class="how-desc">Entries are never removed — rugged or not. The signals were on-chain before the collapse. The goose does not edit history.</div>
     </div>
   </div>
+  <p style="font-size:0.65rem;color:var(--gray);margin-top:1.25rem;line-height:1.7;border-top:1px solid var(--light);padding-top:1rem;">This record contains on-chain signals only — timestamps, scores, and verifiable blockchain data. No entry implies legal fraud or criminal intent. Every flag is a reading of public on-chain state, not an accusation. Verify independently before acting on any information here.</p>
 </div>
 
 <footer>

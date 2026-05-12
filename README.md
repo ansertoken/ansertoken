@@ -67,7 +67,7 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 | Metric | Type | Weight |
 |---|---|---|
 | Mint Authority revoked | VERIFIED | 25 pts |
-| Holder Distribution (top 20) | OBSERVED | 20 pts |
+| Holder Distribution (top 20) | OBSERVED | 20 pts — AMM pools (Raydium, Orca, Meteora) filtered from calculation |
 | Liquidity / MCAP ratio | OBSERVED | 15 pts |
 | Freeze Authority revoked | VERIFIED | 10 pts |
 | Contract Age | OBSERVED | 10 pts |

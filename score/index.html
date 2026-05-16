@@ -1771,6 +1771,10 @@
 
       let score = calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
 
+      // ⚠️  SCORING CAPS — KEEP IN SYNC WITH:
+      //   · index.js → auditToken() caps block (lines ~755-820)
+      //   · index.js → auditForHall() caps block (lines ~1010-1036)
+      // Any change here must be mirrored in BOTH places. v1.0 baseline.
       // Cap score based on critical signals — one red flag limits total trust
 
       // Pre-compute age/newness — used in age cap and liquidity fallback below
@@ -1792,12 +1796,12 @@
         if      (holderPct >= 95 && !isLargeCap) { score = Math.min(score, 35); capsFired++; capsLabels.push('Concentration ≥95% → cap 35'); }
         else if (holderPct >= 80 && !isLargeCap) { score = Math.min(score, 49); capsFired++; capsLabels.push('Concentration ≥80% → cap 49'); }
         else if (holderPct >= 60 && !isLargeCap) { score = Math.min(score, 65); capsFired++; capsLabels.push('Concentration ≥60% → cap 65'); }
-        else if (holderPct >= 80 &&  isLargeCap) { score = Math.min(score, 65); capsFired++; }
-        else if (holderPct >= 60 &&  isLargeCap) { score = Math.min(score, 75); capsFired++; }
+        else if (holderPct >= 80 &&  isLargeCap) { score = Math.min(score, 65); capsFired++; capsLabels.push('Concentration ≥80% (large cap) → cap 65'); }
+        else if (holderPct >= 60 &&  isLargeCap) { score = Math.min(score, 75); capsFired++; capsLabels.push('Concentration ≥60% (large cap) → cap 75'); }
 
         // When holder data unavailable for large-cap tokens, cap at 70
         // — we cannot verify the most important concentration risk
-        else if (!conc && liquidity && liquidity.liquidityUsd > 100000) score = Math.min(score, 70);
+        else if (!conc && liquidity && liquidity.liquidityUsd > 100000) { score = Math.min(score, 70); capsLabels.push('Holder data unavailable → cap 70'); }
 
         if (!auth.mintAuthorityRevoked)   { score = Math.min(score, 60); capsFired++; capsLabels.push('Mint active → cap 60'); }
 
@@ -1808,7 +1812,7 @@
         // Mutable metadata: vector for post-launch phishing (changing token
         // name/logo/URI to drain holders). Cap at 85 — a mutable token cannot
         // reach STRUCTURALLY SOUND regardless of other signals.
-        if (updAuth && updAuth.isRevoked === false) score = Math.min(score, 85);
+        if (updAuth && updAuth.isRevoked === false) { score = Math.min(score, 85); capsLabels.push('Mutable metadata → cap 85'); }
 
         // Honeypot caps
         if (honeypot?.status === 'likely_honeypot') { score = Math.min(score, 15); capsFired++; capsLabels.push('Likely honeypot → cap 15'); }
@@ -1827,7 +1831,7 @@
         }
 
         // LP lock: confirmed unlocked = -5pts penalty (rug vector)
-        if (liquidity?.lpLocked === false) score = Math.max(0, score - 5);
+        if (liquidity?.lpLocked === false) { score = Math.max(0, score - 5); capsLabels.push('LP confirmed unlocked → −5 pts'); }
 
         // Compounding red-flag penalty: 3+ caps firing simultaneously means
         // multiple independent critical signals — beyond reasonable doubt.
@@ -1844,7 +1848,9 @@
                                  && (!auth.isToken2022 || !auth.dangerousExtensions?.length)
                                  && updAuth?.isRevoked === true
                                  && conc !== null && (conc?.pct || 0) < 60;
-        score = Math.min(score, (_isEstablished && _strongFundamentals) ? 80 : 50);
+        const _liqCap = (_isEstablished && _strongFundamentals) ? 80 : 50;
+        score = Math.min(score, _liqCap);
+        capsLabels.push(`Liquidity data unavailable → cap ${_liqCap}`);
       }
 
       const voice = gooseVoice(score, auth, conc, liquidity, deployedAt);

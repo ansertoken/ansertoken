@@ -84,9 +84,7 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 
 The scanner reports both layers — the chain and our reading of it — so you always know which is which.
 
-**Scoring version: v1.1** — this set of metrics, weights, and caps is the current baseline. Any change to weights or thresholds will be released as v1.2, etc., and noted here. Fixes to bugs in the implementation (without changing the scoring logic) are not version bumps.
-
-**Changelog:** v1.1 — Liquidity Data Unavailable cap refined: established tokens (>180 days on-chain) with clean fundamentals (mint/freeze/updateAuth revoked, concentration <60%) cap at 80 instead of 50, preventing false negatives when DexScreener has a temporary outage. LP Unlocked warning now shown for all tokens regardless of age, consistent with the existing −5 pts penalty.
+**Scoring version: v1.0** — this set of metrics, weights, and caps is frozen as the v1.0 baseline. Any change to weights or thresholds will be released as v1.1, v1.2, etc., and noted here. Fixes to bugs in the implementation (without changing the scoring logic) are not version bumps.
 
 Certain red flags cap the total score regardless of other metrics. The goose does not average away red flags.
 

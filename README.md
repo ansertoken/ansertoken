@@ -56,6 +56,8 @@ The scanner exists whether or not anyone holds the token. The token exists to as
 
 No build step. No framework. Files go in, site goes live.
 
+The scanner stores no data. RPC calls are proxied through Cloudflare Workers — API keys never reach the client. No wallet connection is ever required.
+
 ---
 
 ## The Token Scanner
@@ -82,7 +84,9 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 
 The scanner reports both layers — the chain and our reading of it — so you always know which is which.
 
-**Scoring version: v1.0** — this set of metrics, weights, and caps is frozen as the v1.0 baseline. Any change to weights or thresholds will be released as v1.1, v1.2, etc., and noted here. Fixes to bugs in the implementation (without changing the scoring logic) are not version bumps.
+**Scoring version: v1.1** — this set of metrics, weights, and caps is the current baseline. Any change to weights or thresholds will be released as v1.2, etc., and noted here. Fixes to bugs in the implementation (without changing the scoring logic) are not version bumps.
+
+**Changelog:** v1.1 — Liquidity Data Unavailable cap refined: established tokens (>180 days on-chain) with clean fundamentals (mint/freeze/updateAuth revoked, concentration <60%) cap at 80 instead of 50, preventing false negatives when DexScreener has a temporary outage. LP Unlocked warning now shown for all tokens regardless of age, consistent with the existing −5 pts penalty.
 
 Certain red flags cap the total score regardless of other metrics. The goose does not average away red flags.
 
@@ -107,7 +111,8 @@ Certain red flags cap the total score regardless of other metrics. The goose doe
 | Vol / MCAP Ratio | 24h volume >500% of market cap | 49 — HIGH RISK |
 | Vol / MCAP Ratio | 24h volume >1000% of market cap | 35 — CRITICAL |
 | LP Confirmed Unlocked | DexScreener confirms LP not locked | −5 pts penalty |
-| Liquidity Data Unavailable | DexScreener fetch failed | 50 |
+| Liquidity Data Unavailable | DexScreener fetch failed — established token (>180d) with clean fundamentals | 80 |
+| Liquidity Data Unavailable | DexScreener fetch failed — otherwise | 50 |
 | Compounding Red Flags | 3+ caps fired simultaneously | −10 pts penalty |
 
 ---
@@ -138,7 +143,7 @@ The project was built product-first: the scanner, the bot, the transparency infr
 - Liquidity: Raydium CPMM — locked minimum 1 year via Unicrypt
 - Anti-snipe: 30-minute launch delay + 1% fee tier
 
-**Self-audit at deploy:** the first act after launch is publishing $ANSER's own transparency score on the home page, run on the live scanner, with full breakdown and links to every vesting and lock contract. If $ANSER doesn't pass its own scanner, we don't ship.
+**Self-audit at deploy:** the first act after launch is publishing $ANSER's own transparency score on the home page, run on the live scanner, with full breakdown and links to every vesting and lock contract. If the live scanner returns a verdict below STRUCTURALLY SOUND (75+), deploy is halted and the contradiction is made public.
 
 When deployed, this README will be updated with:
 - Contract address
@@ -161,6 +166,14 @@ When deployed, this README will be updated with:
 
 No private allocations. No advisor tokens. No VC rounds. No presale with special pricing.  
 No exchange listing without community governance approval.
+
+Circulating supply at launch: **50,000,000 ANSER (5% of total)**. All other allocations are locked or vesting via on-chain contracts verifiable on Streamflow and Unicrypt.
+
+---
+
+## Hall of Shame — Dispute Policy
+
+Every entry is based on public on-chain data at the time of audit. If you believe an entry contains a factual error (wrong address, incorrect flag, data fetch error), contact [@theanserapp](https://x.com/theanserapp) or [t.me/theanser](https://t.me/theanser) with the contract address and the specific correction. Disputes are reviewed within 7 days. Factual errors are corrected and noted. Entries are not removed because a token recovered — the audit was a snapshot, not a verdict on the future.
 
 ---
 

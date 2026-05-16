@@ -1801,6 +1801,7 @@
 
         // When holder data unavailable for large-cap tokens, cap at 70
         // — we cannot verify the most important concentration risk
+        // capsFired NOT incremented: absence of data, not a fundamental red flag.
         else if (!conc && liquidity && liquidity.liquidityUsd > 100000) { score = Math.min(score, 70); capsLabels.push('Holder data unavailable → cap 70'); }
 
         if (!auth.mintAuthorityRevoked)   { score = Math.min(score, 60); capsFired++; capsLabels.push('Mint active → cap 60'); }
@@ -1812,6 +1813,7 @@
         // Mutable metadata: vector for post-launch phishing (changing token
         // name/logo/URI to drain holders). Cap at 85 — a mutable token cannot
         // reach STRUCTURALLY SOUND regardless of other signals.
+        // capsFired NOT incremented: phishing risk but not a fundamental red flag for compounding penalty.
         if (updAuth && updAuth.isRevoked === false) { score = Math.min(score, 85); capsLabels.push('Mutable metadata → cap 85'); }
 
         // Honeypot caps

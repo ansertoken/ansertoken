@@ -32,6 +32,44 @@
     "author": { "@type": "Organization", "name": "$ANSER", "url": "https://theanser.app" }
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does the ANSER token scanner score work?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The scanner analyzes 9 on-chain metrics and returns a transparency score from 0 to 100. VERIFIED signals (mint authority, freeze authority, token mechanics, update authority) are on-chain binary facts. OBSERVED signals (holder distribution, liquidity, contract age, honeypot check) are real data that could theoretically be gamed. INDICATIVE signals (creator risk) are useful but not conclusive. Certain red flags cap the total score regardless of other metrics." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is mint authority and why does it matter?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Mint authority is the ability to create new tokens. If it is not revoked, the creator can inflate the supply at any time, diluting every holder indefinitely. A revoked mint authority means the supply is permanently fixed — no more tokens can ever be created. This is worth 25 points in the ANSER scoring system." }
+      },
+      {
+        "@type": "Question",
+        "name": "What does holder concentration mean on Solana?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Holder concentration measures what percentage of total supply the top 20 wallets hold. The ANSER scanner filters AMM liquidity pools (Raydium, Orca, Meteora) from this calculation so the figure reflects real holder wallets only. High concentration in small-cap tokens means a few wallets can crash the price with a single transaction. Tokens with top-20 holding ≥95% of supply are capped at a maximum score of 35." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does this scanner detect honeypots on Solana?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. The ANSER scanner analyzes recent DEX swap patterns to detect if the token can actually be sold. A high rate of failed sell transactions is a strong honeypot signal. Likely honeypots are capped at a maximum score of 15 (CRITICAL). Suspicious patterns are capped at 50 (HIGH RISK)." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is this scanner free to use?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. The ANSER Token Scanner is completely free. No account required, no wallet connection, no data stored. You can also use @TheAnser_bot on Telegram for instant on-chain audits. The scanner is a gift from the $ANSER project to the Solana community." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is Token-2022 and why is it flagged?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Token-2022 is an extension of the standard Solana SPL token program. Some extensions are benign, but others — like hidden transfer fees, interest-bearing mechanics, or permanent delegate authority — can allow creators to take funds from holders without their knowledge. The scanner specifically detects these dangerous extensions and caps the score at 40 if found." }
+      }
+    ]
+  }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
@@ -898,7 +936,7 @@
     // API key is handled server-side by the Cloudflare Worker proxy
 
     const RPC_URL = 'https://anser-proxy.ansertoken.workers.dev';
-    const ANSER_MINT = 'ANSER_MINT_ADDRESS_PLACEHOLDER';
+
 
 
 
@@ -1731,27 +1769,29 @@
 
       document.getElementById('loading').classList.remove('visible');
 
-      const isAnser = address === ANSER_MINT;
-
-      let score = isAnser ? 95 : calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
+      let score = calcScore(auth, conc, deployedAt, liquidity, creatorRisk);
 
       // Cap score based on critical signals — one red flag limits total trust
 
-      if (!isAnser) {
+      // Pre-compute age/newness — used in age cap and liquidity fallback below
+      const _contractHours = deployedAt instanceof Date ? (Date.now() - deployedAt.getTime()) / 3600000 : 999;
+      const _poolHoursS    = liquidity?.pairCreatedAt instanceof Date ? (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000 : 999;
+      const isVeryNew      = _contractHours < 48 || _poolHoursS < 48;
 
-        // Track which caps fire so we can apply a compounding penalty when
-        // multiple critical signals stack (e.g. tiny new token with whale
-        // concentration AND wash trading — each cap alone says "high risk",
-        // but three at once means CRITICAL, not just high).
-        let capsFired = 0;
+      // Track which caps fire so we can apply a compounding penalty when
+      // multiple critical signals stack (e.g. tiny new token with whale
+      // concentration AND wash trading — each cap alone says "high risk",
+      // but three at once means CRITICAL, not just high).
+      let capsFired = 0;
+      const capsLabels = [];
 
-        const holderPct = conc?.pct || 0;
+      const holderPct = conc?.pct || 0;
 
-        const isLargeCap = liquidity?.liquidityUsd > 500000;
+      const isLargeCap = liquidity?.liquidityUsd > 500000;
         // NEW: ≥95% top-20 small-cap = creator effectively controls supply → CRITICAL
-        if      (holderPct >= 95 && !isLargeCap) { score = Math.min(score, 35); capsFired++; }
-        else if (holderPct >= 80 && !isLargeCap) { score = Math.min(score, 49); capsFired++; }
-        else if (holderPct >= 60 && !isLargeCap) { score = Math.min(score, 65); capsFired++; }
+        if      (holderPct >= 95 && !isLargeCap) { score = Math.min(score, 35); capsFired++; capsLabels.push('Concentration ≥95% → cap 35'); }
+        else if (holderPct >= 80 && !isLargeCap) { score = Math.min(score, 49); capsFired++; capsLabels.push('Concentration ≥80% → cap 49'); }
+        else if (holderPct >= 60 && !isLargeCap) { score = Math.min(score, 65); capsFired++; capsLabels.push('Concentration ≥60% → cap 65'); }
         else if (holderPct >= 80 &&  isLargeCap) { score = Math.min(score, 65); capsFired++; }
         else if (holderPct >= 60 &&  isLargeCap) { score = Math.min(score, 75); capsFired++; }
 
@@ -1759,11 +1799,11 @@
         // — we cannot verify the most important concentration risk
         else if (!conc && liquidity && liquidity.liquidityUsd > 100000) score = Math.min(score, 70);
 
-        if (!auth.mintAuthorityRevoked)   { score = Math.min(score, 60); capsFired++; }
+        if (!auth.mintAuthorityRevoked)   { score = Math.min(score, 60); capsFired++; capsLabels.push('Mint active → cap 60'); }
 
-        if (!auth.freezeAuthorityRevoked) { score = Math.min(score, 70); capsFired++; }
+        if (!auth.freezeAuthorityRevoked) { score = Math.min(score, 70); capsFired++; capsLabels.push('Freeze active → cap 70'); }
 
-        if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) { score = Math.min(score, 40); capsFired++; }
+        if (auth.dangerousExtensions && auth.dangerousExtensions.length > 0) { score = Math.min(score, 40); capsFired++; capsLabels.push('Dangerous Token-2022 extension → cap 40'); }
 
         // Mutable metadata: vector for post-launch phishing (changing token
         // name/logo/URI to drain holders). Cap at 85 — a mutable token cannot
@@ -1771,28 +1811,19 @@
         if (updAuth && updAuth.isRevoked === false) score = Math.min(score, 85);
 
         // Honeypot caps
-        if (honeypot?.status === 'likely_honeypot') { score = Math.min(score, 15); capsFired++; }
-        else if (honeypot?.status === 'suspicious')  { score = Math.min(score, 50); capsFired++; }
+        if (honeypot?.status === 'likely_honeypot') { score = Math.min(score, 15); capsFired++; capsLabels.push('Likely honeypot → cap 15'); }
+        else if (honeypot?.status === 'suspicious')  { score = Math.min(score, 50); capsFired++; capsLabels.push('Suspicious sell pattern → cap 50'); }
 
-        // Token age cap: < 48h gets capped at 60 — clean mechanics ≠ safe for brand-new tokens
-        let ageCapped = false;
-        if (deployedAt instanceof Date) {
-          const hoursOld = (Date.now() - deployedAt.getTime()) / 3600000;
-          if (hoursOld < 48) { score = Math.min(score, 60); ageCapped = true; }
-        }
-        if (liquidity?.pairCreatedAt instanceof Date) {
-          const poolHours = (Date.now() - liquidity.pairCreatedAt.getTime()) / 3600000;
-          if (poolHours < 48) { score = Math.min(score, 60); ageCapped = true; }
-        }
-        if (ageCapped) capsFired++;
+      // Token age cap: < 48h gets capped at 60 — clean mechanics ≠ safe for brand-new tokens
+      if (isVeryNew) { score = Math.min(score, 60); capsFired++; capsLabels.push('Token/pool < 48h → cap 60'); }
 
         // VOL/MCAP ratio: abnormal volume = likely pump/wash trading
         // NEW: >1000% (10x mcap) = blatant manipulation → CRITICAL
         const _vmr = liquidity?.volMcapRatio;
         if (_vmr !== null && _vmr !== undefined) {
-          if      (_vmr > 1000) { score = Math.min(score, 35); capsFired++; }
-          else if (_vmr > 500)  { score = Math.min(score, 49); capsFired++; }
-          else if (_vmr > 200)  { score = Math.min(score, 65); capsFired++; }
+          if      (_vmr > 1000) { score = Math.min(score, 35); capsFired++; capsLabels.push('Vol/MCAP >1000% → cap 35'); }
+          else if (_vmr > 500)  { score = Math.min(score, 49); capsFired++; capsLabels.push('Vol/MCAP >500% → cap 49'); }
+          else if (_vmr > 200)  { score = Math.min(score, 65); capsFired++; capsLabels.push('Vol/MCAP >200% → cap 65'); }
         }
 
         // LP lock: confirmed unlocked = -5pts penalty (rug vector)
@@ -1802,16 +1833,21 @@
         // multiple independent critical signals — beyond reasonable doubt.
         if (capsFired >= 3) score = Math.max(0, score - 10);
 
-        // Liquidity data unavailable: cannot verify Vol/MCAP, LP lock, or
-        // wash trading context. Cap at 50 (HIGH RISK) — manipulation signals
-        // cannot be ruled out without market data.
-        if (!liquidity || liquidity.liquidityUsd === 0) score = Math.min(score, 50);
-
+      // Liquidity data unavailable: cannot verify Vol/MCAP, LP lock, or
+      // wash trading context. For established tokens with clean fundamentals,
+      // a DexScreener hiccup is not a signal — cap at 80. Otherwise cap at 50.
+      if (!liquidity || liquidity.liquidityUsd === 0) {
+        const _isEstablished = (deployedAt instanceof Date && (Date.now() - deployedAt.getTime()) > 180 * 86400000)
+                               || deployedAt?.tooActive === true;
+        const _strongFundamentals = auth.mintAuthorityRevoked
+                                 && auth.freezeAuthorityRevoked
+                                 && (!auth.isToken2022 || !auth.dangerousExtensions?.length)
+                                 && updAuth?.isRevoked === true
+                                 && conc !== null && (conc?.pct || 0) < 60;
+        score = Math.min(score, (_isEstablished && _strongFundamentals) ? 80 : 50);
       }
 
-      const voice = isAnser
-        ? 'The goose built this. It passes its own test.'
-        : gooseVoice(score, auth, conc, liquidity, deployedAt);
+      const voice = gooseVoice(score, auth, conc, liquidity, deployedAt);
 
       const scoreClass   = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
 
@@ -1844,7 +1880,7 @@
           return 'Volume exceeds market cap ' + Math.round(vmr/100) + 'x in 24 hours. The price is being moved, not discovered.';
         if (vmr !== null && vmr !== undefined && vmr > 200)
           return 'Abnormal volume. Something is coordinating the price action. Verify before acting.';
-        if (liquidity?.lpLocked === false && !isVeryNew)
+        if (liquidity?.lpLocked === false)
           return 'Liquidity is not locked. One transaction from the creator erases the pool.';
         if (isVeryNew)
           return 'Contract is hours old. On-chain mechanics can be clean and still be a trap. Time reveals intent.';
@@ -2140,11 +2176,9 @@
 
       const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, honeyM, updAuthM, crM];
 
-      const tokenName    = isAnser ? '$ANSER' : (name || 'Unknown Token');
-      const tokenSymbol  = isAnser ? 'ANSER'  : (symbol || null);
-      const tokenDisplay = isAnser
-        ? '$ANSER'
-        : (tokenSymbol ? tokenName + ' ($' + tokenSymbol + ')' : tokenName);
+      const tokenName    = name || 'Unknown Token';
+      const tokenSymbol  = symbol || null;
+      const tokenDisplay = tokenSymbol ? tokenName + ' ($' + tokenSymbol + ')' : tokenName;
 
 
 
@@ -2164,6 +2198,7 @@
 
       // 9 metrics: 4 VERIFIED · 4 OBSERVED · 1 INDICATIVE
       const scoreSubtitle  = '4 verified · 4 observed · 1 indicative';
+      const scoringVersion = 'Scored with ANSER v1.0';
 
 
 
@@ -2232,6 +2267,7 @@
             '<div class="score-label">/ 100</div>' +
 
             '<div style="font-size:0.6rem;color:var(--gray);letter-spacing:0.08em;margin-top:0.4rem;text-align:right">' + scoreSubtitle + '</div>' +
+            '<div style="font-size:0.58rem;color:var(--gray);letter-spacing:0.06em;margin-top:0.15rem;text-align:right;opacity:0.7">' + scoringVersion + '</div>' +
 
           '</div>' +
 
@@ -2245,6 +2281,10 @@
 
         '</div>' +
         (voice ? '<div style="font-size:0.82rem;font-style:italic;color:#555;padding:0.4rem 1.5rem 1rem;letter-spacing:0.02em;border-left:2px solid #bbb;">' + voice + '</div>' : '') +
+
+        (capsLabels.length > 0 ? '<div style="margin:0.6rem 0 0.4rem;padding:0.6rem 1rem;background:#fafafa;border:1px solid var(--light);font-size:0.7rem;color:var(--gray);letter-spacing:0.02em;line-height:1.8;"><span style="font-weight:500;letter-spacing:0.08em;font-size:0.65rem;">SCORE CAPS APPLIED</span><br>' + capsLabels.map(l => '· ' + l).join('<br>') + (capsFired >= 3 ? '<br>· 3+ caps fired — compounding penalty −10 pts' : '') + '</div>' : '') +
+
+        '<div style="font-size:0.68rem;color:var(--gray);text-align:center;padding:0.5rem 1rem 0.4rem;margin-top:0.4rem;letter-spacing:0.02em;line-height:1.7;">No data stored &nbsp;·&nbsp; RPC proxied via Cloudflare &nbsp;·&nbsp; Your wallet is never connected.</div>' +
 
         '<div style="font-size:0.68rem;color:var(--gray);text-align:center;padding:0.9rem 0 0.5rem;margin-top:0.8rem;margin-bottom:1.2rem;border-top:1px solid var(--light);letter-spacing:0.01em;">The scanner is free. Always. If it saved you something, the goose accepts SOL.<a href="https://solscan.io/account/Eq7QcLnSUTQNfXP7W5rGgsqbM1Qk2ejRX4v1QKv1Ugrj" target="_blank" rel="noopener" style="display:block;font-family:IBM Plex Mono,monospace;color:inherit;text-decoration:none;border-bottom:1px solid var(--gray);margin-top:0.9rem;padding-bottom:0.6rem;">Eq7QcLnSUTQNfXP7W5rGgsqbM1Qk2ejRX4v1QKv1Ugrj</a></div>' +
 
@@ -2271,7 +2311,7 @@
           const _contractMature = (deployedAt && deployedAt.tooActive === true)
                                   || (_ageH !== null && _ageH >= 48);
           const _isNew = _contractYoung || _poolYoung;
-          if (_isNew && !isAnser) {
+          if (_isNew) {
             let _label, _badge, _h, _desc;
             if (_poolYoung && !_contractYoung && _contractMature) {
               // Old contract, fresh pool — distinct risk profile (re-launch / stealth pool / migration)
@@ -2305,7 +2345,7 @@
           }
 
           const _vmr2 = liquidity?.volMcapRatio;
-          if (_vmr2 !== null && _vmr2 !== undefined && _vmr2 > 100 && !isAnser) {
+          if (_vmr2 !== null && _vmr2 !== undefined && _vmr2 > 100) {
             const _vol = fmtUsd(liquidity.vol24h || 0);
             let _vmrColor, _vmrLabel, _vmrNote;
             if (_vmr2 > 500) {

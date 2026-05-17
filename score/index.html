@@ -941,18 +941,21 @@
 
 
     async function rpc(method, params) {
-      const res  = await fetch(RPC_URL, {
-
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
-
-      });
-
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      return data.result;
-
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 25000);
+      try {
+        const res  = await fetch(RPC_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+          signal: controller.signal
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.result;
+      } finally {
+        clearTimeout(timer);
+      }
     }
 
 
@@ -982,15 +985,20 @@
 
     async function getHoneypotStatus(address) {
       try {
-        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 20 }]);
+        const sigs = await rpc('getSignaturesForAddress', [address, { limit: 30 }]);
         if (!sigs || sigs.length === 0) return { status: 'no_activity' };
         const dexPrograms = new Set([
-          '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
-          'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK',
-          '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
+          '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium AMM v4
+          'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK', // Raydium CLMM
+          'CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C', // Raydium CPMM ← $ANSER pool
+          'whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc', // Orca Whirlpools
+          'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo', // Meteora DLMM
+          'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EkQGfFyR', // Meteora Pools
+          '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', // PumpFun
+          'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA',  // PumpAMM
         ]);
         let failedSells = 0, successSells = 0;
-        for (const sig of sigs.slice(0, 5)) {
+        for (const sig of sigs.slice(0, 20)) {
           try {
             const tx = await rpc('getTransaction', [sig.signature, {
               encoding: 'jsonParsed', maxSupportedTransactionVersion: 0
@@ -1004,7 +1012,7 @@
           } catch {}
         }
         const total = failedSells + successSells;
-        if (total >= 3 && failedSells / total > 0.8) return { status: 'likely_honeypot', failRate: Math.round(failedSells/total*100) };
+        if (total >= 5 && failedSells / total > 0.9) return { status: 'likely_honeypot', failRate: Math.round(failedSells/total*100) };
         if (total >= 3 && failedSells / total > 0.3) return { status: 'suspicious',      failRate: Math.round(failedSells/total*100) };
         if (successSells > 0) return { status: 'sellable' };
         return { status: 'unknown' };
@@ -1195,11 +1203,12 @@
         'UNCX77nZrA3TdAxMEggqG18xxpgiNGT6iqyynPwpoxN',   // Unicrypt AMM v4 Smart locker
         'UNCXrB8cZXnmtYM1aSo1Wx3pQaeSZYuF2jCTesXvECs',   // Unicrypt CLMM locker
         'DSwpgjMvXhtGn6BsbqmacdBZyfLj6jSKCqdis1hTMAFU', // FluxBeam
+        'SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf',   // Squads v4 multisig
       ]);
 
       const ammOwned = new Set();
       try {
-        const lookupAddrs = accounts.slice(0, 30).map(a => a.address);
+        const lookupAddrs = accounts.slice(0, 50).map(a => a.address);
         if (lookupAddrs.length) {
           const ownerRes = await rpc('getMultipleAccounts', [lookupAddrs, { encoding: 'jsonParsed' }]);
           (ownerRes?.value || []).forEach((acct, i) => {
@@ -1625,20 +1634,21 @@
 
 
 
+    let _analyzing = false;
     function analyzeToken() {
-
+      if (_analyzing) return;
       const input = document.getElementById('contractInput').value.trim();
-
       if (!input || input.length < 32) { alert('Please enter a valid Solana contract address.'); return; }
-
+      _analyzing = true;
+      const btn = document.querySelector('button[onclick="analyzeToken()"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'ANALYZING…'; }
       // Keep how-it-works visible below results for context
-
       document.getElementById('results').classList.remove('visible');
-
       document.getElementById('loading').classList.add('visible');
-
-      fetchAndRender(input);
-
+      fetchAndRender(input).finally(() => {
+        _analyzing = false;
+        if (btn) { btn.disabled = false; btn.textContent = 'ANALYZE →'; }
+      });
     }
 
 

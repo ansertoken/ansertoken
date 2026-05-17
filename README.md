@@ -125,6 +125,8 @@ Stack: Node.js · node-telegram-bot-api · Helius RPC · DexScreener API.
 
 Send any Solana contract address to the bot to get an instant on-chain audit.
 
+**Bot vs scanner divergence (expected):** the Telegram bot always assigns +5 pts for Creator Risk (unknown branch — no deployer wallet fetch) and does not implement the transferFeeBps <100 tier for Token-2022. Maximum expected divergence: ±8 pts on tokens where these signals apply. Both are documented in the bot reference PDF.
+
 ---
 
 ## Token — Status: not yet deployed

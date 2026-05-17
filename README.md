@@ -12,6 +12,8 @@
 
 ## What is this repo?
 
+**$ANSER is an on-chain transparency standard for Solana. The token exists to test whether transparency has economic value.**
+
 This is the public codebase for **theanser.app** — the official web presence of the $ANSER project on Solana.
 
 Everything here is visible by design. The project's founding principle is that transparency is not a marketing claim — it is a technical constraint. This repo is part of that constraint.

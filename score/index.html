@@ -1857,7 +1857,7 @@
 
       const voice = gooseVoice(score, auth, conc, liquidity, deployedAt);
 
-      const scoreClass   = score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low';
+      const scoreClass   = score >= 75 ? 'score-high' : score >= 60 ? 'score-mid' : 'score-low';
 
       const verdictClass = score >= 90 ? 'pass' : score >= 75 ? 'pass' : score >= 60 ? 'partial' : score >= 40 ? 'fail' : 'fail';
 
@@ -2290,7 +2290,7 @@
         '</div>' +
         (voice ? '<div style="font-size:0.82rem;font-style:italic;color:#555;padding:0.4rem 1.5rem 1rem;letter-spacing:0.02em;border-left:2px solid #bbb;">' + voice + '</div>' : '') +
 
-        (capsLabels.length > 0 ? '<div style="margin:0.6rem 0 0.4rem;padding:0.6rem 1rem;background:#fafafa;border:1px solid var(--light);font-size:0.7rem;color:var(--gray);letter-spacing:0.02em;line-height:1.8;"><span style="font-weight:500;letter-spacing:0.08em;font-size:0.65rem;">SCORE CAPS APPLIED</span><br>' + capsLabels.map(l => '· ' + l).join('<br>') + (capsFired >= 3 ? '<br>· 3+ caps fired — compounding penalty −10 pts' : '') + '</div>' : '') +
+        (capsLabels.length > 0 ? '<div style="margin:0.6rem 0 0.4rem;padding:0.6rem 1rem;background:#fafafa;border:1px solid var(--light);font-size:0.7rem;color:var(--gray);letter-spacing:0.02em;line-height:1.8;"><span style="font-weight:500;letter-spacing:0.08em;font-size:0.65rem;">SCORE CAPS APPLIED</span><br>' + capsLabels.map(l => '· ' + l).join('<br>') + (capsFired >= 3 ? '<br>· 3+ critical caps fired — compounding penalty −10 pts' : '') + '</div>' : '') +
 
         '<div style="font-size:0.68rem;color:var(--gray);text-align:center;padding:0.5rem 1rem 0.4rem;margin-top:0.4rem;letter-spacing:0.02em;line-height:1.7;">No data stored &nbsp;·&nbsp; RPC proxied via Cloudflare &nbsp;·&nbsp; Your wallet is never connected.</div>' +
 

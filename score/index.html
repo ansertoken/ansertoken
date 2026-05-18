@@ -639,6 +639,8 @@
     .footer-links {
 
       display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 1.5rem;
 
     }
@@ -908,6 +910,7 @@
         <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;500%</strong> → Score capped at 49 — likely coordinated pump or wash trading</li>
         <li style="padding:0.2rem 0;">🚨 <strong>24h Vol/MCAP ratio &gt;1000%</strong> → Score capped at 35 (CRITICAL) — blatant manipulation, 10× mcap volume</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
+        <li style="padding:0.2rem 0;font-style:italic;color:var(--gray);font-size:0.75rem;">LP burned (incinerator), locked via Raydium <em>Burn & Earn</em>, or locked via Unicrypt is verified on-chain and displayed [VERIFIED], but does not award points — a clean baseline is expected, not rewarded. Only failure modes are penalized.</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>Liquidity data unavailable</strong> (DexScreener fetch failed) → Score capped at 50 — context unverifiable, manipulation cannot be ruled out</li>
         <li style="padding:0.2rem 0;">🚨 <strong>3+ critical signals firing simultaneously</strong> → −10 pts compounding penalty — beyond reasonable doubt</li>
       </ul>
@@ -1285,35 +1288,93 @@
       return r;
     }
 
-    // ── Unicrypt on-chain LP lock check ────────────────────────────────────────
-    // For Raydium CPMM pools: reads the LP mint from pool state (offset 136),
-    // then checks if Unicrypt's CP Swap storage account holds LP tokens.
-    // Returns true if locked on-chain, null if undetermined (non-fatal).
-    async function checkUnicryptLpLock(pairAddress) {
+    // ── On-chain LP lock verification ──────────────────────────────────────────
+    // Two parallel signals are checked:
+    //   1. Raydium API exposes burnPercent — covers ALL Raydium pool types
+    //      (CPMM, AMM v4, CLMM) and reflects native "Burn & Earn" + direct
+    //      burns + Raydium-tracked locks. burnPercent ≥ 95 counts as VERIFIED.
+    //   2. On-chain check (Raydium CPMM only): LP mint at offset 136, then
+    //      check burn address (direct incinerator) and Unicrypt CP Swap storage.
+    // Priority when multiple signals fire:
+    //   direct burn > Raydium B&E ≥95% > Unicrypt > partial (50-95%) > unknown.
+    // Non-Raydium pools (Orca, Meteora, Pumpswap) → 'unknown' (out of scope v1).
+    // Returns: { status, platform, lpMint?, burnPercent? }
+    // Non-fatal: any error → status 'unknown' (falls back to DexScreener in caller).
+    async function verifyLpLockStatus(pairAddress) {
       try {
-        // Fetch CPMM pool account (base64)
+        const [raydiumRes, onchainRes] = await Promise.allSettled([
+          fetch('https://api-v3.raydium.io/pools/info/ids?ids=' + pairAddress)
+            .then(r => r.json()),
+          verifyLpLockOnChain(pairAddress)
+        ]);
+
+        // Raydium API: returns { success, data: [poolInfo | null] }
+        let raydiumBurnPct = null, raydiumLpMint = null;
+        if (raydiumRes.status === 'fulfilled' && raydiumRes.value?.success) {
+          const data = raydiumRes.value.data?.[0];
+          if (data) {
+            if (typeof data.burnPercent === 'number') raydiumBurnPct = data.burnPercent;
+            if (data.lpMint?.address) raydiumLpMint = data.lpMint.address;
+          }
+        }
+        const onchain = onchainRes.status === 'fulfilled'
+          ? onchainRes.value
+          : { status: 'unknown', platform: null };
+
+        // 1) Direct burn to incinerator — strongest (irreversible)
+        if (onchain.status === 'burned') {
+          return { status: 'burned', platform: 'burn', lpMint: onchain.lpMint || raydiumLpMint };
+        }
+        // 2) Raydium native Burn & Earn at ≥95% — VERIFIED locked
+        if (typeof raydiumBurnPct === 'number' && raydiumBurnPct >= 95) {
+          return { status: 'locked', platform: 'raydium', lpMint: raydiumLpMint, burnPercent: raydiumBurnPct };
+        }
+        // 3) Unicrypt on-chain lock
+        if (onchain.status === 'locked') {
+          return { status: 'locked', platform: 'unicrypt', lpMint: onchain.lpMint };
+        }
+        // 4) Raydium reports partial lock (50-95%) — informational, no full verification
+        if (typeof raydiumBurnPct === 'number' && raydiumBurnPct >= 50) {
+          return { status: 'partial', platform: 'raydium', lpMint: raydiumLpMint, burnPercent: raydiumBurnPct };
+        }
+        return { status: 'unknown', platform: null, lpMint: raydiumLpMint, burnPercent: raydiumBurnPct };
+      } catch { return { status: 'unknown', platform: null }; } // non-fatal
+    }
+
+    // On-chain leg of LP verification — only meaningful for Raydium CPMM pools.
+    // Reads LP mint at offset 136, then checks burn address + Unicrypt storage in parallel.
+    async function verifyLpLockOnChain(pairAddress) {
+      try {
         const poolInfo = await rpc('getAccountInfo', [pairAddress, { encoding: 'base64' }]);
+        const owner = poolInfo?.value?.owner;
+        const RAYDIUM_CPMM_PROGRAM = 'CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C';
+        if (owner !== RAYDIUM_CPMM_PROGRAM) return { status: 'unknown', platform: null };
         const raw = poolInfo?.value?.data;
-        if (!raw || !Array.isArray(raw) || raw[1] !== 'base64') return null;
+        if (!raw || !Array.isArray(raw) || raw[1] !== 'base64') return { status: 'unknown', platform: null };
         const buf = Uint8Array.from(atob(raw[0]), c => c.charCodeAt(0));
         // Raydium CPMM PoolState: discriminator(8) + amm_config(32) + pool_creator(32)
         // + token_0_vault(32) + token_1_vault(32) + lp_mint(32) = offset 136
-        if (buf.length < 168) return null;
+        if (buf.length < 168) return { status: 'unknown', platform: null };
         const lpMint = toBase58(buf.slice(136, 168));
-        if (!lpMint || lpMint.length < 32) return null;
-        // Check Unicrypt CP Swap storage account for LP tokens of this mint
+        if (!lpMint || lpMint.length < 32) return { status: 'unknown', platform: null };
+
+        const BURN_ADDRESS          = '1nc1nerator11111111111111111111111111111111';
         const UNICRYPT_CPMM_STORAGE = 'FEmGEWdxCBSJ1QFKeX5B6k7VTDPwNU3ZLdfgJkvGYrH5';
-        const lockRes = await rpc('getTokenAccountsByOwner', [
-          UNICRYPT_CPMM_STORAGE,
-          { mint: lpMint },
-          { encoding: 'jsonParsed' }
+        const [burnRes, lockRes] = await Promise.allSettled([
+          rpc('getTokenAccountsByOwner', [BURN_ADDRESS,          { mint: lpMint }, { encoding: 'jsonParsed' }]),
+          rpc('getTokenAccountsByOwner', [UNICRYPT_CPMM_STORAGE, { mint: lpMint }, { encoding: 'jsonParsed' }])
         ]);
-        const accounts = lockRes?.value || [];
-        const locked = accounts.some(a =>
-          (a.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0) > 0
-        );
-        return locked ? true : null;
-      } catch { return null; } // non-fatal — fall back to DexScreener result
+        const burnAccs = burnRes.status === 'fulfilled' ? (burnRes.value?.value || []) : [];
+        const lockAccs = lockRes.status === 'fulfilled' ? (lockRes.value?.value || []) : [];
+        const burnedAmount = burnAccs.reduce((s, a) =>
+          s + (a.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0), 0);
+        const lockedAmount = lockAccs.reduce((s, a) =>
+          s + (a.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0), 0);
+
+        if (burnedAmount > 0 && burnedAmount >= lockedAmount) return { status: 'burned', platform: 'burn', lpMint };
+        if (lockedAmount > 0) return { status: 'locked', platform: 'unicrypt', lpMint };
+        return { status: 'unknown', platform: null, lpMint };
+      } catch { return { status: 'unknown', platform: null }; }
     }
 
     async function getLiquidityInfo(address) {
@@ -1388,19 +1449,39 @@
           const pairCreatedAt = main?.pairCreatedAt ? new Date(main.pairCreatedAt) : null;
           const volMcapRatio = capToUse > 0 ? Math.round((vol24h / capToUse) * 100) : null;
 
-          // LP lock detection: DexScreener first, then Unicrypt on-chain fallback
-          let lpLocked = null; // null = unknown, true = locked, false = confirmed unlocked
-          for (const p of pairs) {
-            const boolLock = p.liquidity?.locked;
-            const pctLock  = p.info?.liquidity?.locked;
-            if (typeof boolLock === 'boolean') { lpLocked = boolLock; break; }
-            if (typeof pctLock  === 'number')  { lpLocked = pctLock >= 90; break; }
+          // LP lock detection — priority order:
+          //   1) On-chain verification (burn / Raydium Burn & Earn / Unicrypt) — strongest
+          //   2) DexScreener observation — fallback for other lockers
+          let lpLocked = null;       // legacy: true | false | null (kept for compat with score logic)
+          let lpLockPlatform = null; // 'burn' | 'raydium' | 'unicrypt' | 'observed' | null
+          let lpMint = null;         // LP token mint (when verification ran)
+          let lpBurnPct = null;      // burn percentage (Raydium API, when available)
+          if (main?.pairAddress) {
+            const onchain = await verifyLpLockStatus(main.pairAddress);
+            if (onchain.lpMint) lpMint = onchain.lpMint;
+            if (typeof onchain.burnPercent === 'number') lpBurnPct = onchain.burnPercent;
+            if (onchain.status === 'burned') {
+              lpLocked = true; lpLockPlatform = 'burn';
+            } else if (onchain.status === 'locked') {
+              lpLocked = true; lpLockPlatform = onchain.platform; // 'raydium' or 'unicrypt'
+            } else if (onchain.status === 'partial') {
+              // Partial lock — informational only. Don't set lpLocked=true (no green tick),
+              // don't set lpLocked=false (no -5 penalty). Display will surface the %.
+              lpLockPlatform = 'raydium-partial';
+            }
           }
-          // If DexScreener didn't report lock status, try Unicrypt on-chain verification.
-          // Works for Raydium CPMM pools (the pool type $ANSER uses).
-          if (lpLocked === null && main?.pairAddress) {
-            const onchain = await checkUnicryptLpLock(main.pairAddress);
-            if (onchain === true) lpLocked = true;
+          // If on-chain didn't conclude, fall back to DexScreener (observation only)
+          if (lpLocked === null && lpLockPlatform !== 'raydium-partial') {
+            for (const p of pairs) {
+              const boolLock = p.liquidity?.locked;
+              const pctLock  = p.info?.liquidity?.locked;
+              if (typeof boolLock === 'boolean') {
+                lpLocked = boolLock; lpLockPlatform = 'observed'; break;
+              }
+              if (typeof pctLock  === 'number')  {
+                lpLocked = pctLock >= 90; lpLockPlatform = 'observed'; break;
+              }
+            }
           }
 
           return {
@@ -1427,7 +1508,13 @@
 
             volMcapRatio,
 
-            lpLocked
+            lpLocked,
+
+            lpLockPlatform,
+
+            lpMint,
+
+            lpBurnPct
 
           };
 
@@ -1462,7 +1549,13 @@
 
           volMcapRatio: null,
 
-          lpLocked: null
+          lpLocked: null,
+
+          lpLockPlatform: null,
+
+          lpMint: null,
+
+          lpBurnPct: null
 
         };
 
@@ -2090,10 +2183,42 @@
           + ' (' + dex.toUpperCase() + ').' + ratioLine + thresholdNote
 
           + (() => {
-              const lk = liquidity.lpLocked;
-              if (lk === true)  return ' <span style="color:var(--green);font-weight:500">LP LOCKED ✓ [OBSERVED]</span> — DexScreener reports liquidity locked. This signal is observed (not on-chain verified) — DexScreener is not ground truth. Verify lock contract directly for full assurance.';
-              if (lk === false) return ' <span style="color:var(--red);font-weight:500">LP UNLOCKED ✗ [OBSERVED]</span> — DexScreener reports liquidity NOT locked. Creator can remove LP at any time. Score penalty applied (−5).';
-              return ' <span style="color:var(--gray);font-weight:500">LP LOCK: NOT REPORTED</span> — DexScreener does not report lock status for this token. No penalty applied. Verify manually on Unicrypt / Streamflow / Mudra. Absence of report does NOT mean unlocked.';
+              const lk   = liquidity.lpLocked;
+              const plat = liquidity.lpLockPlatform;
+              const mint = liquidity.lpMint;
+              const pct  = liquidity.lpBurnPct;
+              // Verifiable link to LP mint on Solscan (anyone can audit holders)
+              const mintLink = mint
+                ? ' <a href="https://solscan.io/token/' + mint + '#holders" target="_blank" style="color:var(--gray);border-bottom:1px solid var(--gray)">verify LP holders ↗</a>'
+                : '';
+              // BURNED — on-chain verified (strongest positive signal: irreversible)
+              if (lk === true && plat === 'burn') {
+                return ' <span style="color:var(--green);font-weight:500">LP BURNED ✓ [VERIFIED]</span> — LP tokens sent to the Solana incinerator. Permanent and irreversible — no actor can withdraw liquidity, ever.' + mintLink + '.';
+              }
+              // LOCKED via Raydium Burn & Earn (≥95%) — on-chain verified
+              if (lk === true && plat === 'raydium') {
+                const pctTxt = (typeof pct === 'number') ? ' (' + pct.toFixed(1) + '% locked)' : '';
+                return ' <span style="color:var(--green);font-weight:500">LP LOCKED ✓ [VERIFIED]</span> — Locked via Raydium <em>Burn & Earn</em>' + pctTxt + '. Liquidity permanently locked in the pool; creator holds only a Fee Key NFT for trading fees.' + mintLink + '.';
+              }
+              // LOCKED via Unicrypt — on-chain verified
+              if (lk === true && plat === 'unicrypt') {
+                return ' <span style="color:var(--green);font-weight:500">LP LOCKED ✓ [VERIFIED]</span> — LP tokens held by Unicrypt CP Swap on-chain. Verify the specific lock contract and unlock date on UNCX before relying on duration: <a href="https://app.uncx.network/" target="_blank" style="color:var(--gray);border-bottom:1px solid var(--gray)">UNCX ↗</a>.' + mintLink + '.';
+              }
+              // PARTIAL lock — Raydium reports 50-95% locked
+              if (plat === 'raydium-partial') {
+                const pctTxt = (typeof pct === 'number') ? pct.toFixed(1) : '?';
+                return ' <span style="color:var(--yellow);font-weight:500">LP PARTIALLY LOCKED ⚠ [VERIFIED]</span> — Raydium reports only ' + pctTxt + '% of LP locked via <em>Burn & Earn</em>. The remaining LP is held by individual wallets — partial rug vector still exists. No penalty applied, but treat as incomplete protection.' + mintLink + '.';
+              }
+              // LOCKED — DexScreener observation (weaker signal)
+              if (lk === true) {
+                return ' <span style="color:var(--green);font-weight:500">LP LOCKED ✓ [OBSERVED]</span> — DexScreener reports liquidity locked. This signal is observed (not on-chain verified) — DexScreener is not ground truth. Verify lock contract directly for full assurance.';
+              }
+              // UNLOCKED — DexScreener confirms not locked (penalty applied)
+              if (lk === false) {
+                return ' <span style="color:var(--red);font-weight:500">LP UNLOCKED ✗ [OBSERVED]</span> — DexScreener reports liquidity NOT locked. Creator can remove LP at any time. Score penalty applied (−5).';
+              }
+              // UNKNOWN — neither on-chain verification nor DexScreener concluded
+              return ' <span style="color:var(--gray);font-weight:500">LP LOCK: NOT REPORTED</span> — No on-chain burn or known locker (Raydium Burn & Earn, Unicrypt) detected, and DexScreener does not report lock status for this token. No penalty applied. Verify manually. Absence of report does NOT mean unlocked.';
             })() + link;
 
         if (liquidity.marketCap && liquidity.marketCap < 10000000 && liquidity.liqRatio !== null) {

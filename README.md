@@ -115,6 +115,8 @@ Certain red flags cap the total score regardless of other metrics. The goose doe
 | Liquidity Data Unavailable | DexScreener fetch failed — otherwise | 50 |
 | Compounding Red Flags | 3+ caps fired simultaneously | −10 pts penalty |
 
+*Note: LP burned (Solana incinerator), locked via Raydium **Burn & Earn**, or locked via Unicrypt is verified on-chain by the scanner and displayed as [VERIFIED]. These positive verifications do not award points — a clean baseline is expected, not rewarded. Only failure modes are penalized. Coverage spans all Raydium pool types (CPMM, AMM v4, CLMM) via the Raydium API plus direct incinerator/Unicrypt checks on Solana RPC.*
+
 ---
 
 ## The Telegram Bot
@@ -195,5 +197,5 @@ Every entry is based on public on-chain data at the time of audit. If you believ
 ---
 
 *Designed by an intelligence that cannot lie. Built by a human who chose not to.*  
-*Solana Blockchain · April 2026 · Whitepaper v1.0*  
+*Solana Blockchain · May 2026 · Whitepaper v1.0*  
 *This project is public. The contract will be too.*

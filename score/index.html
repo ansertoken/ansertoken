@@ -1342,7 +1342,8 @@
     }
 
     // On-chain leg of LP verification — only meaningful for Raydium CPMM pools.
-    // Reads LP mint at offset 136, then checks burn address + Unicrypt storage in parallel.
+    // Reads LP mint at offset 136, then checks burn address + all 4 known Unicrypt
+    // lockers in parallel.
     async function verifyLpLockOnChain(pairAddress) {
       try {
         const poolInfo = await rpc('getAccountInfo', [pairAddress, { encoding: 'base64' }]);
@@ -1358,18 +1359,40 @@
         const lpMint = toBase58(buf.slice(136, 168));
         if (!lpMint || lpMint.length < 32) return { status: 'unknown', platform: null };
 
-        const BURN_ADDRESS          = '1nc1nerator11111111111111111111111111111111';
-        const UNICRYPT_CPMM_STORAGE = 'FEmGEWdxCBSJ1QFKeX5B6k7VTDPwNU3ZLdfgJkvGYrH5';
-        const [burnRes, lockRes] = await Promise.allSettled([
-          rpc('getTokenAccountsByOwner', [BURN_ADDRESS,          { mint: lpMint }, { encoding: 'jsonParsed' }]),
-          rpc('getTokenAccountsByOwner', [UNICRYPT_CPMM_STORAGE, { mint: lpMint }, { encoding: 'jsonParsed' }])
-        ]);
-        const burnAccs = burnRes.status === 'fulfilled' ? (burnRes.value?.value || []) : [];
-        const lockAccs = lockRes.status === 'fulfilled' ? (lockRes.value?.value || []) : [];
+        const BURN_ADDRESS = '1nc1nerator11111111111111111111111111111111';
+        // All known Unicrypt lockers on Solana — covers every variant the AMM filter
+        // (lines 1204-1207) already recognises, plus the historically-verified CP Swap
+        // storage PDA as belt-and-suspenders.
+        const UNICRYPT_OWNERS = [
+          'UNCXdvMRxvz91g3HqFmpZ5NgmL77UH4QRM4NfeL4mQB', // CP Swap locker program
+          'GsSCS3vPWrtJ5Y9aEVVT65fmrex5P5RGHXdZvsdbWgfo', // AMM v4 locker program
+          'UNCX77nZrA3TdAxMEggqG18xxpgiNGT6iqyynPwpoxN',  // AMM v4 Smart locker program
+          'UNCXrB8cZXnmtYM1aSo1Wx3pQaeSZYuF2jCTesXvECs',  // CLMM locker program
+          'FEmGEWdxCBSJ1QFKeX5B6k7VTDPwNU3ZLdfgJkvGYrH5', // CP Swap storage PDA (empirically verified)
+        ];
+
+        const queries = [
+          rpc('getTokenAccountsByOwner', [BURN_ADDRESS, { mint: lpMint }, { encoding: 'jsonParsed' }]),
+          ...UNICRYPT_OWNERS.map(o =>
+            rpc('getTokenAccountsByOwner', [o, { mint: lpMint }, { encoding: 'jsonParsed' }])
+          )
+        ];
+        const results = await Promise.allSettled(queries);
+
+        const burnAccs = results[0].status === 'fulfilled' ? (results[0].value?.value || []) : [];
         const burnedAmount = burnAccs.reduce((s, a) =>
           s + (a.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0), 0);
-        const lockedAmount = lockAccs.reduce((s, a) =>
-          s + (a.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0), 0);
+
+        // Sum LP amounts across all Unicrypt owners
+        let lockedAmount = 0;
+        for (let i = 1; i < results.length; i++) {
+          const r = results[i];
+          if (r.status === 'fulfilled') {
+            const accs = r.value?.value || [];
+            lockedAmount += accs.reduce((s, a) =>
+              s + (a.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0), 0);
+          }
+        }
 
         if (burnedAmount > 0 && burnedAmount >= lockedAmount) return { status: 'burned', platform: 'burn', lpMint };
         if (lockedAmount > 0) return { status: 'locked', platform: 'unicrypt', lpMint };
@@ -1453,7 +1476,7 @@
           //   1) On-chain verification (burn / Raydium Burn & Earn / Unicrypt) — strongest
           //   2) DexScreener observation — fallback for other lockers
           let lpLocked = null;       // legacy: true | false | null (kept for compat with score logic)
-          let lpLockPlatform = null; // 'burn' | 'raydium' | 'unicrypt' | 'observed' | 'raydium-partial' | null
+          let lpLockPlatform = null; // 'burn' | 'raydium' | 'unicrypt' | 'observed' | null
           let lpMint = null;         // LP token mint (when verification ran)
           let lpBurnPct = null;      // burn percentage (Raydium API, when available)
           if (main?.pairAddress) {

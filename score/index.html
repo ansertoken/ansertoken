@@ -1453,7 +1453,7 @@
           //   1) On-chain verification (burn / Raydium Burn & Earn / Unicrypt) — strongest
           //   2) DexScreener observation — fallback for other lockers
           let lpLocked = null;       // legacy: true | false | null (kept for compat with score logic)
-          let lpLockPlatform = null; // 'burn' | 'raydium' | 'unicrypt' | 'observed' | null
+          let lpLockPlatform = null; // 'burn' | 'raydium' | 'unicrypt' | 'observed' | 'raydium-partial' | null
           let lpMint = null;         // LP token mint (when verification ran)
           let lpBurnPct = null;      // burn percentage (Raydium API, when available)
           if (main?.pairAddress) {

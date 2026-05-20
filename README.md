@@ -42,7 +42,7 @@ The scanner is a gift. The token is a question. Three reasons it deserves an ans
 
 **Skin in the game.** $ANSER is audited by its own scanner from day one. Structural criteria — mint revoked, freeze revoked, LP locked — are verifiable on-chain before you buy. Time-based signals (age, distribution) improve by design as the token matures. The contradiction is always public. No founder rescue. No exceptions.
 
-**Coordination layer.** The treasury (20% Ecosystem/DAO) is governed by holders. What gets funded, audited, granted, or added to the Hall of Shame is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.
+**Coordination layer.** The treasury (the 20% Ecosystem Vesting allocation) is governed by holders. What gets funded, audited, granted, or added to the Hall of Shame is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.
 
 **Memetic filter.** If the market values radical honesty, the price is its thermometer. If it doesn't, we'll have learned something useful about the market. Either outcome is signal. Neither is a promise.
 
@@ -78,7 +78,7 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 | Token Mechanics (Token-2022) | VERIFIED | 10 pts |
 | Honeypot Check | OBSERVED | Cap — 15 if likely trap, 50 if suspicious |
 | Update Authority | VERIFIED | Cap at 85 if mutable |
-| Creator Risk | INDICATIVE | 10 pts |
+| Deployer Conviction | INDICATIVE | 10 pts |
 
 **VERIFIED** = on-chain binary fact, cannot be gamed.  
 **OBSERVED** = real data, but potentially gameable via wallet splitting etc.  
@@ -127,9 +127,11 @@ Runs on **Render**, kept alive via **UptimeRobot** pings every 5 min.
 Source: private repo `ansertoken/anser-bot`.  
 Stack: Node.js · node-telegram-bot-api · Helius RPC · DexScreener API.
 
+**Why is the bot repo private when everything else is public?** The bot holds operational secrets (Helius API key, admin chat ID, GitHub write token) and the Hall-of-Shame proposal heuristics. Open-sourcing it would either leak those credentials or require a redacted copy that no longer matches what runs — a silent inconsistency. A named, documented exception is more honest than a public repo that lies about itself. The part that must be verifiable — the scanner's scoring logic — is fully public in `score/index.html`.
+
 Send any Solana contract address to the bot to get an instant on-chain audit.
 
-**Bot vs scanner divergence (expected):** the Telegram bot always assigns +5 pts for Creator Risk (unknown branch — no deployer wallet fetch) and does not implement the transferFeeBps <100 tier for Token-2022. Maximum expected divergence: ±8 pts on tokens where these signals apply. Both are documented in the bot reference PDF.
+**Bot vs scanner divergence (expected):** the Telegram bot always assigns +5 pts for Deployer Conviction (unknown branch — no deployer wallet fetch). Maximum expected divergence: ±5 pts, on tokens where the deployer's current holdings would otherwise move the score. Documented in the bot reference PDF.
 
 ---
 
@@ -142,8 +144,8 @@ The project was built product-first: the scanner, the bot, the transparency infr
 **Planned deploy stack:**
 - SPL token on Solana mainnet
 - Mint authority revoked at deploy (irreversible)
-- Creator vesting: Streamflow — 6-month cliff + 2-year linear vest (100M tokens)
-- DAO vesting: Streamflow — 4-year linear vest (200M tokens)
+- Creator Vesting: Streamflow — 6-month cliff + 2-year linear vest (100M tokens)
+- Ecosystem Vesting: Streamflow — 4-year linear vest (200M tokens)
 - Liquidity: Raydium CPMM — locked minimum 1 year via Unicrypt
 - Anti-snipe: 30-minute launch delay + 1% fee tier
 
@@ -153,7 +155,7 @@ When deployed, this README will be updated with:
 - Contract address
 - Streamflow vesting links
 - Unicrypt LP lock link
-- DAO reserve wallet address
+- Reserve wallet addresses (Ecosystem Vesting + Community Reserve)
 - Live $ANSER score from the scanner
 
 ---
@@ -162,11 +164,11 @@ When deployed, this README will be updated with:
 
 | Allocation | % | Tokens | Conditions |
 |---|---|---|---|
-| Community & Public Sale | 35% | 350M | 50M at pool open · 200M Streamflow 2yr vest (DAO governed) · 100M airdrop to first 2,000 holders |
-| Ecosystem / DAO | 20% | 200M | Streamflow 4yr linear vest |
+| Community & Public Sale | 35% | 350M | 50M at pool open · 200M Community Reserve, Streamflow 2yr vest (DAO governed) · 100M airdrop to first 2,000 holders |
+| Ecosystem Vesting | 20% | 200M | Streamflow 4yr linear vest |
 | Initial Liquidity | 25% | 250M | Locked ≥1 year via Unicrypt |
 | Staking Rewards | 10% | 100M | Gradual emission over 4 years — timeline set by DAO |
-| Creators | 10% | 100M | Streamflow — 6-month cliff + 2-year linear vest |
+| Creator Vesting | 10% | 100M | Streamflow — 6-month cliff + 2-year linear vest |
 
 No private allocations. No advisor tokens. No VC rounds. No presale with special pricing.  
 No exchange listing without community governance approval.

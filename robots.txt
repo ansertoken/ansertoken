@@ -1,3 +1,39 @@
+# theanser.app - transparency means being readable by humans AND machines.
+# All crawlers welcome, including LLM/AI agents. Nothing here is hidden.
+
 User-agent: *
 Allow: /
+
+# LLM / AI crawlers - explicitly allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
 Sitemap: https://theanser.app/sitemap.xml
+

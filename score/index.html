@@ -7,6 +7,7 @@
   <link rel="canonical" href="https://theanser.app/score/">
   <meta name="description" content="Free Solana token scanner and anti-rug checker. Detects honeypots, checks mint authority, LP lock, holder concentration and more. Transparency score 0–100.">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
   <meta property="og:url" content="https://theanser.app/score/">
   <meta property="og:title" content="ANSER Token Scanner — Transparency Score for Solana Tokens">
   <meta property="og:description" content="9 on-chain metrics. Free Solana rug checker — honeypot, mint authority, LP lock, update authority and more.">
@@ -16,8 +17,13 @@
   <meta name="twitter:title" content="ANSER Token Scanner — Transparency Score for Solana Tokens">
   <meta name="twitter:description" content="9 on-chain metrics. Free Solana rug checker — honeypot, mint authority, LP lock, update authority and more.">
   <meta name="twitter:image" content="https://theanser.app/goose.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" href="/favicon.png">
-  <link rel="apple-touch-icon" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
   <title>ANSER Token Scanner — Free Solana Rug Checker & Transparency Score</title>
   <script type="application/ld+json">
   {
@@ -40,7 +46,7 @@
       {
         "@type": "Question",
         "name": "How does the ANSER token scanner score work?",
-        "acceptedAnswer": { "@type": "Answer", "text": "The scanner analyzes 9 on-chain metrics and returns a transparency score from 0 to 100. VERIFIED signals (mint authority, freeze authority, token mechanics, update authority) are on-chain binary facts. OBSERVED signals (holder distribution, liquidity, contract age, honeypot check) are real data that could theoretically be gamed. INDICATIVE signals (creator risk) are useful but not conclusive. Certain red flags cap the total score regardless of other metrics." }
+        "acceptedAnswer": { "@type": "Answer", "text": "The scanner analyzes 9 on-chain metrics and returns a transparency score from 0 to 100. VERIFIED signals (mint authority, freeze authority, token mechanics, update authority) are on-chain binary facts. OBSERVED signals (holder distribution, liquidity, contract age, honeypot check) are real data that could theoretically be gamed. INDICATIVE signals (deployer conviction) are useful but not conclusive. Certain red flags cap the total score regardless of other metrics." }
       },
       {
         "@type": "Question",
@@ -749,7 +755,7 @@
 
   <nav>
     <a href="https://theanser.app" class="logo">
-      <img src="/goose.png" alt="$ANSER">
+      <img src="/goose.png" alt="$ANSER — on-chain transparency scanner for Solana tokens">
       <div>$ANSER<span>TRANSPARENCY SCORE</span></div>
     </a>
     <ul class="links" id="navLinks">
@@ -873,14 +879,14 @@
       </div>
 
       <div class="criteria-item">
-        <div class="criteria-weight">−5</div>
+        <div class="criteria-weight">⚑</div>
         <div class="criteria-name">Update Authority</div>
         <div class="criteria-desc">Can the creator change token name, logo or URI after launch? Mutable metadata is a phishing vector. <em>On-chain fact. Score capped at 85 if mutable.</em></div>
       </div>
 
       <div class="criteria-item criteria-item-full">
         <div class="criteria-weight">10</div>
-        <div class="criteria-name">Creator Risk</div>
+        <div class="criteria-name">Deployer Conviction</div>
         <div class="criteria-desc">Does the deployer wallet still hold tokens? A creator who sold everything is a warning signal. <em>Applies to tokens with limited transaction history. High-activity tokens are flagged as not applicable.</em></div>
       </div>
     </div>
@@ -1674,8 +1680,6 @@
 
       else if (auth.dangerousExtensions.length === 0)   pts += 8;
 
-      else if (auth.transferFeeBps !== null && auth.transferFeeBps < 100) pts += 3;
-
       if (conc) {
 
         if      (conc.pct < 20) pts += 20;
@@ -2314,7 +2318,7 @@
 
       }
 
-      const crM = { name: 'Creator Risk ' + conf('indicative'), desc: crDesc, status: crStatus, cls: crCls };
+      const crM = { name: 'Deployer Conviction ' + conf('indicative'), desc: crDesc, status: crStatus, cls: crCls };
 
       // ── Update Authority metric ─────────────────────────────────────────
       let updAuthM;

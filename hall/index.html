@@ -247,7 +247,7 @@ nav {
     <div class="how-item">
       <div class="how-num">02</div>
       <div class="how-name">Outcome tracked</div>
-      <div class="how-desc">The token's liquidity is monitored automatically. When a collapse is confirmed on-chain — liquidity below $500 or under 20% of the initial level (80%+ drained) — the rug date and days-to-collapse are recorded. Fast collapses are confirmed immediately when the pattern is unambiguous. Slow or ambiguous cases require at least 24h without recovery before confirmation. Pending = still being watched.</div>
+      <div class="how-desc">The token's liquidity is monitored automatically. When a collapse is confirmed on-chain — liquidity below $500 or under 20% of the initial level (80%+ drained) — the rug date and days-to-collapse are recorded. A collapse is only confirmed after the token has been in the Hall at least 24 hours without recovery. Faster collapses are not added as track-record entries: the Hall only claims warnings it gave with real lead time. Pending = still being watched.</div>
     </div>
     <div class="how-item">
       <div class="how-num">03</div>
@@ -406,15 +406,6 @@ nav {
       flags: ["Vol/MCAP 1130%", "Pool < 48h"],
       dexscreenerUrl: "https://dexscreener.com/solana/CjUoUjyKYpLM3aRWyH6VVFZcwANNPZwHNRfctjm7pump",
     },
-    {
-      name: "catwidcap", symbol: "cap", address: "3jJxPhDShzHjWj6Y4PhGUHWhKfyhA3hAdxdUUxUhpump",
-      score: 35, voice: "95% of supply in 20 wallets. One decision ends the price.",
-      verdict: "CRITICAL", auditDate: "2026-05-19", rugDate: "2026-05-19", lastChecked: "2026-05-19",
-      auditTimestamp: "2026-05-19T06:31:58.990Z",
-      initialLiq: 28674.12, initialMcap: 134198,
-      flags: ["95% top-20 concentration", "Pool < 48h"],
-      dexscreenerUrl: "https://dexscreener.com/solana/3jJxPhDShzHjWj6Y4PhGUHWhKfyhA3hAdxdUUxUhpump",
-    },
 ];
 
   function renderEntries() {
@@ -470,4 +461,3 @@ nav {
 </script>
 </body>
 </html>
-

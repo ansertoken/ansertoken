@@ -1006,7 +1006,7 @@
           '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', // PumpFun
           'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA',  // PumpAMM
         ]);
-        let failedSells = 0, successSells = 0;
+        let failedSells = 0, successSells = 0, rpcErrors = 0;
         for (const sig of sigs.slice(0, 20)) {
           try {
             const tx = await rpc('getTransaction', [sig.signature, {
@@ -1018,9 +1018,10 @@
             if (accts.some(a => dexPrograms.has(a))) {
               tx.meta?.err ? failedSells++ : successSells++;
             }
-          } catch {}
+          } catch { rpcErrors++; }
         }
         const total = failedSells + successSells;
+        if (total < 5 && rpcErrors >= 5) return { status: 'rpc_saturated' };
         if (total >= 5 && failedSells / total > 0.9) return { status: 'likely_honeypot', failRate: Math.round(failedSells/total*100) };
         if (total >= 3 && failedSells / total > 0.3) return { status: 'suspicious',      failRate: Math.round(failedSells/total*100) };
         if (successSells > 0) return { status: 'sellable' };
@@ -2340,8 +2341,10 @@
         honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Selling may be impossible or heavily taxed. Do not buy.', status: 'LIKELY TRAP ⚠', cls: 'status-fail' };
       } else if (honeypot.status === 'suspicious') {
         honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: honeypot.failRate + '% of DEX interactions failed. Verify you can sell before buying.', status: 'SUSPICIOUS ⚠', cls: 'status-warn' };
+      } else if (honeypot.status === 'rpc_saturated') {
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Solana nodes are congested right now — could not verify the sell pattern. This is not a token signal; try again in ~30 seconds.', status: 'NODES BUSY', cls: 'status-warn' };
       } else {
-        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected. Token appears sellable.', status: 'SELLABLE ✓', cls: 'status-pass' };
+        honeyM = { name: 'Honeypot Check ' + conf('observed'), desc: 'Successful sell transactions detected. Token appears sellable. Note: checks recent sells only — advanced Token-2022 tokens can use transfer hooks or whitelists to fake sellability, so always review the contract extensions.', status: 'SELLABLE ✓', cls: 'status-pass' };
       }
 
       const metrics = [mintM, concM, liqM, freezeM, ageM, mechM, honeyM, updAuthM, crM];
@@ -2900,6 +2903,8 @@
     if (contractFromUrl && inputField) {
       // 1. Rellena el input con la dirección del contrato
       inputField.value = contractFromUrl;
+      const _autoBtn = document.querySelector('button[onclick="analyzeToken()"]');
+      if (_autoBtn) { _autoBtn.disabled = true; _autoBtn.textContent = 'ANALYZING…'; }
       
       // 2. Ejecuta la función de análisis automáticamente
       setTimeout(() => {

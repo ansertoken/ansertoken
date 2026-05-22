@@ -42,7 +42,7 @@ The scanner is a gift. The token is a question. Three reasons it deserves an ans
 
 **Skin in the game.** $ANSER is audited by its own scanner from day one. Structural criteria — mint revoked, freeze revoked, LP locked — are verifiable on-chain before you buy. Time-based signals (age, distribution) improve by design as the token matures. The contradiction is always public. No founder rescue. No exceptions.
 
-**Coordination layer.** The treasury (the 20% Ecosystem Vesting allocation) is governed by holders. What gets funded, audited, granted, or added to the Hall of Shame is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.
+**Coordination layer.** The treasury (the 20% Ecosystem Vesting allocation, plus the Community Reserve as it unlocks) is governed by holders. What gets funded, audited, granted, or added to the Hall of Shame is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.
 
 **Memetic filter.** If the market values radical honesty, the price is its thermometer. If it doesn't, we'll have learned something useful about the market. Either outcome is signal. Neither is a promise.
 
@@ -145,8 +145,10 @@ The project was built product-first: the scanner, the bot, the transparency infr
 - SPL token on Solana mainnet
 - Mint authority revoked at deploy (irreversible)
 - Creator Vesting: Streamflow — 6-month cliff + 2-year linear vest (100M tokens)
-- Ecosystem Vesting: Streamflow — 4-year linear vest (200M tokens)
-- Liquidity: Raydium CPMM — locked minimum 1 year via Unicrypt
+- Ecosystem Vesting: Streamflow — 2-year linear vest (200M tokens)
+- Community Reserve: Streamflow — 4-year linear vest into the DAO-governed treasury (530M tokens)
+- Liquidity: 50M seeds the Raydium CPMM pool — LP locked minimum 1 year via Unicrypt
+- Community Airdrop: 20M, proportional to verified early holders, claimed linearly over 6 months
 - Anti-snipe: 30-minute launch delay + 1% fee tier
 
 **Self-audit at deploy:** the first act after launch is publishing $ANSER's own transparency score on the home page, run on the live scanner, with full breakdown and links to every vesting and lock contract. If the live scanner returns a verdict below STRUCTURALLY SOUND (75+), deploy is halted and the contradiction is made public.
@@ -164,11 +166,12 @@ When deployed, this README will be updated with:
 
 | Allocation | % | Tokens | Conditions |
 |---|---|---|---|
-| Community & Public Sale | 35% | 350M | 50M at pool open · 200M Community Reserve, Streamflow 2yr vest (DAO governed) · 100M airdrop to first 2,000 holders |
-| Ecosystem Vesting | 20% | 200M | Streamflow 4yr linear vest |
-| Initial Liquidity | 25% | 250M | Locked ≥1 year via Unicrypt |
+| Community Reserve | 53% | 530M | Streamflow 4yr linear vest into the DAO-governed treasury · long-term community & liquidity incentives (incl. future liquidity provision) |
+| Ecosystem Vesting | 20% | 200M | Streamflow 2yr linear vest (~8.3M/month) · DAO-governed · grants, bounties, listings, ops |
+| Liquidity | 5% | 50M | Seeds the Raydium pool — LP locked ≥1 year via Unicrypt |
 | Staking Rewards | 10% | 100M | Gradual emission over 4 years — timeline set by DAO |
 | Creator Vesting | 10% | 100M | Streamflow — 6-month cliff + 2-year linear vest |
+| Community Airdrop | 2% | 20M | Proportional to verified early holders · claimed linearly over 6 months · sized below pool depth |
 
 No private allocations. No advisor tokens. No VC rounds. No presale with special pricing.  
 No exchange listing without community governance approval.

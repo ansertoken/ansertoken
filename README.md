@@ -166,11 +166,11 @@ When deployed, this README will be updated with:
 
 | Allocation | % | Tokens | Conditions |
 |---|---|---|---|
-| Community Reserve | 53% | 530M | Streamflow 4yr linear vest into the DAO-governed treasury · long-term community & liquidity incentives (incl. future liquidity provision) |
+| Community Reserve | 53% | 530M | Streamflow 4yr linear vest (~11M/month) into the DAO-governed treasury · long-term community & liquidity incentives (incl. future liquidity provision) |
 | Ecosystem Vesting | 20% | 200M | Streamflow 2yr linear vest (~8.3M/month) · DAO-governed · grants, bounties, listings, ops |
 | Liquidity | 5% | 50M | Seeds the Raydium pool — LP locked ≥1 year via Unicrypt |
 | Staking Rewards | 10% | 100M | Gradual emission over 4 years — timeline set by DAO |
-| Creator Vesting | 10% | 100M | Streamflow — 6-month cliff + 2-year linear vest |
+| Creator Vesting | 10% | 100M | Streamflow — 6-month cliff + 2-year linear vest (~4.2M/month after cliff) |
 | Community Airdrop | 2% | 20M | Proportional to verified early holders · claimed linearly over 6 months · sized below pool depth |
 
 No private allocations. No advisor tokens. No VC rounds. No presale with special pricing.  

@@ -217,7 +217,7 @@ nav {
   </div>
   <div class="counter-item">
     <div class="counter-num" id="totalRugged">0</div>
-    <div class="counter-label">Confirmed rugs</div>
+    <div class="counter-label">Confirmed collapses</div>
   </div>
   <div class="counter-item">
     <div class="counter-num" id="avgScore">—</div>
@@ -247,7 +247,7 @@ nav {
     <div class="how-item">
       <div class="how-num">02</div>
       <div class="how-name">Outcome tracked</div>
-      <div class="how-desc">The token's liquidity is monitored automatically. When a collapse is confirmed on-chain — liquidity below $500 or under 20% of the initial level (80%+ drained) — the rug date and days-to-collapse are recorded. A collapse is only confirmed after the token has been in the Hall at least 24 hours without recovery. Faster collapses are not added as track-record entries: the Hall only claims warnings it gave with real lead time. Pending = still being watched.</div>
+      <div class="how-desc">The token's liquidity is monitored automatically. When a collapse is confirmed on-chain — liquidity below $500 or under 20% of the initial level (80%+ drained) — the rug date and days-to-collapse are recorded. A collapse is only confirmed after the token has been in the Hall at least 24 hours without recovery. Faster collapses are not added as track-record entries: the Hall only claims warnings it gave with real lead time. Pending = still being watched. Some flagged tokens collapse in price (market cap down 80%+ from audit) while their liquidity stays locked — a pump-and-dump rather than a liquidity rug. These are marked "Dumped" with the market-cap drop, counted as confirmed collapses but kept honestly distinct from liquidity rugs (which require the liquidity itself to be drained).</div>
     </div>
     <div class="how-item">
       <div class="how-num">03</div>
@@ -283,7 +283,7 @@ nav {
     {
       name: "Green Kitten Crew", symbol: "GKC", address: "GPXY56UALMCnKkbPnWKRdEeG6DWvbFafySsG48MRpump",
       score: 35, voice: "Volume exceeds market cap 23x in 24h. The price is being moved, not discovered.",
-      verdict: "CRITICAL", auditDate: "2026-05-12", rugDate: null, lastChecked: "2026-05-19",
+      verdict: "CRITICAL", auditDate: "2026-05-12", rugDate: null, dumpDate: "2026-05-19", dumpMcap: 8200, lastChecked: "2026-05-19",
       auditTimestamp: "2026-05-12T08:25:38.573Z",
       initialLiq: 27311.8, initialMcap: 86904,
       flags: ["Vol/MCAP 2300%", "Pool < 48h"],
@@ -425,7 +425,7 @@ nav {
     emptyState.style.display = 'none';
     container.classList.add('has-entries');
     document.getElementById('totalWarned').textContent = entries.length;
-    document.getElementById('totalRugged').textContent = entries.filter(e => e.rugDate).length;
+    document.getElementById('totalRugged').textContent = entries.filter(e => e.rugDate || e.dumpDate).length;
     const avg = Math.round(entries.reduce((s, e) => s + e.score, 0) / entries.length);
     document.getElementById('avgScore').textContent = avg;
 
@@ -434,8 +434,15 @@ nav {
       const _adObj = new Date(_adRaw);
       const ad = _adObj.toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) +
         (e.auditTimestamp ? ' · ' + _adObj.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', timeZone:'UTC' }) + ' UTC' : '');
-      const rd = e.rugDate ? new Date(e.rugDate).toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) : 'Pending';
-      const days = e.rugDate ? Math.floor((new Date(e.rugDate) - new Date(e.auditDate)) / 86400000) : '—';
+      const _collapseDate = e.rugDate || e.dumpDate || null;
+      const _dropPct = (e.dumpDate && e.dumpMcap && e.initialMcap) ? Math.round((1 - e.dumpMcap / e.initialMcap) * 100) : null;
+      const _outcomeLabel = e.rugDate ? 'Rug date' : e.dumpDate ? 'Dumped (price collapse)' : 'Rug date';
+      const rd = e.rugDate
+        ? new Date(e.rugDate).toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' })
+        : e.dumpDate
+          ? new Date(e.dumpDate).toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric' }) + (_dropPct != null ? ` · MCAP −${_dropPct}%` : '')
+          : 'Pending';
+      const days = _collapseDate ? Math.floor((new Date(_collapseDate) - new Date(e.auditDate)) / 86400000) : '—';
       const _vClass = e.verdict === "CRITICAL" ? "verdict-critical" : e.verdict === "HIGH RISK" ? "verdict-high" : (e.rugDate ? "verdict-rugged" : "");
       return `<div class="entry ${_vClass}">
         <div><span class="warned-badge">⚠ The goose warned you</span></div>
@@ -447,7 +454,7 @@ nav {
         <div class="entry-voice">"${e.voice}"</div>
         <div class="entry-meta">
           <div><div class="meta-label">Audit date</div><div class="meta-value">${ad}</div></div>
-          <div><div class="meta-label">Rug date</div><div class="meta-value">${rd}</div></div>
+          <div><div class="meta-label">${_outcomeLabel}</div><div class="meta-value">${rd}</div></div>
           <div><div class="meta-label">Days to collapse</div><div class="meta-value">${days}</div></div>
           <div><div class="meta-label">Verdict</div><div class="meta-value">${e.verdict}</div></div>
         </div>

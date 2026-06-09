@@ -1038,23 +1038,29 @@
       const view = new DataView(u8.buffer);
       const mintAuthorityRevoked   = view.getUint32(0,  true) === 0;
       const freezeAuthorityRevoked = view.getUint32(46, true) === 0;
-      const isToken2022 = result.value.owner === 'TokenzQdBNbequF8Li1WhHnkPdmEep1qEkfLBs9w9vF';
+      const isToken2022 = result.value.owner === 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
       const dangerousExtensions = [];
       let transferFeeBps = null;
+      let feeAuthorityActive = false;
 
-      if (isToken2022 && u8.length > 83) {
-        const DANGER = { 1: 'Transfer Fee', 6: 'Permanent Delegate', 8: 'Non-Transferable', 12: 'Transfer Hook' };
-        let offset = 83;
+      // Base mint = 82 bytes; with extensions the account_type byte sits at offset
+      // 165 and the TLV list starts at 166. Must stay 1:1 with the bot (index.js).
+      if (isToken2022 && u8.length > 165) {
+        const DANGER = { 9: 'Non-Transferable', 12: 'Permanent Delegate', 14: 'Transfer Hook' };
+        let offset = 166;
         while (offset + 4 <= u8.length) {
           const type = view.getUint16(offset, true);
           const len  = view.getUint16(offset + 2, true);
           if (type === 0 && len === 0) break;
-          if (DANGER[type]) {
-            dangerousExtensions.push(DANGER[type]);
-            if (type === 1 && len >= 116) {
-              const fv = new DataView(u8.buffer, offset + 4);
-              transferFeeBps = fv.getUint16(96, true);
-            }
+          if (DANGER[type]) dangerousExtensions.push(DANGER[type]);
+          // TransferFeeConfig (1): dangerous only if the fee AUTHORITY is still live
+          // (can be raised toward ~100% post-sale) or the fee is already punitive.
+          if (type === 1 && offset + 4 + 108 <= u8.length) {
+            const d = offset + 4;
+            feeAuthorityActive = false;
+            for (let i = 0; i < 32; i++) { if (u8[d + i] !== 0) { feeAuthorityActive = true; break; } }
+            transferFeeBps = view.getUint16(d + 106, true);   // newer transfer fee basis points
+            if (feeAuthorityActive || transferFeeBps >= 1000) dangerousExtensions.push('Transfer Fee');
           }
 
           offset += 4 + len;
@@ -1062,7 +1068,7 @@
         }
       }
 
-      return { mintAuthorityRevoked, freezeAuthorityRevoked, isToken2022, dangerousExtensions, transferFeeBps };
+      return { mintAuthorityRevoked, freezeAuthorityRevoked, isToken2022, dangerousExtensions, transferFeeBps, feeAuthorityActive };
 
     }
 
@@ -2083,13 +2089,16 @@
 
       } else if (auth.dangerousExtensions.length === 0) {
 
-        mechDesc = 'Token-2022 with no dangerous extensions detected.';
+        const fee = auth.transferFeeBps !== null ? ` It carries a ${(auth.transferFeeBps/100).toFixed(2)}% transfer fee (fixed — authority revoked).` : '';
+        mechDesc = 'Token-2022 with no dangerous extensions detected.' + fee;
 
         mechStatus = 'CLEAN ✓'; mechCls = 'status-pass';
 
       } else {
 
-        const fee = auth.transferFeeBps !== null ? ` (${(auth.transferFeeBps/100).toFixed(2)}% fee on every transfer)` : '';
+        const fee = auth.transferFeeBps !== null
+          ? ` (${(auth.transferFeeBps/100).toFixed(2)}% transfer fee${auth.feeAuthorityActive ? ', authority ACTIVE — can be raised at any time' : ', fixed'})`
+          : '';
 
         mechDesc = 'Token-2022 dangerous extensions: ' + auth.dangerousExtensions.join(', ') + fee + '. Exercise caution.';
 

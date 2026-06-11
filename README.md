@@ -71,7 +71,7 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 | Metric | Type | Weight |
 |---|---|---|
 | Mint Authority revoked | VERIFIED | 25 pts |
-| Holder Distribution (top 20) | OBSERVED | 20 pts — AMM pools (Raydium, Orca, Meteora) filtered from calculation |
+| Holder Distribution (top 20) | OBSERVED | 20 pts — AMM pools (Raydium, Orca, Meteora) and on-chain vesting/lock escrows (Streamflow, Unicrypt) filtered from calculation |
 | Liquidity / MCAP ratio | OBSERVED | 15 pts |
 | Freeze Authority revoked | VERIFIED | 10 pts |
 | Contract Age | OBSERVED | 10 pts |
@@ -87,6 +87,8 @@ The ANSER Token Scanner (`score/index.html`) analyzes any Solana token against n
 The scanner reports both layers — the chain and our reading of it — so you always know which is which.
 
 **Scoring version: v1.0** — this set of metrics, weights, and caps is frozen as the v1.0 baseline. Any change to weights or thresholds will be released as v1.1, v1.2, etc., and noted here. Fixes to bugs in the implementation (without changing the scoring logic) are not version bumps.
+
+**Measurement note (documented, not hidden):** the Holder Distribution filter was expanded to exclude token accounts owned by on-chain vesting and lock programs (Streamflow escrows, Unicrypt lockers) in addition to AMM pools. Weights, thresholds, and caps are unchanged — this is a measurement-layer correction: tokens locked in irreversible on-chain contracts cannot sell, so counting them as "holders" misrepresented dump risk. The filter applies identically to every token, including $ANSER itself. We document it here precisely so nobody can claim it was added quietly to flatter our own launch score.
 
 Certain red flags cap the total score regardless of other metrics. The goose does not average away red flags.
 
@@ -151,7 +153,7 @@ The project was built product-first: the scanner, the bot, the transparency infr
 - Community Airdrop: 20M, proportional to verified early holders, claimed linearly over 6 months
 - Anti-snipe: 30-minute launch delay + 1% fee tier
 
-**Self-audit at deploy:** the first act after launch is publishing $ANSER's own transparency score on the home page, run on the live scanner, with full breakdown and links to every vesting and lock contract. If the live scanner returns a verdict below STRUCTURALLY SOUND (75+), deploy is halted and the contradiction is made public.
+**Self-audit — two phases:** (1) **At deploy:** every VERIFIED structural criterion — mint authority revoked, freeze authority revoked, LP locked on-chain, no dangerous Token-2022 extensions, immutable metadata — must pass on the live scanner before the pool opens. If any fails, deploy is halted and the contradiction is made public. A preliminary self-audit with full breakdown is published immediately; the pool-age cap (<48h → 60) applies to $ANSER like any other token, so the deploy-day score reads PARTIAL RISK by design. (2) **At 48h:** once the age cap expires, the official self-audit runs. If the live scanner returns a verdict below STRUCTURALLY SOUND (75+), the contradiction is made public on the home page. The goose does not exempt itself from its own clock.
 
 When deployed, this README will be updated with:
 - Contract address
@@ -202,5 +204,5 @@ Every entry is based on public on-chain data at the time of audit. If you believ
 ---
 
 *Designed by an intelligence that cannot lie. Built by a human who chose not to.*  
-*Solana Blockchain · May 2026 · Whitepaper v1.0*  
+*Solana Blockchain · April 2026 · Whitepaper v1.0*  
 *This project is public. The contract will be too.*

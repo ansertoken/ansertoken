@@ -1,6 +1,6 @@
 # $ANSER — The Goose That Cannot Lie
 
-**theanser.app** · [Token Scanner](https://theanser.app/score/) · [Milestones](https://theanser.app/milestones/) · [Hall of Shame](https://theanser.app/hall/) · [Whitepaper](https://theanser.app/anser_whitepaper.pdf) · [@theanserapp](https://x.com/theanserapp) · [t.me/theanser](https://t.me/theanser)
+**theanser.app** · [Token Scanner](https://theanser.app/score/) · [Milestones](https://theanser.app/milestones/) · [Whitepaper](https://theanser.app/anser_whitepaper.pdf) · [@theanserapp](https://x.com/theanserapp) · [t.me/theanser](https://t.me/theanser)
 
 ---
 
@@ -27,7 +27,6 @@ Everything here is visible by design. The project's founding principle is that t
 | `index.html` | Landing page — theanser.app |
 | `score/index.html` | ANSER Token Scanner — theanser.app/score |
 | `milestones/index.html` | Milestone Verification Dashboard — theanser.app/milestones |
-| `hall/index.html` | Hall of Shame — theanser.app/hall |
 | `anser_whitepaper.pdf` | Whitepaper v1.0 |
 | `goose.png` | Brand asset |
 | `favicon.png` | Favicon |
@@ -42,7 +41,7 @@ The scanner is a gift. The token is a question. Three reasons it deserves an ans
 
 **Skin in the game.** $ANSER is audited by its own scanner from day one. Structural criteria — mint revoked, freeze revoked, LP locked — are verifiable on-chain before you buy. Time-based signals (age, distribution) improve by design as the token matures. The contradiction is always public. No founder rescue. No exceptions.
 
-**Coordination layer.** The treasury (the 20% Ecosystem Vesting allocation, plus the Community Reserve as it unlocks) is governed by holders. What gets funded, audited, granted, or added to the Hall of Shame is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.
+**Coordination layer.** The treasury (the 20% Ecosystem Vesting allocation, plus the Community Reserve as it unlocks) is governed by holders. What gets funded, audited, or granted is a collective decision — not the founder's. Holding $ANSER is voting power over the goose's voice.
 
 **Memetic filter.** If the market values radical honesty, the price is its thermometer. If it doesn't, we'll have learned something useful about the market. Either outcome is signal. Neither is a promise.
 
@@ -129,7 +128,7 @@ Runs on **Render**, kept alive via **UptimeRobot** pings every 5 min.
 Source: private repo `ansertoken/anser-bot`.  
 Stack: Node.js · node-telegram-bot-api · Helius RPC · DexScreener API.
 
-**Why is the bot repo private when everything else is public?** The bot holds operational secrets (Helius API key, admin chat ID, GitHub write token) and the Hall-of-Shame proposal heuristics. Open-sourcing it would either leak those credentials or require a redacted copy that no longer matches what runs — a silent inconsistency. A named, documented exception is more honest than a public repo that lies about itself. The part that must be verifiable — the scanner's scoring logic — is fully public in `score/index.html`.
+**Why is the bot repo private when everything else is public?** The bot holds operational secrets (Helius API key, admin chat ID, GitHub write token). Open-sourcing it would either leak those credentials or require a redacted copy that no longer matches what runs — a silent inconsistency. A named, documented exception is more honest than a public repo that lies about itself. The part that must be verifiable — the scanner's scoring logic — is fully public in `score/index.html`.
 
 Send any Solana contract address to the bot to get an instant on-chain audit.
 
@@ -182,12 +181,6 @@ Circulating supply at launch: **50,000,000 ANSER (5% of total)**. All other allo
 
 ---
 
-## Hall of Shame — Dispute Policy
-
-Every entry is based on public on-chain data at the time of audit. If you believe an entry contains a factual error (wrong address, incorrect flag, data fetch error), contact [@theanserapp](https://x.com/theanserapp) or [t.me/theanser](https://t.me/theanser) with the contract address and the specific correction. Disputes are reviewed within 7 days. Factual errors are corrected and noted. Entries are not removed because a token recovered — the audit was a snapshot, not a verdict on the future.
-
----
-
 ## Links
 
 | | |
@@ -195,7 +188,6 @@ Every entry is based on public on-chain data at the time of audit. If you believ
 | Web | https://theanser.app |
 | Scanner | https://theanser.app/score/ |
 | Milestones | https://theanser.app/milestones/ |
-| Hall of Shame | https://theanser.app/hall/ |
 | Whitepaper | https://theanser.app/anser_whitepaper.pdf |
 | X | https://x.com/theanserapp |
 | Telegram channel | https://t.me/theanser |

@@ -118,6 +118,8 @@ Certain red flags cap the total score regardless of other metrics. The goose doe
 
 *Note: LP burned (Solana incinerator), locked via Raydium **Burn & Earn**, or locked via Unicrypt is verified on-chain by the scanner and displayed as [VERIFIED]. These positive verifications do not award points — a clean baseline is expected, not rewarded. Only failure modes are penalized. Coverage spans all Raydium pool types (CPMM, AMM v4, CLMM) via the Raydium API plus direct incinerator/Unicrypt checks on Solana RPC.*
 
+*Measurement note — bonding-curve tokens (documented, not hidden): tokens in a launchpad bonding-curve phase (e.g. Raydium LaunchLab before graduation) have no AMM pool or LP by construction — the SOL raised lives in the curve contract and sells execute against the curve. The scanner labels this phase explicitly (curve progress and raise target shown when available) instead of reporting misleading "$0 liquidity", and the standard liquidity-unverifiable cap (50) applies until graduation, when the migrated pool and LP burn become verifiable on-chain. No weights, thresholds, or cap values changed — this is a measurement-layer clarification, applied identically to every token including $ANSER itself.*
+
 ---
 
 ## The Telegram Bot

@@ -917,6 +917,7 @@
         <li style="padding:0.2rem 0;">⚠️ <strong>LP confirmed unlocked</strong> → −5 pts penalty — creator can remove liquidity at any time</li>
         <li style="padding:0.2rem 0;font-style:italic;color:var(--gray);font-size:0.75rem;">LP burned (incinerator), locked via Raydium <em>Burn & Earn</em>, or locked via Unicrypt is verified on-chain and displayed [VERIFIED], but does not award points — a clean baseline is expected, not rewarded. Only failure modes are penalized.</li>
         <li style="padding:0.2rem 0;">⚠️ <strong>Liquidity data unavailable</strong> (DexScreener fetch failed) → Score capped at 50 — context unverifiable, manipulation cannot be ruled out</li>
+        <li style="padding:0.2rem 0;font-style:italic;color:var(--gray);font-size:0.75rem;">Bonding-curve tokens (e.g. Raydium LaunchLab before graduation) have no AMM pool or LP by construction — the scanner labels this phase explicitly, showing curve progress instead of misleading "$0 liquidity". The same cap (50) applies until graduation, when the migrated pool and LP burn become verifiable on-chain. Applied identically to every token, including $ANSER itself.</li>
         <li style="padding:0.2rem 0;">🚨 <strong>3+ critical signals firing simultaneously</strong> → −10 pts compounding penalty — beyond reasonable doubt</li>
       </ul>
       <p style="margin-top:0.75rem;color:var(--gray);font-size:0.75rem;font-style:italic;">The goose does not average away red flags.</p>
@@ -1158,7 +1159,7 @@
 
           const timeoutPromise2 = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000));
           const das = await Promise.race([
-            rpc('getTokenAccounts', { mint: address, limit: 1000 }),
+            rpc('getTokenAccounts', { mintAddress: address, limit: 1000 }),
 
             timeoutPromise2
 
@@ -1411,6 +1412,27 @@
       } catch { return { status: 'unknown', platform: null }; }
     }
 
+    // ── LaunchLab bonding curve info (only fetched when curve phase detected) ──
+    // Raydium LaunchLab API: progress toward graduation. Mirrors the bot 1:1.
+    async function getLaunchLabCurve(mint) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch(`https://launch-mint-v1.raydium.io/get/by/mints?ids=${mint}`,
+          { headers: { 'Accept': 'application/json' }, signal: ctrl.signal })
+          .finally(() => clearTimeout(t));
+        if (!res.ok) return null;
+        const d = await res.json();
+        const r = d?.data?.rows?.[0];
+        if (!r) return null;
+        return {
+          finishingRate: typeof r.finishingRate === 'number' ? r.finishingRate : null,
+          targetSol:     r.totalFundRaisingB ? r.totalFundRaisingB / 1e9 : null,
+          migrateType:   r.migrateType || null
+        };
+      } catch { return null; }
+    }
+
     async function getLiquidityInfo(address) {
 
       // Jupiter for price + market cap, DexScreener for pool breakdown
@@ -1443,7 +1465,12 @@
 
         const main  = [...pairs].sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0];
 
-
+        // LaunchLab bonding curve phase: pair exists (dexId 'launchlab') but no
+        // AMM liquidity — the SOL raised lives in the curve contract, not an LP.
+        // Detected here so display can label the phase honestly instead of "$0".
+        const mainDex    = main?.dexId || null;
+        const curvePhase = (mainDex === 'launchlab' && totalLiquidity === 0);
+        const curve      = curvePhase ? await getLaunchLabCurve(address) : null;
 
         if (!main && (!jupRes.value?.data?.[address])) return { found: false };
 
@@ -1548,7 +1575,11 @@
 
             lpMint,
 
-            lpBurnPct
+            lpBurnPct,
+
+            curvePhase,
+
+            curve
 
           };
 
@@ -1589,7 +1620,11 @@
 
           lpMint: null,
 
-          lpBurnPct: null
+          lpBurnPct: null,
+
+          curvePhase,
+
+          curve
 
         };
 
@@ -1986,7 +2021,7 @@
                                  && conc !== null && (conc?.pct || 0) < 60;
         const _liqCap = (_isEstablished && _strongFundamentals) ? 80 : 50;
         score = Math.min(score, _liqCap);
-        capsLabels.push(`Liquidity data unavailable → cap ${_liqCap}`);
+        capsLabels.push(`${liquidity && liquidity.curvePhase ? 'Bonding curve (pre-graduation)' : 'Liquidity data unavailable'} → cap ${_liqCap}`);
       }
 
       const voice = gooseVoice(score, auth, conc, liquidity, deployedAt);
@@ -2153,6 +2188,15 @@
       } else if (!liquidity.found) {
 
         liqDesc = 'No liquidity pool found on Solana DEXes. Token may not be tradeable yet or pool was removed.'; liqStatus = 'NO POOL ✗'; liqCls = 'status-fail';
+
+      } else if (liquidity.curvePhase) {
+
+        const prog = (liquidity.curve?.finishingRate != null && liquidity.curve?.targetSol)
+          ? liquidity.curve.finishingRate.toFixed(1) + '% of ' + liquidity.curve.targetSol + ' SOL target raised'
+          : 'progress unavailable';
+        const mcapTxt = liquidity.marketCap ? ' | MCAP ' + fmtUsd(liquidity.marketCap) : '';
+        liqDesc = '<span style="color:var(--yellow);font-weight:500">BONDING CURVE [LAUNCHLAB]</span> — pre-graduation phase: ' + prog + mcapTxt + '. Liquidity lives in the curve contract and sells execute against the curve — no AMM pool or LP exists until graduation (migrates to Raydium ' + (liquidity.curve?.migrateType?.toUpperCase() || 'CPMM') + ', LP burn verifiable then). Market-liquidity metrics do not apply in this phase; the v1.0 liquidity-unverifiable cap (50) applies until graduation.';
+        liqStatus = 'CURVE PHASE ⚠'; liqCls = 'status-warn';
 
       } else {
 
